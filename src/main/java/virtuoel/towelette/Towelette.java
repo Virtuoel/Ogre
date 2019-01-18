@@ -15,19 +15,31 @@ import com.google.gson.JsonElement;
 import net.fabricmc.api.ModInitializer;
 import net.fabricmc.fabric.api.event.registry.RegistryEntryAddedCallback;
 import net.fabricmc.fabric.api.event.registry.RegistryIdRemapCallback;
+import net.fabricmc.fabric.api.registry.CommandRegistry;
 import net.fabricmc.fabric.api.tag.TagRegistry;
 import net.minecraft.block.Block;
+import net.minecraft.command.arguments.ArgumentTypes;
+import net.minecraft.command.arguments.BlockPosArgumentType;
+import net.minecraft.command.arguments.serialize.ConstantArgumentSerializer;
 import net.minecraft.fluid.Fluid;
+import net.minecraft.fluid.FluidState;
+import net.minecraft.server.command.CommandManager;
 import net.minecraft.state.PropertyContainer;
 import net.minecraft.state.property.Property;
 import net.minecraft.tag.Tag;
+import net.minecraft.text.LiteralText;
 import net.minecraft.util.Identifier;
+import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.registry.Registry;
 import virtuoel.statement.api.StateRefresher;
 import virtuoel.statement.api.StatementApi;
 import virtuoel.towelette.api.FluidProperties;
 import virtuoel.towelette.api.ToweletteApi;
 import virtuoel.towelette.api.ToweletteConfig;
+import virtuoel.towelette.command.arguments.FluidArgumentType;
+import virtuoel.towelette.command.arguments.FluidPredicateArgumentType;
+import virtuoel.towelette.server.command.SetFluidCommand;
+import virtuoel.towelette.util.StateUtils;
 
 public class Towelette implements ModInitializer, ToweletteApi, StatementApi
 {
@@ -78,6 +90,25 @@ public class Towelette implements ModInitializer, ToweletteApi, StatementApi
 			r -> RegistryIdRemapCallback.event(r)::register,
 			r -> s -> r.reorderBlockStates()
 		);
+		
+		ArgumentTypes.register("fluid_state", FluidArgumentType.class, new ConstantArgumentSerializer<FluidArgumentType>(FluidArgumentType::create));
+		ArgumentTypes.register("fluid_predicate", FluidPredicateArgumentType.class, new ConstantArgumentSerializer<FluidPredicateArgumentType>(FluidPredicateArgumentType::create));
+
+		CommandRegistry.INSTANCE.register(false, commandDispatcher ->
+		{
+			commandDispatcher.register(CommandManager.literal("getfluid").requires(commandSource ->
+			{
+				return commandSource.hasPermissionLevel(2);
+			}).then(CommandManager.argument("pos", BlockPosArgumentType.blockPos()).executes((context) ->
+			{
+				BlockPos pos = BlockPosArgumentType.getLoadedBlockPos(context, "pos");
+				FluidState state = context.getSource().getWorld().getFluidState(pos);
+				context.getSource().sendFeedback(new LiteralText(StateUtils.serializeFluidState(state).toString()), true);
+				return 1;
+			})));
+			
+			SetFluidCommand.register(commandDispatcher);
+		});
 	}
 	
 	private static boolean filterFluid(final Fluid fluid, final Identifier id, final BiPredicate<Fluid, Identifier> defaultPredicate)

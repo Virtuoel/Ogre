@@ -12,8 +12,8 @@ import net.minecraft.fluid.FluidState;
 import net.minecraft.fluid.Fluids;
 import net.minecraft.util.PacketByteBuf;
 import net.minecraft.world.chunk.ChunkSection;
-import net.minecraft.world.chunk.IdListPalette;
 import net.minecraft.world.chunk.PalettedContainer;
+import virtuoel.towelette.Towelette;
 import virtuoel.towelette.api.ChunkSectionFluidLayer;
 import virtuoel.towelette.util.StateUtils;
 
@@ -22,18 +22,24 @@ public class ChunkSectionMixin implements ChunkSectionFluidLayer
 {
 	@Shadow short nonEmptyFluidCount;
 	
-	public final PalettedContainer<FluidState> fluidContainer = new PalettedContainer<FluidState>(new IdListPalette<FluidState>(Fluid.STATE_IDS, Fluids.EMPTY.getDefaultState()), Fluid.STATE_IDS, StateUtils::deserializeFluidState, StateUtils::serializeFluidState, Fluids.EMPTY.getDefaultState());
+	public final PalettedContainer<FluidState> fluidContainer = new PalettedContainer<FluidState>(StateUtils.FLUID_STATE_PALETTE, Fluid.STATE_IDS, StateUtils::deserializeFluidState, StateUtils::serializeFluidState, Fluids.EMPTY.getDefaultState());
+	
+	@Override
+	public PalettedContainer<FluidState> getFluidStateContainer()
+	{
+		return fluidContainer;
+	}
 	
 	@Inject(at = @At("RETURN"), method = "lock()V")
 	public void onLock(CallbackInfo info)
 	{
-		fluidContainer.lock();
+		getFluidStateContainer().lock();
 	}
 	
 	@Inject(at = @At("RETURN"), method = "unlock()V")
 	public void onUnlock(CallbackInfo info)
 	{
-		fluidContainer.unlock();
+		getFluidStateContainer().unlock();
 	}
 	
 	@Inject(at = @At("RETURN"), method = "isEmpty()Z", cancellable = true)
@@ -45,7 +51,7 @@ public class ChunkSectionMixin implements ChunkSectionFluidLayer
 	@Override
 	public FluidState setFluidState(int x, int y, int z, FluidState state, boolean synchronous)
 	{
-		FluidState old_state = synchronous ? fluidContainer.setSync(x, y, z, state) : fluidContainer.set(x, y, z, state);
+		FluidState old_state = synchronous ? getFluidStateContainer().setSync(x, y, z, state) : getFluidStateContainer().set(x, y, z, state);
 		
 		if(!old_state.isEmpty())
 		{
@@ -60,41 +66,26 @@ public class ChunkSectionMixin implements ChunkSectionFluidLayer
 		return old_state;
 	}
 	
-	// TODO method_12256, get fluid state from blockState_1 and add to container if applicable
-	
-	
-	
-	
-	
-	
 	@Inject(at = @At("HEAD"), method = "getFluidState(III)Lnet/minecraft/fluid/FluidState;", cancellable = true)
-	public void onGetFluidState(int int_1, int int_2, int int_3, CallbackInfoReturnable<FluidState> info)
+	public void onGetFluidState(int x, int y, int z, CallbackInfoReturnable<FluidState> info)
 	{
-		FluidState state = fluidContainer.get(int_1, int_2, int_3);
-		if(!state.isEmpty())
+		final FluidState state = getFluidStateContainer().get(x, y, z);
+		if(Towelette.isLayerView((ChunkSection) (Object) this, x, y, z, state))
 		{
 			info.setReturnValue(state);
 		}
 	}
 	
-	// TODO FIXME client-side only. Investigate. Maybe move to client-only mixin.
-	@Inject(require = 0, at = @At("RETURN"), method = "fromPacket(Lnet/minecraft/util/PacketByteBuf;)V")
-	public void fromPacket(PacketByteBuf buffer, CallbackInfo info)
-	{
-		this.nonEmptyFluidCount = buffer.readShort();
-		this.fluidContainer.fromPacket(buffer);
-	}
-	
 	@Inject(at = @At("RETURN"), method = "toPacket(Lnet/minecraft/util/PacketByteBuf;)V")
-	public void toPacket(PacketByteBuf buffer, CallbackInfo info)
+	public void onToPacket(PacketByteBuf buffer, CallbackInfo info)
 	{
 		buffer.writeShort(this.nonEmptyFluidCount);
-		this.fluidContainer.toPacket(buffer);
+		getFluidStateContainer().toPacket(buffer);
 	}
 	
 	@Inject(at = @At("RETURN"), method = "getPacketSize()I", cancellable = true)
 	public void onGetPacketSize(CallbackInfoReturnable<Integer> info)
 	{
-		info.setReturnValue(info.getReturnValue() + 2 + fluidContainer.getPacketSize());
+		info.setReturnValue(info.getReturnValue() + 2 + getFluidStateContainer().getPacketSize());
 	}
 }

@@ -18,7 +18,7 @@ import virtuoel.towelette.util.FluidUtils;
 @Mixin(CampfireBlock.class)
 public class CampfireBlockMixin
 {
-	@Inject(at = @At("RETURN"), method = "tryFillWithFluid(Lnet/minecraft/world/IWorld;Lnet/minecraft/util/math/BlockPos;Lnet/minecraft/block/BlockState;Lnet/minecraft/fluid/FluidState;)Z", cancellable = true)
+/*	@Inject(at = @At("RETURN"), method = "tryFillWithFluid(Lnet/minecraft/world/IWorld;Lnet/minecraft/util/math/BlockPos;Lnet/minecraft/block/BlockState;Lnet/minecraft/fluid/FluidState;)Z", cancellable = true)
 	private void onTryFillWithFluid(IWorld world, BlockPos blockPos, BlockState blockState, FluidState fluidState, CallbackInfoReturnable<Boolean> info)
 	{
 		if(info.getReturnValue())
@@ -44,5 +44,5 @@ public class CampfireBlockMixin
 			}
 			info.setReturnValue(true);
 		}
-	}
+	}*/
 }

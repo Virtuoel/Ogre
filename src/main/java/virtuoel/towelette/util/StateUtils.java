@@ -17,10 +17,13 @@ import net.minecraft.state.property.Property;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.registry.DefaultedRegistry;
 import net.minecraft.util.registry.Registry;
+import net.minecraft.world.chunk.IdListPalette;
+import net.minecraft.world.chunk.Palette;
 import virtuoel.towelette.Towelette;
 
 public class StateUtils
 {
+	public static final Palette<FluidState> FLUID_STATE_PALETTE = new IdListPalette<FluidState>(Fluid.STATE_IDS, Fluids.EMPTY.getDefaultState());
 	
 	public static FluidState deserializeFluidState(CompoundTag compound)
 	{

@@ -16,7 +16,7 @@ import virtuoel.towelette.util.FluidUtils;
 @Mixin(FireBlock.class)
 public class FireBlockMixin
 {
-	@Inject(at = @At("HEAD"), method = { "getSpreadChance", "getBurnChance" }, cancellable = true)
+/*	@Inject(at = @At("HEAD"), method = { "getSpreadChance", "getBurnChance" }, cancellable = true)
 	private void onGetChances(BlockState state, CallbackInfoReturnable<Integer> info)
 	{
 		if(FluidUtils.getFluid(state).matches(FluidTags.WATER))
@@ -24,7 +24,7 @@ public class FireBlockMixin
 			info.setReturnValue(0);
 		}
 	}
-	
+	*/ // TODO fire
 	@Redirect(method = { "onScheduledTick", "trySpreadingFire" }, at = @At(value = "INVOKE", target = "Lnet/minecraft/world/World;setBlockState(Lnet/minecraft/util/math/BlockPos;Lnet/minecraft/block/BlockState;I)Z"))
 	private boolean spreadSetBlockStateProxy(World obj, BlockPos pos, BlockState state, int flags)
 	{

@@ -28,6 +28,10 @@
 		[
 			"virtuoel.towelette.Towelette"
 		],
+		"client":
+		[
+			"virtuoel.towelette.ToweletteClient"
+		],
 		"towelette":
 		[
 			"virtuoel.towelette.Towelette"

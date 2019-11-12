@@ -5,7 +5,11 @@ import javax.annotation.Nullable;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
+import org.spongepowered.asm.mixin.injection.At.Shift;
+import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.Redirect;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
+import org.spongepowered.asm.mixin.injection.callback.LocalCapture;
 
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;
@@ -17,11 +21,14 @@ import net.minecraft.fluid.Fluid;
 import net.minecraft.fluid.FluidState;
 import net.minecraft.fluid.Fluids;
 import net.minecraft.item.BucketItem;
+import net.minecraft.item.ItemStack;
 import net.minecraft.util.Hand;
+import net.minecraft.util.TypedActionResult;
 import net.minecraft.util.hit.BlockHitResult;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Direction;
 import net.minecraft.world.World;
+import virtuoel.towelette.api.ModifiableWorldFluidLayer;
 
 @Mixin(BucketItem.class)
 public class BucketItemMixin
@@ -92,5 +99,17 @@ public class BucketItemMixin
 			return ((FluidFillable) state.getBlock()).canFillWithFluid(world, blockPos, state, fluid) ? Fluids.WATER : fluid;
 		}
 		return Fluids.WATER;
+	}
+	
+	@Inject(at = @At(value = "RETURN", ordinal = 2), method = "use", locals = LocalCapture.CAPTURE_FAILSOFT)
+	private void onPlaceFluid(World world, PlayerEntity player, Hand hand, CallbackInfoReturnable<TypedActionResult<ItemStack>> info, ItemStack held, BlockHitResult hitResult, BlockPos pos, BlockState state, Fluid drained, ItemStack filled)
+	{
+		((ModifiableWorldFluidLayer) world).setFluidState(pos, Fluids.EMPTY.getDefaultState(), 11);
+	}
+	
+	@Inject(at = @At(value = "INVOKE", shift = Shift.AFTER, target = "playEmptyingSound"), method = "placeFluid")
+	private void onPlaceFluid(@Nullable PlayerEntity player, World world, BlockPos pos, @Nullable BlockHitResult result, CallbackInfoReturnable<Boolean> info)
+	{
+		((ModifiableWorldFluidLayer) world).setFluidState(pos, this.fluid.getDefaultState(), 11);
 	}
 }

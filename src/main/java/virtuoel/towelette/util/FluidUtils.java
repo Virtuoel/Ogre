@@ -5,6 +5,7 @@ import java.util.Optional;
 import com.google.common.math.DoubleMath;
 import com.google.gson.JsonElement;
 
+import it.unimi.dsi.fastutil.objects.Object2ByteLinkedOpenHashMap;
 import net.minecraft.block.BlockState;
 import net.minecraft.fluid.Fluid;
 import net.minecraft.fluid.FluidState;
@@ -21,6 +22,21 @@ import virtuoel.towelette.mixin.VoxelShapeAccessor;
 
 public class FluidUtils
 {
+	public static final ThreadLocal<Object2ByteLinkedOpenHashMap<StateNeighborGroup>> FLUID_FLOW_MAP = ThreadLocal.withInitial(() ->
+	{
+		@SuppressWarnings("serial")
+		Object2ByteLinkedOpenHashMap<StateNeighborGroup> map = new Object2ByteLinkedOpenHashMap<StateNeighborGroup>(200)
+		{
+			@Override
+			protected void rehash(int int_1)
+			{
+				
+			}
+		};
+		map.defaultReturnValue((byte) 127);
+		return map;
+	});
+	
 	public static boolean isFluidFlowBlocked(Direction direction, BlockView world, VoxelShape shape, BlockState blockState, BlockPos blockPos, VoxelShape otherShape, BlockState otherState, BlockPos otherPos)
 	{
 		final boolean accurateFlowBlocking = Optional.ofNullable(ToweletteConfig.DATA.get("accurateFlowBlocking"))

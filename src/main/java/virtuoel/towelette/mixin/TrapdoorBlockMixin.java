@@ -26,7 +26,7 @@ public abstract class TrapdoorBlockMixin
 	{
 		if(state.getMaterial() != Material.METAL)
 		{
-			FluidUtils.scheduleFluidTick(state, world, pos);
+			FluidUtils.scheduleFluidTick(world, pos);
 		}
 	}
 	
@@ -35,7 +35,7 @@ public abstract class TrapdoorBlockMixin
 	{
 		if(!world.isClient && world.isReceivingRedstonePower(pos) != state.get(Properties.POWERED))
 		{
-			FluidUtils.scheduleFluidTick(state, world, pos);
+			FluidUtils.scheduleFluidTick(world, pos);
 		}
 	}
 }

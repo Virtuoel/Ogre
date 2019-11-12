@@ -28,7 +28,7 @@ public abstract class DoorBlockMixin
 	{
 		if(state.getMaterial() != Material.METAL)
 		{
-			FluidUtils.scheduleFluidTick(state, world, blockPos);
+			FluidUtils.scheduleFluidTick(world, blockPos);
 		}
 	}
 	
@@ -38,7 +38,7 @@ public abstract class DoorBlockMixin
 		boolean powered = world.isReceivingRedstonePower(blockPos) || world.isReceivingRedstonePower(blockPos.offset(blockState.get(Properties.DOUBLE_BLOCK_HALF) == DoubleBlockHalf.LOWER ? Direction.UP : Direction.DOWN));
 		if(!world.isClient && powered != blockState.get(Properties.POWERED))
 		{
-			FluidUtils.scheduleFluidTick(blockState, world, blockPos);
+			FluidUtils.scheduleFluidTick(world, blockPos);
 		}
 	}
 }

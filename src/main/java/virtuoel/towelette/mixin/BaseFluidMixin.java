@@ -1,13 +1,21 @@
 package virtuoel.towelette.mixin;
 
+import java.util.Iterator;
+
 import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
+import org.spongepowered.asm.mixin.injection.At.Shift;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.ModifyVariable;
 import org.spongepowered.asm.mixin.injection.Redirect;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
+import com.mojang.datafixers.util.Pair;
+
+import it.unimi.dsi.fastutil.objects.Object2ByteLinkedOpenHashMap;
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.Blocks;
@@ -19,11 +27,15 @@ import net.minecraft.fluid.Fluids;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Direction;
 import net.minecraft.util.shape.VoxelShape;
+import net.minecraft.util.shape.VoxelShapes;
 import net.minecraft.world.BlockView;
 import net.minecraft.world.IWorld;
+import net.minecraft.world.ViewableWorld;
 import net.minecraft.world.World;
 import virtuoel.towelette.Towelette;
+import virtuoel.towelette.api.ModifiableWorldFluidLayer;
 import virtuoel.towelette.util.FluidUtils;
+import virtuoel.towelette.util.StateNeighborGroup;
 
 @Mixin(BaseFluid.class)
 public abstract class BaseFluidMixin
@@ -92,11 +104,249 @@ public abstract class BaseFluidMixin
 		}
 	}
 	
-	@Redirect(method = "onScheduledTick", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/World;setBlockState(Lnet/minecraft/util/math/BlockPos;Lnet/minecraft/block/BlockState;I)Z"))
-	private boolean onOnScheduledTickSetBlockStateProxy(World obj, BlockPos pos, BlockState state, int flags, World world, BlockPos blockPos, FluidState fluidState)
+	@Shadow abstract boolean isInfinite();
+	@Shadow abstract boolean method_15752(FluidState state);
+	@Shadow abstract int getLevelDecreasePerBlock(ViewableWorld world);
+	@Shadow abstract boolean receivesFlow(Direction direction, BlockView world, BlockPos blockPos, BlockState blockState, BlockPos otherPos, BlockState otherState);
+	
+	@Inject(method = "getUpdatedState", at = @At(value = "HEAD"), cancellable = true)
+	private void onGetUpdatedState(ViewableWorld world, BlockPos pos, BlockState state, CallbackInfoReturnable<FluidState> info)
 	{
-		final BlockState existingState = world.getBlockState(pos);
-		final BlockState stateWithFluid = FluidUtils.getStateWithFluid(existingState, state != Blocks.AIR.getDefaultState() ? fluidState : Fluids.EMPTY.getDefaultState());
-		return obj.setBlockState(pos, existingState == stateWithFluid ? state : stateWithFluid, flags);
+		final BaseFluid self = (BaseFluid) (Object) this;
+		int maxLevel = 0;
+		int sources = 0;
+		
+		Iterator<Direction> iter = Direction.Type.HORIZONTAL.iterator();
+		while (iter.hasNext())
+		{
+			final Direction dir = iter.next();
+			final BlockPos blockPos = pos.offset(dir);
+			final BlockState blockState = world.getBlockState(blockPos);
+			final FluidState fluidState = world.getFluidState(blockPos);
+			if (fluidState.getFluid().matchesType(self) && this.receivesFlow(dir, world, pos, state, blockPos, blockState))
+			{
+				if (fluidState.isStill())
+				{
+					++sources;
+				}
+				
+				maxLevel = Math.max(maxLevel, fluidState.getLevel());
+			}
+		}
+		
+		if (isInfinite() && sources >= 2)
+		{
+			final BlockPos blockPos = pos.down();
+			final BlockState blockState = world.getBlockState(blockPos);
+			final FluidState fluidState = world.getFluidState(blockPos);
+			if (blockState.getMaterial().isSolid() || method_15752(fluidState))
+			{
+				info.setReturnValue(self.getStill(false));
+			}
+		}
+		
+		final BlockPos blockPos = pos.up();
+		final BlockState blockState = world.getBlockState(blockPos);
+		final FluidState fluidState = world.getFluidState(blockPos);
+		if (!fluidState.isEmpty() && fluidState.getFluid().matchesType(self) && this.receivesFlow(Direction.UP, world, pos, state, blockPos, blockState))
+		{
+			info.setReturnValue(self.getFlowing(8, true));
+		}
+		else
+		{
+			final int level = maxLevel - getLevelDecreasePerBlock(world);
+			info.setReturnValue(level <= 0 ? Fluids.EMPTY.getDefaultState() : self.getFlowing(level, false));
+		}
+	}
+	/*
+	@Unique private final ThreadLocal<ViewableWorld> towelette$cachedWorld = ThreadLocal.withInitial(() -> null);
+	@Unique private final ThreadLocal<BlockPos> towelette$cachedPos = ThreadLocal.withInitial(() -> BlockPos.ORIGIN);
+	@Unique private final ThreadLocal<BlockState> towelette$cachedState = ThreadLocal.withInitial(() -> Blocks.AIR.getDefaultState());
+	
+	@ModifyVariable(method = "getUpdatedState", at = @At(value = "LOAD", ordinal = 2), allow = 1)
+	private int onGetUpdatedStateMaxLevelProxy(int orig)
+	{
+		final ViewableWorld world = towelette$cachedWorld.get();
+		final BlockPos pos = towelette$cachedPos.get();
+		final BlockState state = towelette$cachedState.get();
+		
+		int maxLevel = 0;
+		
+		for(final Direction dir : Direction.values())
+		{
+			final BlockPos blockPos = pos.offset(dir);
+			final BlockState blockState = world.getBlockState(blockPos);
+			final FluidState fluidState = world.getFluidState(blockPos);
+			if (fluidState.getFluid().matchesType((BaseFluid) (Object) this) && receivesFlow(dir, world, pos, state, blockPos, blockState))
+			{
+				maxLevel = Math.max(maxLevel, fluidState.getLevel());
+			}
+		}
+		
+		return maxLevel;
+	}
+	
+	@ModifyVariable(method = "getUpdatedState", at = @At(value = "LOAD", ordinal = 1), allow = 1)
+	private int onGetUpdatedStateSourcesProxy(int orig)
+	{
+		final ViewableWorld world = towelette$cachedWorld.get();
+		final BlockPos pos = towelette$cachedPos.get();
+		final BlockState state = towelette$cachedState.get();
+		
+		int sources = 0;
+		
+		for(final Direction dir : Direction.values())
+		{
+			final BlockPos blockPos = pos.offset(dir);
+			final BlockState blockState = world.getBlockState(blockPos);
+			final FluidState fluidState = world.getFluidState(blockPos);
+			if (fluidState.getFluid().matchesType((BaseFluid) (Object) this) && receivesFlow(dir, world, pos, state, blockPos, blockState))
+			{
+				if (fluidState.isStill())
+				{
+					sources++;
+				}
+			}
+		}
+		
+		return sources;
+	}
+	
+	@Inject(method = "getUpdatedState", at = @At(value = "HEAD"))
+	private void onGetUpdatedStatePre(ViewableWorld world, BlockPos pos, BlockState blockState, CallbackInfoReturnable<FluidState> info)
+	{
+		towelette$cachedWorld.set(world);
+		towelette$cachedPos.set(pos);
+		towelette$cachedState.set(blockState);
+	}
+	
+	@Inject(method = "getUpdatedState", at = @At(value = "RETURN"))
+	private void onGetUpdatedStatePost(ViewableWorld world, BlockPos pos, BlockState blockState, CallbackInfoReturnable<FluidState> info)
+	{
+		towelette$cachedWorld.remove();
+		towelette$cachedPos.remove();
+		towelette$cachedState.remove();
+	}
+	
+	@Redirect(method = "getUpdatedState", at = @At(value = "INVOKE", ordinal = 1, target = "Lnet/minecraft/block/BlockState;getFluidState()Lnet/minecraft/fluid/FluidState;"))
+	private FluidState onGetUpdatedStateGetFluidState1Proxy(BlockState obj, ViewableWorld world, BlockPos pos, BlockState blockState)
+	{
+		return world.getFluidState(pos.down());
+	}
+	
+	@Redirect(method = "getUpdatedState", at = @At(value = "INVOKE", ordinal = 2, target = "Lnet/minecraft/block/BlockState;getFluidState()Lnet/minecraft/fluid/FluidState;"))
+	private FluidState onGetUpdatedStateGetFluidState2Proxy(BlockState obj, ViewableWorld world, BlockPos pos, BlockState blockState)
+	{
+		return world.getFluidState(pos.up());
+	}
+	*/
+	
+	@Inject(at = @At(value = "HEAD"), method = "receivesFlow", cancellable = true)
+	private void onReceivesFlow(Direction direction, BlockView world, BlockPos blockPos, BlockState blockState, BlockPos otherPos, BlockState otherState, CallbackInfoReturnable<Boolean> info)
+	{
+		final Object2ByteLinkedOpenHashMap<StateNeighborGroup> map;
+		if (!blockState.getBlock().hasDynamicBounds() && !otherState.getBlock().hasDynamicBounds())
+		{
+			map = FluidUtils.FLUID_FLOW_MAP.get();
+		}
+		else
+		{
+			map = null;
+		}
+		
+		final StateNeighborGroup group;
+		if (map != null)
+		{
+			group = new StateNeighborGroup(direction, blockState, otherState, world.getFluidState(blockPos), world.getFluidState(otherPos));
+			byte value = map.getAndMoveToFirst(group);
+			if (value != 127)
+			{
+				info.setReturnValue(value != 0);
+			}
+		}
+		else
+		{
+			group = null;
+		}
+		
+		final VoxelShape shape = blockState.getCollisionShape(world, blockPos);
+		final VoxelShape otherShape = otherState.getCollisionShape(world, otherPos);
+		final boolean canFlow = !FluidUtils.isFluidFlowBlocked(direction, world, shape, blockState, blockPos, otherShape, otherState, otherPos);
+		if (map != null)
+		{
+			if (map.size() == 200)
+			{
+				map.removeLastByte();
+			}
+			
+			map.putAndMoveToFirst(group, (byte) (canFlow ? 1 : 0));
+		}
+		
+		info.setReturnValue(canFlow);
+	}
+	
+	@Shadow abstract void beforeBreakingBlock(IWorld world, BlockPos pos, BlockState state);
+	
+	@Inject(at = @At(value = "HEAD"), method = "flow", cancellable = true)
+	private void onFlowPre(IWorld world, BlockPos pos, BlockState blockState, Direction direction, FluidState fluidState, CallbackInfo info)
+	{
+		((ModifiableWorldFluidLayer) world).setFluidState(pos, fluidState, fluidState.isEmpty() ? 3 : 2);
+		
+		if(blockState.matches(Towelette.DISPLACEABLE) && !blockState.matches(Towelette.UNDISPLACEABLE))
+		{
+			if (!blockState.isAir())
+			{
+				beforeBreakingBlock(world, pos, blockState);
+			}
+			
+			world.setBlockState(pos, Blocks.AIR.getDefaultState(), 3);
+		}
+		else
+		{
+			info.cancel();
+		}
+	}
+	
+	@Inject(at = @At("HEAD"), method = "method_15754", cancellable = true)
+	private void onMethod_15754Pre(BlockView blockView, BlockPos pos, BlockState state, Fluid fluid, CallbackInfoReturnable<Boolean> info)
+	{
+		info.setReturnValue(state.getCollisionShape(blockView, pos) != VoxelShapes.fullCube());
+	}
+	
+	@Inject(method = { "method_15734", "method_15755" }, at = @At(value = "RETURN"), cancellable = true)
+	private static void onCompute(ViewableWorld world, BlockPos pos, int key, CallbackInfoReturnable<Pair<BlockState, FluidState>> info)
+	{
+		info.setReturnValue(Pair.of(info.getReturnValue().getFirst(), world.getFluidState(pos)));
+	}
+	
+	@Inject(method = "method_15736", at = @At(value = "RETURN"), cancellable = true)
+	private void onMethod_15736(BlockView world, Fluid fluid, BlockPos pos, BlockState state, BlockPos otherPos, BlockState otherState, CallbackInfoReturnable<Boolean> info)
+	{
+		final BaseFluid self = (BaseFluid) (Object) this;
+		if(info.getReturnValueZ() && otherState.getFluidState().getFluid().matchesType(self))
+		{
+			info.setReturnValue(world.getFluidState(otherPos).getFluid().matchesType(self));
+		}
+	}
+	
+	@Inject(method = "flow", at = @At(value = "RETURN"))
+	private void onFlow(IWorld world, BlockPos pos, BlockState blockState, Direction direction, FluidState fluidState, CallbackInfo info)
+	{
+		if(!(blockState.getBlock() instanceof FluidFillable))
+		{
+			((ModifiableWorldFluidLayer) world).setFluidState(pos, fluidState, fluidState.isEmpty() ? 3 : 2);
+		}
+	}
+	
+	@Redirect(method = "onScheduledTick", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/World;setBlockState(Lnet/minecraft/util/math/BlockPos;Lnet/minecraft/block/BlockState;I)Z"))
+	private boolean onOnScheduledTickSetBlockStateProxy(World obj, BlockPos pos, BlockState state, int flags)
+	{
+		return false;
+	}
+	
+	@Inject(method = "onScheduledTick", at = @At(value = "INVOKE", shift = Shift.AFTER, target = "Lnet/minecraft/world/World;setBlockState(Lnet/minecraft/util/math/BlockPos;Lnet/minecraft/block/BlockState;I)Z"))
+	private void onOnScheduledTick(World world, BlockPos pos, FluidState fluidState, CallbackInfo info)
+	{
+		((ModifiableWorldFluidLayer) world).setFluidState(pos, fluidState, fluidState.isEmpty() ? 3 : 2);
 	}
 }

@@ -38,12 +38,12 @@ public abstract class BlockStateMixin
 	@Inject(at = @At("RETURN"), method = "getStateForNeighborUpdate")
 	private void onGetStateForNeighborUpdate(Direction direction, BlockState blockState, IWorld world, BlockPos pos, BlockPos otherPos, CallbackInfoReturnable<BlockState> info)
 	{
-		FluidUtils.scheduleFluidTick((BlockState) (Object) this, world, pos);
+		FluidUtils.scheduleFluidTick(world, pos);
 	}
 	
 	@Inject(at = @At("RETURN"), method = "onBlockAdded")
 	private void onOnBlockAdded(World world, BlockPos blockPos, BlockState blockState, boolean flag, CallbackInfo info)
 	{
-		FluidUtils.scheduleFluidTick((BlockState) (Object) this, world, blockPos);
+		FluidUtils.scheduleFluidTick(world, blockPos);
 	}
 }

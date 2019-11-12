@@ -61,27 +61,6 @@ public class ToweletteMixinConfigPlugin implements IMixinConfigPlugin
 	{
 		final Map<String, Pair<String, Boolean>> map = new HashMap<>();
 		
-		addConfig(map, "AllOfTheBlocksMixin", "absolutely_every_single_existing_block_yes_i_am_sure", false);
-		addConfig(map, "BarrierBlockMixin", "barrier", false);
-		addConfig(map, "BeaconBlockMixin", "beacon", false);
-		addConfig(map, "CauldronBlockMixin", "cauldron", false);
-		addConfig(map, "EndPortalBlockMixin", "end_portal", false);
-		addConfig(map, "FarmlandBlockMixin", "farmland", false);
-		addConfig(map, "FireBlockMixin", "fire", false);
-		addConfig(map, "GrassPathBlockMixin", "grass_path", false);
-		addConfig(map, "LeavesBlockMixin", "leaves", false);
-		addConfig(map, "LilyPadBlockMixin", "lily_pad", false);
-		addConfig(map, "ObserverBlockMixin", "observer", false);
-		addConfig(map, "PistonBlockMixin", "pistons", true);
-		addConfig(map, "PortalBlockMixin", "nether_portal", false);
-		addConfig(map, "RedstoneBlockMixin", "redstone_block", false);
-		addConfig(map, "RedstoneWireBlockMixin", "redstone_dust", true);
-		addConfig(map, "ShulkerBoxBlockMixin", "shulker_boxes", false);
-		addConfig(map, "SlimeBlockMixin", "slime_block", false);
-		addConfig(map, "SpawnerBlockMixin", "spawner", false);
-		addConfig(map, "StructureVoidBlockMixin", "structure_void", false);
-		addConfig(map, "TorchBlockMixin", "torches", true);
-		
 		return map;
 	}
 	

@@ -16,19 +16,17 @@ import net.minecraft.server.command.CommandManager;
 import net.minecraft.tag.Tag;
 import net.minecraft.text.LiteralText;
 import net.minecraft.util.Identifier;
-import net.minecraft.util.TagHelper;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.chunk.ChunkSection;
+import virtuoel.towelette.api.PaletteRegistrar;
 import virtuoel.towelette.api.ToweletteApi;
 import virtuoel.towelette.command.arguments.FluidArgumentType;
 import virtuoel.towelette.command.arguments.FluidPredicateArgumentType;
 import virtuoel.towelette.server.command.SetFluidCommand;
-import virtuoel.towelette.util.StateUtils;
 
 public class Towelette implements ModInitializer
 {
-	public static final String MOD_ID = "towelette";
-	public static final Logger LOGGER = LogManager.getLogger(MOD_ID);
+	public static final Logger LOGGER = LogManager.getLogger(ToweletteApi.MOD_ID);
 	
 	public static final Tag<Block> DISPLACEABLE = TagRegistry.block(id("displaceable"));
 	public static final Tag<Block> UNDISPLACEABLE = TagRegistry.block(id("undisplaceable"));
@@ -46,6 +44,9 @@ public class Towelette implements ModInitializer
 	@Override
 	public void onInitialize()
 	{
+		Object init = PaletteRegistrar.INSTANCE;
+		init.getClass();
+		
 		ArgumentTypes.register("fluid_state", FluidArgumentType.class, new ConstantArgumentSerializer<FluidArgumentType>(FluidArgumentType::create));
 		ArgumentTypes.register("fluid_predicate", FluidPredicateArgumentType.class, new ConstantArgumentSerializer<FluidPredicateArgumentType>(FluidPredicateArgumentType::create));
 		
@@ -58,7 +59,7 @@ public class Towelette implements ModInitializer
 			{
 				BlockPos pos = BlockPosArgumentType.getLoadedBlockPos(context, "pos");
 				FluidState state = context.getSource().getWorld().getFluidState(pos);
-				context.getSource().sendFeedback(new LiteralText(StateUtils.serializeFluidState(state).toString()), true);
+				context.getSource().sendFeedback(new LiteralText(PaletteRegistrar.serializeFluidState(state).toString()), true);
 				return 1;
 			})));
 			
@@ -69,7 +70,7 @@ public class Towelette implements ModInitializer
 			{
 				BlockPos pos = BlockPosArgumentType.getLoadedBlockPos(context, "pos");
 				BlockState state = context.getSource().getWorld().getBlockState(pos);
-				context.getSource().sendFeedback(new LiteralText(TagHelper.serializeBlockState(state).toString()), true);
+				context.getSource().sendFeedback(new LiteralText(PaletteRegistrar.serializeBlockState(state).toString()), true);
 				return 1;
 			})));
 			

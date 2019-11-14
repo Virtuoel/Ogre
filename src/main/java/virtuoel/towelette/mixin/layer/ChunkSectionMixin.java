@@ -1,5 +1,10 @@
 package virtuoel.towelette.mixin.layer;
 
+import java.util.HashMap;
+import java.util.Map;
+
+import org.apache.commons.lang3.tuple.MutablePair;
+import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
@@ -7,22 +12,38 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
+import net.minecraft.block.Block;
+import net.minecraft.block.BlockState;
+import net.minecraft.block.Blocks;
 import net.minecraft.fluid.Fluid;
 import net.minecraft.fluid.FluidState;
 import net.minecraft.fluid.Fluids;
+import net.minecraft.util.Identifier;
 import net.minecraft.util.PacketByteBuf;
 import net.minecraft.world.chunk.ChunkSection;
+import net.minecraft.world.chunk.Palette;
 import net.minecraft.world.chunk.PalettedContainer;
 import virtuoel.towelette.Towelette;
 import virtuoel.towelette.api.ChunkSectionFluidLayer;
-import virtuoel.towelette.util.StateUtils;
+import virtuoel.towelette.api.PaletteRegistrar;
+import virtuoel.towelette.api.ToweletteApi;
 
 @Mixin(ChunkSection.class)
 public class ChunkSectionMixin implements ChunkSectionFluidLayer
 {
+	@Shadow @Final static Palette<BlockState> palette;
+	
+	private final Map<Identifier, MutablePair<PalettedContainer<?>, Integer>> palettes = new HashMap<Identifier, MutablePair<PalettedContainer<?>,Integer>>();
+	
+	static
+	{
+		PaletteRegistrar.registerPaletteBuilder(PaletteRegistrar.PALETTES.add(new Identifier(ToweletteApi.MOD_ID, "block_states"), palette), Block.STATE_IDS, PaletteRegistrar::deserializeBlockState, PaletteRegistrar::serializeBlockState, Blocks.AIR.getDefaultState());
+		PaletteRegistrar.registerPaletteBuilder(new Identifier(ToweletteApi.MOD_ID, "fluid_states"), Fluid.STATE_IDS, PaletteRegistrar::deserializeFluidState, PaletteRegistrar::serializeFluidState, Fluids.EMPTY.getDefaultState());
+	}
+	
 	@Shadow short nonEmptyFluidCount;
 	
-	public final PalettedContainer<FluidState> fluidContainer = new PalettedContainer<FluidState>(StateUtils.FLUID_STATE_PALETTE, Fluid.STATE_IDS, StateUtils::deserializeFluidState, StateUtils::serializeFluidState, Fluids.EMPTY.getDefaultState());
+	public final PalettedContainer<FluidState> fluidContainer = PaletteRegistrar.getBuilder(PaletteRegistrar.FLUID_STATES).get();
 	
 	@Override
 	public PalettedContainer<FluidState> getFluidStateContainer()

@@ -116,7 +116,7 @@ public abstract class BaseFluidMixin
 		int maxLevel = 0;
 		int sources = 0;
 		
-		Iterator<Direction> iter = Direction.Type.HORIZONTAL.iterator();
+		final Iterator<Direction> iter = Direction.Type.HORIZONTAL.iterator();
 		while (iter.hasNext())
 		{
 			final Direction dir = iter.next();
@@ -127,7 +127,7 @@ public abstract class BaseFluidMixin
 			{
 				if (fluidState.isStill())
 				{
-					++sources;
+					sources++;
 				}
 				
 				maxLevel = Math.max(maxLevel, fluidState.getLevel());
@@ -158,88 +158,6 @@ public abstract class BaseFluidMixin
 			info.setReturnValue(level <= 0 ? Fluids.EMPTY.getDefaultState() : self.getFlowing(level, false));
 		}
 	}
-	/*
-	@Unique private final ThreadLocal<ViewableWorld> towelette$cachedWorld = ThreadLocal.withInitial(() -> null);
-	@Unique private final ThreadLocal<BlockPos> towelette$cachedPos = ThreadLocal.withInitial(() -> BlockPos.ORIGIN);
-	@Unique private final ThreadLocal<BlockState> towelette$cachedState = ThreadLocal.withInitial(() -> Blocks.AIR.getDefaultState());
-	
-	@ModifyVariable(method = "getUpdatedState", at = @At(value = "LOAD", ordinal = 2), allow = 1)
-	private int onGetUpdatedStateMaxLevelProxy(int orig)
-	{
-		final ViewableWorld world = towelette$cachedWorld.get();
-		final BlockPos pos = towelette$cachedPos.get();
-		final BlockState state = towelette$cachedState.get();
-		
-		int maxLevel = 0;
-		
-		for(final Direction dir : Direction.values())
-		{
-			final BlockPos blockPos = pos.offset(dir);
-			final BlockState blockState = world.getBlockState(blockPos);
-			final FluidState fluidState = world.getFluidState(blockPos);
-			if (fluidState.getFluid().matchesType((BaseFluid) (Object) this) && receivesFlow(dir, world, pos, state, blockPos, blockState))
-			{
-				maxLevel = Math.max(maxLevel, fluidState.getLevel());
-			}
-		}
-		
-		return maxLevel;
-	}
-	
-	@ModifyVariable(method = "getUpdatedState", at = @At(value = "LOAD", ordinal = 1), allow = 1)
-	private int onGetUpdatedStateSourcesProxy(int orig)
-	{
-		final ViewableWorld world = towelette$cachedWorld.get();
-		final BlockPos pos = towelette$cachedPos.get();
-		final BlockState state = towelette$cachedState.get();
-		
-		int sources = 0;
-		
-		for(final Direction dir : Direction.values())
-		{
-			final BlockPos blockPos = pos.offset(dir);
-			final BlockState blockState = world.getBlockState(blockPos);
-			final FluidState fluidState = world.getFluidState(blockPos);
-			if (fluidState.getFluid().matchesType((BaseFluid) (Object) this) && receivesFlow(dir, world, pos, state, blockPos, blockState))
-			{
-				if (fluidState.isStill())
-				{
-					sources++;
-				}
-			}
-		}
-		
-		return sources;
-	}
-	
-	@Inject(method = "getUpdatedState", at = @At(value = "HEAD"))
-	private void onGetUpdatedStatePre(ViewableWorld world, BlockPos pos, BlockState blockState, CallbackInfoReturnable<FluidState> info)
-	{
-		towelette$cachedWorld.set(world);
-		towelette$cachedPos.set(pos);
-		towelette$cachedState.set(blockState);
-	}
-	
-	@Inject(method = "getUpdatedState", at = @At(value = "RETURN"))
-	private void onGetUpdatedStatePost(ViewableWorld world, BlockPos pos, BlockState blockState, CallbackInfoReturnable<FluidState> info)
-	{
-		towelette$cachedWorld.remove();
-		towelette$cachedPos.remove();
-		towelette$cachedState.remove();
-	}
-	
-	@Redirect(method = "getUpdatedState", at = @At(value = "INVOKE", ordinal = 1, target = "Lnet/minecraft/block/BlockState;getFluidState()Lnet/minecraft/fluid/FluidState;"))
-	private FluidState onGetUpdatedStateGetFluidState1Proxy(BlockState obj, ViewableWorld world, BlockPos pos, BlockState blockState)
-	{
-		return world.getFluidState(pos.down());
-	}
-	
-	@Redirect(method = "getUpdatedState", at = @At(value = "INVOKE", ordinal = 2, target = "Lnet/minecraft/block/BlockState;getFluidState()Lnet/minecraft/fluid/FluidState;"))
-	private FluidState onGetUpdatedStateGetFluidState2Proxy(BlockState obj, ViewableWorld world, BlockPos pos, BlockState blockState)
-	{
-		return world.getFluidState(pos.up());
-	}
-	*/
 	
 	@Inject(at = @At(value = "HEAD"), method = "receivesFlow", cancellable = true)
 	private void onReceivesFlow(Direction direction, BlockView world, BlockPos blockPos, BlockState blockState, BlockPos otherPos, BlockState otherState, CallbackInfoReturnable<Boolean> info)

@@ -3,6 +3,8 @@ package virtuoel.towelette;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import com.google.common.reflect.Reflection;
+
 import net.fabricmc.api.ModInitializer;
 import net.fabricmc.fabric.api.registry.CommandRegistry;
 import net.fabricmc.fabric.api.tag.TagRegistry;
@@ -44,8 +46,10 @@ public class Towelette implements ModInitializer
 	@Override
 	public void onInitialize()
 	{
-		Object init = PaletteRegistrar.INSTANCE;
-		init.getClass();
+		Reflection.initialize(
+			PaletteRegistrar.class,
+			ChunkSection.class
+		);
 		
 		ArgumentTypes.register("fluid_state", FluidArgumentType.class, new ConstantArgumentSerializer<FluidArgumentType>(FluidArgumentType::create));
 		ArgumentTypes.register("fluid_predicate", FluidPredicateArgumentType.class, new ConstantArgumentSerializer<FluidPredicateArgumentType>(FluidPredicateArgumentType::create));

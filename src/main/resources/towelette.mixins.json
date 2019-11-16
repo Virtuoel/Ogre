@@ -23,7 +23,6 @@
 		"layer.ChunkMixin",
 		"layer.ChunkSectionMixin",
 		"layer.ChunkSerializerMixin",
-		"layer.FluidTagsMixin",
 		"layer.ModifiableWorldMixin",
 		"layer.ServerChunkManagerMixin",
 		"layer.WorldChunkMixin"

@@ -12,19 +12,22 @@ import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;
 import net.minecraft.command.arguments.ArgumentTypes;
 import net.minecraft.command.arguments.BlockPosArgumentType;
+import net.minecraft.command.arguments.serialize.ArgumentSerializer;
 import net.minecraft.command.arguments.serialize.ConstantArgumentSerializer;
+import net.minecraft.fluid.Fluid;
 import net.minecraft.fluid.FluidState;
+import net.minecraft.fluid.Fluids;
 import net.minecraft.server.command.CommandManager;
 import net.minecraft.tag.Tag;
 import net.minecraft.text.LiteralText;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.registry.Registry;
 import net.minecraft.world.chunk.ChunkSection;
 import virtuoel.towelette.api.PaletteRegistrar;
 import virtuoel.towelette.api.ToweletteApi;
-import virtuoel.towelette.command.arguments.FluidArgumentType;
-import virtuoel.towelette.command.arguments.FluidPredicateArgumentType;
-import virtuoel.towelette.server.command.SetFluidCommand;
+import virtuoel.towelette.command.arguments.StateArgumentType;
+import virtuoel.towelette.server.command.SetStateCommand;
 
 public class Towelette implements ModInitializer
 {
@@ -32,11 +35,6 @@ public class Towelette implements ModInitializer
 	
 	public static final Tag<Block> DISPLACEABLE = TagRegistry.block(id("displaceable"));
 	public static final Tag<Block> UNDISPLACEABLE = TagRegistry.block(id("undisplaceable"));
-	
-	public static boolean isLayerView(ChunkSection section, int x, int y, int z, FluidState state)
-	{
-		return true;
-	}
 	
 	public static boolean ignoreBlockStateFluids(BlockState state)
 	{
@@ -50,9 +48,11 @@ public class Towelette implements ModInitializer
 			PaletteRegistrar.class,
 			ChunkSection.class
 		);
+		PaletteRegistrar.<Fluid, FluidState>registerPaletteData(PaletteRegistrar.FLUID_STATE, Fluid.STATE_IDS, PaletteRegistrar::deserializeFluidState, PaletteRegistrar::serializeFluidState, FluidState::isEmpty, Fluids.EMPTY::getDefaultState, PaletteRegistrar::shouldUpdateFluidStateLight, Registry.FLUID, FluidState::getFluid, Fluid::getDefaultState, Fluid::getStateFactory, Fluids.EMPTY::getDefaultState);
 		
-		ArgumentTypes.register("fluid_state", FluidArgumentType.class, new ConstantArgumentSerializer<FluidArgumentType>(FluidArgumentType::create));
-		ArgumentTypes.register("fluid_predicate", FluidPredicateArgumentType.class, new ConstantArgumentSerializer<FluidPredicateArgumentType>(FluidPredicateArgumentType::create));
+		@SuppressWarnings("rawtypes") final ArgumentSerializer<StateArgumentType> stateSerializer = new ConstantArgumentSerializer<StateArgumentType>(StateArgumentType::create);
+		ArgumentTypes.register("state", StateArgumentType.class, stateSerializer);
+	//	ArgumentTypes.register("state_predicate", StatePredicateArgumentType.class, new ConstantArgumentSerializer<StatePredicateArgumentType>(StatePredicateArgumentType::create));
 		
 		CommandRegistry.INSTANCE.register(false, commandDispatcher ->
 		{
@@ -78,7 +78,7 @@ public class Towelette implements ModInitializer
 				return 1;
 			})));
 			
-			SetFluidCommand.register(commandDispatcher);
+			SetStateCommand.register(commandDispatcher);
 		});
 	}
 	

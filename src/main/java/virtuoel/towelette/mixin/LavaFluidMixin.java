@@ -14,7 +14,8 @@ import net.minecraft.fluid.LavaFluid;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Direction;
 import net.minecraft.world.IWorld;
-import virtuoel.towelette.api.ModifiableWorldFluidLayer;
+import virtuoel.towelette.api.ModifiableWorldStateLayer;
+import virtuoel.towelette.api.PaletteRegistrar;
 
 @Mixin(LavaFluid.class)
 public class LavaFluidMixin
@@ -26,7 +27,7 @@ public class LavaFluidMixin
 		final boolean replaceable = obj.isAir() || obj.getBlock().getMaterial(obj).isReplaceable() || obj.getBlock() instanceof FluidBlock;
 		if(replaceable)
 		{
-			((ModifiableWorldFluidLayer) world).setFluidState(pos, Fluids.EMPTY.getDefaultState());
+			((ModifiableWorldStateLayer) world).setState(PaletteRegistrar.FLUID_STATE, pos, Fluids.EMPTY.getDefaultState());
 			return Blocks.WATER;
 		}
 		

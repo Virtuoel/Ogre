@@ -1,112 +1,160 @@
 package virtuoel.towelette.mixin.layer;
 
-import java.util.HashMap;
 import java.util.Map;
 
 import org.apache.commons.lang3.tuple.MutablePair;
+import org.apache.commons.lang3.tuple.Pair;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
+import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
+import it.unimi.dsi.fastutil.objects.Object2ObjectLinkedOpenHashMap;
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.Blocks;
 import net.minecraft.fluid.Fluid;
 import net.minecraft.fluid.FluidState;
-import net.minecraft.fluid.Fluids;
+import net.minecraft.state.PropertyContainer;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.PacketByteBuf;
+import net.minecraft.util.registry.Registry;
 import net.minecraft.world.chunk.ChunkSection;
 import net.minecraft.world.chunk.Palette;
 import net.minecraft.world.chunk.PalettedContainer;
-import virtuoel.towelette.Towelette;
-import virtuoel.towelette.api.ChunkSectionFluidLayer;
+import virtuoel.towelette.api.ChunkSectionStateLayer;
+import virtuoel.towelette.api.PaletteData;
 import virtuoel.towelette.api.PaletteRegistrar;
-import virtuoel.towelette.api.ToweletteApi;
 
 @Mixin(ChunkSection.class)
-public class ChunkSectionMixin implements ChunkSectionFluidLayer
+public class ChunkSectionMixin implements ChunkSectionStateLayer
 {
 	@Shadow @Final static Palette<BlockState> palette;
+	@Shadow @Final PalettedContainer<BlockState> container;
 	
-	private final Map<Identifier, MutablePair<PalettedContainer<?>, Integer>> palettes = new HashMap<Identifier, MutablePair<PalettedContainer<?>,Integer>>();
+	@Unique private Object2ObjectLinkedOpenHashMap<Identifier, MutablePair<PalettedContainer<?>, Integer>> palettes;
 	
 	static
 	{
-		PaletteRegistrar.registerPaletteBuilder(PaletteRegistrar.PALETTES.add(new Identifier(ToweletteApi.MOD_ID, "block_states"), palette), Block.STATE_IDS, PaletteRegistrar::deserializeBlockState, PaletteRegistrar::serializeBlockState, Blocks.AIR.getDefaultState());
-		PaletteRegistrar.registerPaletteBuilder(new Identifier(ToweletteApi.MOD_ID, "fluid_states"), Fluid.STATE_IDS, PaletteRegistrar::deserializeFluidState, PaletteRegistrar::serializeFluidState, Fluids.EMPTY.getDefaultState());
+		PaletteRegistrar.<Block, BlockState>registerPaletteData(PaletteRegistrar.BLOCK_STATE, palette, Block.STATE_IDS, PaletteRegistrar::deserializeBlockState, PaletteRegistrar::serializeBlockState, BlockState::isAir, Blocks.VOID_AIR::getDefaultState, PaletteRegistrar::shouldUpdateBlockStateLight, Registry.BLOCK, BlockState::getBlock, Block::getDefaultState, Block::getStateFactory, Blocks.AIR::getDefaultState);
 	}
 	
-	@Shadow short nonEmptyFluidCount;
-	
-	public final PalettedContainer<FluidState> fluidContainer = PaletteRegistrar.getBuilder(PaletteRegistrar.FLUID_STATES).get();
-	
-	@Override
-	public PalettedContainer<FluidState> getFluidStateContainer()
+	@Inject(at = @At("RETURN"), method = "<init>(ISSS)V")
+	private void onConstruct(int yOffset, short nonEmptyBlockCount, short randomTickableBlockCount, short nonEmptyFluidCount, CallbackInfo info)
 	{
-		return fluidContainer;
+		palettes = new Object2ObjectLinkedOpenHashMap<Identifier, MutablePair<PalettedContainer<?>, Integer>>();
+		
+		palettes.put(PaletteRegistrar.BLOCK_STATE, new MutablePair<PalettedContainer<?>, Integer>(container, 0));
+		
+		boolean blockState = false;
+		for(final Identifier id : PaletteRegistrar.PALETTES.getIds())
+		{
+			if(!blockState && id.equals(PaletteRegistrar.BLOCK_STATE))
+			{
+				blockState = true;
+				continue;
+			}
+			
+			palettes.put(id, new MutablePair<PalettedContainer<?>, Integer>(PaletteRegistrar.getPaletteData(id).createContainer(), 0));
+		}
 	}
 	
-	@Inject(at = @At("RETURN"), method = "lock()V")
+	@Inject(at = @At("HEAD"), method = "lock()V", cancellable = true)
 	public void onLock(CallbackInfo info)
 	{
-		getFluidStateContainer().lock();
+		palettes.values().forEach(pair ->
+		{
+			pair.getLeft().lock();
+		});
+		
+		info.cancel();
 	}
 	
-	@Inject(at = @At("RETURN"), method = "unlock()V")
+	@Inject(at = @At("HEAD"), method = "unlock()V", cancellable = true)
 	public void onUnlock(CallbackInfo info)
 	{
-		getFluidStateContainer().unlock();
+		palettes.values().forEach(pair ->
+		{
+			pair.getLeft().unlock();
+		});
+		
+		info.cancel();
 	}
 	
 	@Inject(at = @At("RETURN"), method = "isEmpty()Z", cancellable = true)
 	public void onIsEmpty(CallbackInfoReturnable<Boolean> info)
 	{
-		info.setReturnValue(info.getReturnValue() && nonEmptyFluidCount == 0);
-	}
-	
-	@Override
-	public FluidState setFluidState(int x, int y, int z, FluidState state, boolean synchronous)
-	{
-		FluidState old_state = synchronous ? getFluidStateContainer().setSync(x, y, z, state) : getFluidStateContainer().set(x, y, z, state);
-		
-		if(!old_state.isEmpty())
-		{
-			--this.nonEmptyFluidCount;
-		}
-		
-		if(!state.isEmpty())
-		{
-			++this.nonEmptyFluidCount;
-		}
-		
-		return old_state;
+		info.setReturnValue(info.getReturnValue() && palettes.values().stream().allMatch(p -> p.getRight() == 0));
 	}
 	
 	@Inject(at = @At("HEAD"), method = "getFluidState(III)Lnet/minecraft/fluid/FluidState;", cancellable = true)
 	public void onGetFluidState(int x, int y, int z, CallbackInfoReturnable<FluidState> info)
 	{
-		final FluidState state = getFluidStateContainer().get(x, y, z);
-		if(Towelette.isLayerView((ChunkSection) (Object) this, x, y, z, state))
+		info.setReturnValue(this.<Fluid, FluidState>getState(PaletteRegistrar.FLUID_STATE, x, y, z));
+	}
+	
+	@Inject(require = 0, at = @At("RETURN"), method = "fromPacket(Lnet/minecraft/util/PacketByteBuf;)V")
+	public void onFromPacket(PacketByteBuf buffer, CallbackInfo info)
+	{
+		palettes.values().forEach(pair ->
 		{
-			info.setReturnValue(state);
-		}
+			final int count = buffer.readShort();
+			pair.setRight(count);
+			pair.getLeft().fromPacket(buffer);
+		});
 	}
 	
 	@Inject(at = @At("RETURN"), method = "toPacket(Lnet/minecraft/util/PacketByteBuf;)V")
 	public void onToPacket(PacketByteBuf buffer, CallbackInfo info)
 	{
-		buffer.writeShort(this.nonEmptyFluidCount);
-		getFluidStateContainer().toPacket(buffer);
+		palettes.values().forEach(pair ->
+		{
+			buffer.writeShort(pair.getRight());
+			pair.getLeft().toPacket(buffer);
+		});
 	}
 	
 	@Inject(at = @At("RETURN"), method = "getPacketSize()I", cancellable = true)
 	public void onGetPacketSize(CallbackInfoReturnable<Integer> info)
 	{
-		info.setReturnValue(info.getReturnValue() + 2 + getFluidStateContainer().getPacketSize());
+		final int total = palettes.entrySet().stream().map(Map.Entry::getValue).map(Pair::getLeft).mapToInt(PalettedContainer::getPacketSize).sum();
+		info.setReturnValue(info.getReturnValue() + (2 * palettes.size()) + total);
+	}
+	
+	@Override
+	public <O, S extends PropertyContainer<S>> S setState(Identifier layer, int x, int y, int z, S state, boolean synchronous)
+	{
+		final MutablePair<PalettedContainer<?>, Integer> holder = palettes.get(layer);
+		@SuppressWarnings("unchecked")
+		final PalettedContainer<S> container = ((PalettedContainer<S>) holder.getLeft());
+		final S old_state = synchronous ? container.setSync(x, y, z, state) : container.set(x, y, z, state);
+		
+		final PaletteData<O, S> data = PaletteRegistrar.getPaletteData(layer);
+		
+		if(!data.isEmpty(old_state))
+		{
+			holder.setRight(holder.getRight() - 1);
+		}
+		
+		if(!data.isEmpty(state))
+		{
+			holder.setRight(holder.getRight() + 1);
+		}
+		
+		return old_state;
+	}
+	
+	@Override
+	public <O, S extends PropertyContainer<S>> S getState(Identifier layer, int x, int y, int z)
+	{
+		final MutablePair<PalettedContainer<?>, Integer> data = palettes.get(layer);
+		@SuppressWarnings("unchecked")
+		final PalettedContainer<S> container = ((PalettedContainer<S>) data.getLeft());
+		
+		return container.get(x, y, z);
 	}
 }

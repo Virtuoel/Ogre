@@ -1,22 +1,20 @@
 package virtuoel.towelette.api;
 
+import net.minecraft.state.PropertyContainer;
+import net.minecraft.util.Identifier;
 import net.minecraft.util.math.BlockPos;
-import net.minecraft.world.chunk.Palette;
 
-public interface ModifiableWorldStateLayer
+public interface ModifiableWorldStateLayer extends BlockViewStateLayer
 {
-	default <S> boolean setState(BlockPos pos, S state)
+	default <O, S extends PropertyContainer<S>> boolean setState(Identifier layer, BlockPos pos, S state)
 	{
-		return setState(pos, state, 3);
+		return setState(layer, pos, state, 3);
 	}
 	
-	default <S> boolean setState(BlockPos pos, S state, int flags)
-	{
-		return false;
-	}
+	<O, S extends PropertyContainer<S>> boolean setState(Identifier layer, BlockPos pos, S state, int flags);
 	
-	default <S> boolean clearState(Palette<S> palette, BlockPos pos, boolean flag)
+	default <O, S extends PropertyContainer<S>> boolean clearState(Identifier layer, BlockPos pos, boolean flag)
 	{
-		return setState(pos, palette.getByIndex(-1), 3 | (flag ? 64 : 0));
+		return setState(layer, pos, PaletteRegistrar.getPaletteData(layer).getPalette().getByIndex(-1), 3 | (flag ? 64 : 0));
 	}
 }

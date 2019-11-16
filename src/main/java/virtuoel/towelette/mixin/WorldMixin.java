@@ -16,14 +16,17 @@ import net.minecraft.block.Blocks;
 import net.minecraft.fluid.FluidState;
 import net.minecraft.server.world.ChunkHolder;
 import net.minecraft.server.world.ServerWorld;
+import net.minecraft.state.PropertyContainer;
 import net.minecraft.tag.FluidTags;
+import net.minecraft.util.Identifier;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Box;
 import net.minecraft.world.World;
 import net.minecraft.world.chunk.WorldChunk;
 import net.minecraft.world.level.LevelGeneratorType;
-import virtuoel.towelette.api.ChunkFluidLayer;
-import virtuoel.towelette.api.FluidUpdateableChunkManager;
+import virtuoel.towelette.api.ChunkStateLayer;
+import virtuoel.towelette.api.StateUpdateableChunkManager;
+import virtuoel.towelette.api.PaletteRegistrar;
 import virtuoel.towelette.api.UpdateableFluid;
 import virtuoel.towelette.mixin.layer.ModifiableWorldMixin;
 
@@ -64,7 +67,23 @@ public abstract class WorldMixin implements ModifiableWorldMixin
 	}
 	
 	@Override
-	public boolean setFluidState(BlockPos pos, FluidState state, int flags)
+	public <O, S extends PropertyContainer<S>> S getState(Identifier layer, BlockPos pos)
+	{
+		final World self = World.class.cast(this);
+		if(World.isHeightInvalid(pos))
+		{
+			final S state = PaletteRegistrar.<O, S>getPaletteData(layer).getInvalidPositionState();
+			return state;
+		}
+		else
+		{
+			final WorldChunk chunk = self.getWorldChunk(pos);
+			return ((ChunkStateLayer) chunk).getState(layer, pos);
+		}
+	}
+	
+	@Override
+	public <O, S extends PropertyContainer<S>> boolean setState(Identifier layer, BlockPos pos, S state, int flags)
 	{
 		final World self = World.class.cast(this);
 		if(World.isHeightInvalid(pos))
@@ -78,22 +97,23 @@ public abstract class WorldMixin implements ModifiableWorldMixin
 		else
 		{
 			final WorldChunk chunk = self.getWorldChunk(pos);
-			final FluidState oldState = ((ChunkFluidLayer) chunk).setFluidState(pos, state);
+			final S oldState = ((ChunkStateLayer) chunk).setState(layer, pos, state, (flags & 64) != 0);
 			if(oldState == null)
 			{
 				return false;
 			}
 			else
 			{
-				FluidState fluidState = self.getFluidState(pos);
-				if(fluidState != oldState && (fluidState.getBlockState().getLightSubtracted(self, pos) != oldState.getBlockState().getLightSubtracted(self, pos) || fluidState.getBlockState().getLuminance() != oldState.getBlockState().getLuminance() || fluidState.getBlockState().hasSidedTransparency() || oldState.getBlockState().hasSidedTransparency()))
+				final S newState = ((ChunkStateLayer) chunk).getState(layer, pos);
+				
+				if(PaletteRegistrar.<O, S>getPaletteData(layer).shouldEnqueueLightUpdate(self, pos, newState, oldState))
 				{
 					self.getChunkManager().getLightingProvider().enqueueLightUpdate(pos);
 				}
 				
-				if(fluidState == state)
+				if(newState == state)
 				{
-					if(oldState != fluidState)
+					if(oldState != newState)
 					{
 						self.scheduleBlockRender(pos, Blocks.AIR.getDefaultState(), Blocks.VOID_AIR.getDefaultState());
 					}
@@ -102,7 +122,7 @@ public abstract class WorldMixin implements ModifiableWorldMixin
 					{
 						if(self instanceof ServerWorld)
 						{
-							((FluidUpdateableChunkManager) ((ServerWorld) self).method_14178()).onFluidUpdate(pos);
+							((StateUpdateableChunkManager) ((ServerWorld) self).method_14178()).onStateUpdate(layer, pos);
 						}
 						else
 						{

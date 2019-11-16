@@ -8,17 +8,17 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 import net.minecraft.util.PacketByteBuf;
 import net.minecraft.world.chunk.ChunkSection;
-import virtuoel.towelette.api.ChunkSectionFluidLayer;
+import virtuoel.towelette.api.ChunkSectionStateLayer;
 
 @Mixin(ChunkSection.class)
-public abstract class ChunkSectionMixin implements ChunkSectionFluidLayer
+public abstract class ChunkSectionMixin// implements ChunkSectionStateLayer
 {
-	@Shadow short nonEmptyFluidCount;
+/*	@Shadow short nonEmptyFluidCount;
 	
 	@Inject(at = @At("RETURN"), method = "fromPacket(Lnet/minecraft/util/PacketByteBuf;)V")
 	public void onFromPacket(PacketByteBuf buffer, CallbackInfo info)
 	{
 		this.nonEmptyFluidCount = buffer.readShort();
 		getFluidStateContainer().fromPacket(buffer);
-	}
+	}*/
 }

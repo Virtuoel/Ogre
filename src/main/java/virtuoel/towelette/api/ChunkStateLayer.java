@@ -2,13 +2,19 @@ package virtuoel.towelette.api;
 
 import javax.annotation.Nullable;
 
+import net.minecraft.state.PropertyContainer;
+import net.minecraft.util.Identifier;
 import net.minecraft.util.math.BlockPos;
 
 public interface ChunkStateLayer
 {
 	@Nullable
-	default <S> S setState(BlockPos pos, S state)
+	<O, S extends PropertyContainer<S>> S setState(Identifier layer, BlockPos pos, S state, boolean unknownStateBoolean0912);
+	
+	default <O, S extends PropertyContainer<S>> S getState(Identifier layer, BlockPos pos)
 	{
-		return null;
+		return getState(layer, pos.getX(), pos.getY(), pos.getZ());
 	}
+	
+	<O, S extends PropertyContainer<S>> S getState(Identifier layer, int x, int y, int z);
 }

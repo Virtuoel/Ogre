@@ -12,8 +12,9 @@ import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Direction;
 import net.minecraft.world.World;
 import virtuoel.towelette.api.CollidableFluid;
+import virtuoel.towelette.api.ModifiableWorldStateLayer;
+import virtuoel.towelette.api.PaletteRegistrar;
 import virtuoel.towelette.api.UpdateableFluid;
-import virtuoel.towelette.api.ModifiableWorldFluidLayer;
 
 @Mixin(Fluid.class)
 public class FluidMixin implements CollidableFluid, UpdateableFluid
@@ -55,14 +56,14 @@ public class FluidMixin implements CollidableFluid, UpdateableFluid
 			{
 				if (state.isStill())
 				{
-					((ModifiableWorldFluidLayer) world).setFluidState(pos, Fluids.EMPTY.getDefaultState());
+					((ModifiableWorldStateLayer) world).setState(PaletteRegistrar.FLUID_STATE, pos, Fluids.EMPTY.getDefaultState());
 					world.setBlockState(pos, Blocks.OBSIDIAN.getDefaultState());
 					world.playLevelEvent(1501, pos, 0);
 					return true;
 				}
 				else if (state.getHeight(world, pos) >= 4.0F/9.0F)
 				{
-					((ModifiableWorldFluidLayer) world).setFluidState(pos, Fluids.EMPTY.getDefaultState());
+					((ModifiableWorldStateLayer) world).setState(PaletteRegistrar.FLUID_STATE, pos, Fluids.EMPTY.getDefaultState());
 					world.setBlockState(pos, Blocks.COBBLESTONE.getDefaultState());
 					world.playLevelEvent(1501, pos, 0);
 					return true;

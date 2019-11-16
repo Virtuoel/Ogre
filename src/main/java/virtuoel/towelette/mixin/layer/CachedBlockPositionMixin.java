@@ -1,32 +1,41 @@
 package virtuoel.towelette.mixin.layer;
 
+import java.util.HashMap;
+import java.util.Map;
+
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
+import org.spongepowered.asm.mixin.Unique;
 
 import net.minecraft.block.pattern.CachedBlockPosition;
-import net.minecraft.fluid.FluidState;
+import net.minecraft.util.Identifier;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.ViewableWorld;
-import virtuoel.towelette.api.CachedFluidPosition;
+import virtuoel.towelette.api.BlockViewStateLayer;
+import virtuoel.towelette.api.CachedStatePosition;
 
 @Mixin(CachedBlockPosition.class)
-public class CachedBlockPositionMixin implements CachedFluidPosition
+public class CachedBlockPositionMixin implements CachedStatePosition
 {
 	@Shadow @Final ViewableWorld world;
 	@Shadow @Final BlockPos pos;
 	@Shadow @Final boolean forceLoad;
 	
-	public FluidState fluidState;
+	@Unique final Map<Identifier, Object> states = new HashMap<>();
 	
+	@SuppressWarnings("unchecked")
 	@Override
-	public FluidState getFluidState()
+	public <S> S getState(Identifier layer)
 	{
-		if(this.fluidState == null && (this.forceLoad || this.world.isBlockLoaded(this.pos)))
+		return (S) states.computeIfAbsent(layer, key ->
 		{
-			this.fluidState = this.world.getFluidState(this.pos);
-		}
-		
-		return this.fluidState;
+			if(this.forceLoad || this.world.isBlockLoaded(this.pos))
+			{
+				return ((BlockViewStateLayer) this.world).getState(key, this.pos);
+			}
+			
+			return null;
+		});
 	}
 }

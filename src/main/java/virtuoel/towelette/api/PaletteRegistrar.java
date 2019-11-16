@@ -2,6 +2,7 @@ package virtuoel.towelette.api;
 
 import java.util.Map.Entry;
 import java.util.function.Function;
+import java.util.function.Predicate;
 import java.util.function.Supplier;
 
 import com.google.common.collect.ImmutableMap;
@@ -16,38 +17,86 @@ import net.minecraft.state.StateFactory;
 import net.minecraft.state.property.Property;
 import net.minecraft.util.IdList;
 import net.minecraft.util.Identifier;
-import net.minecraft.util.Lazy;
+import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.registry.DefaultedRegistry;
 import net.minecraft.util.registry.Registry;
+import net.minecraft.world.BlockView;
 import net.minecraft.world.chunk.IdListPalette;
 import net.minecraft.world.chunk.Palette;
-import net.minecraft.world.chunk.PalettedContainer;
 import virtuoel.towelette.Towelette;
 
 public class PaletteRegistrar
 {
-	public static final DefaultedRegistry<Palette<?>> PALETTES = Registry.REGISTRIES.add(new Identifier(ToweletteApi.MOD_ID, "palettes"), new DefaultedRegistry<Palette<?>>(ToweletteApi.MOD_ID + ":block_states"));
-	public static final DefaultedRegistry<Supplier<PalettedContainer<?>>> PALETTED_CONTAINER_BUILDERS = Registry.REGISTRIES.add(new Identifier(ToweletteApi.MOD_ID, "paletted_container_builders"), new DefaultedRegistry<Supplier<PalettedContainer<?>>>(ToweletteApi.MOD_ID + ":block_states"));
+	public static final DefaultedRegistry<PaletteData<?, ?>> PALETTES = Registry.REGISTRIES.add(Towelette.id("palettes"), new DefaultedRegistry<PaletteData<?, ?>>(ToweletteApi.MOD_ID + ":block_state"));
 	
-	@SuppressWarnings("unchecked")
-	public static final Lazy<Palette<BlockState>> BLOCK_STATES = new Lazy<>(() -> (Palette<BlockState>) PALETTES.get(new Identifier(ToweletteApi.MOD_ID, "block_states")));
-	@SuppressWarnings("unchecked")
-	public static final Lazy<Palette<FluidState>> FLUID_STATES = new Lazy<>(() -> (Palette<FluidState>) PALETTES.get(new Identifier(ToweletteApi.MOD_ID, "fluid_states")));
+	public static final Identifier BLOCK_STATE = PALETTES.getDefaultId();
+	public static final Identifier FLUID_STATE = new Identifier(ToweletteApi.MOD_ID, "fluid_state");
 	
-	public static <S> void registerPaletteBuilder(final Identifier id, final IdList<S> ids, final Function<CompoundTag, S> deserializer, final Function<S, CompoundTag> serializer, final S defaultEntry)
+	public static <O, S extends PropertyContainer<S>> void registerPaletteData(
+		final Identifier id,
+		
+		final IdList<S> ids,
+		final Function<CompoundTag, S> deserializer,
+		final Function<S, CompoundTag> serializer,
+		
+		final Predicate<S> emptyPredicate,
+		final Supplier<S> invalidPositionSupplier,
+		final LightUpdatePredicate<S> lightUpdatePredicate,
+		
+		final Registry<O> entryRegistry,
+		final Function<S, O> entryFunction,
+		final Function<O, S> defaultStateFunction,
+		final Function<O, StateFactory<O, S>> managerFunction,
+		final Supplier<S> emptyStateSupplier
+	)
 	{
-		registerPaletteBuilder(PALETTES.add(id, new IdListPalette<S>(ids, defaultEntry)), ids, deserializer, serializer, defaultEntry);
+		registerPaletteData(id, new IdListPalette<S>(ids, emptyStateSupplier.get()), ids, deserializer, serializer, emptyPredicate, invalidPositionSupplier, lightUpdatePredicate, entryRegistry, entryFunction, defaultStateFunction, managerFunction, emptyStateSupplier);
 	}
 	
-	public static <S> void registerPaletteBuilder(final Palette<S> palette, final IdList<S> ids, final Function<CompoundTag, S> deserializer, final Function<S, CompoundTag> serializer, final S defaultEntry)
+	public static <O, S extends PropertyContainer<S>> void registerPaletteData(
+		final Identifier id,
+		
+		final Palette<S> palette,
+		
+		final IdList<S> ids,
+		final Function<CompoundTag, S> deserializer,
+		final Function<S, CompoundTag> serializer,
+		
+		final Predicate<S> emptyPredicate,
+		final Supplier<S> invalidPositionSupplier,
+		final LightUpdatePredicate<S> lightUpdatePredicate,
+		
+		final Registry<O> entryRegistry,
+		final Function<S, O> entryFunction,
+		final Function<O, S> defaultStateFunction,
+		final Function<O, StateFactory<O, S>> managerFunction,
+		final Supplier<S> emptyStateSupplier
+	)
 	{
-		PALETTED_CONTAINER_BUILDERS.add(PALETTES.getId(palette), () -> new PalettedContainer<S>(palette, ids, deserializer, serializer, defaultEntry));
+		final PaletteData<O, S> data = new PaletteData<>(palette, ids, deserializer, serializer, emptyPredicate, invalidPositionSupplier, lightUpdatePredicate, entryRegistry, entryFunction, defaultStateFunction, managerFunction, emptyStateSupplier);
+		PALETTES.add(id, data);
 	}
 	
 	@SuppressWarnings("unchecked")
-	public static <S> Supplier<PalettedContainer<S>> getBuilder(final Lazy<Palette<S>> palette)
+	public static <O, S extends PropertyContainer<S>> PaletteData<O, S> getPaletteData(final Identifier id)
 	{
-		return (Supplier<PalettedContainer<S>>) (Object) PaletteRegistrar.PALETTED_CONTAINER_BUILDERS.get(PaletteRegistrar.PALETTES.getId(palette.get()));
+		return (PaletteData<O, S>) (Object) PaletteRegistrar.PALETTES.get(id);
+	}
+	
+	@SuppressWarnings("unchecked")
+	public static <O, S extends PropertyContainer<S>> PaletteData<O, S> getPaletteData(final int id)
+	{
+		return (PaletteData<O, S>) (Object) PaletteRegistrar.PALETTES.get(id);
+	}
+	
+	public static boolean shouldUpdateBlockStateLight(BlockView world, BlockPos pos, BlockState newState, BlockState oldState)
+	{
+		return newState != oldState && (newState.getLightSubtracted(world, pos) != oldState.getLightSubtracted(world, pos) || newState.getLuminance() != oldState.getLuminance() || newState.hasSidedTransparency() || oldState.hasSidedTransparency());
+	}
+	
+	public static boolean shouldUpdateFluidStateLight(BlockView world, BlockPos pos, FluidState newState, FluidState oldState)
+	{
+		return newState != oldState && (newState.getBlockState().getLightSubtracted(world, pos) != oldState.getBlockState().getLightSubtracted(world, pos) || newState.getBlockState().getLuminance() != oldState.getBlockState().getLuminance() || newState.getBlockState().hasSidedTransparency() || oldState.getBlockState().hasSidedTransparency());
 	}
 	
 	public static BlockState deserializeBlockState(CompoundTag compound)
@@ -124,12 +173,5 @@ public class PaletteRegistrar
 		}
 		
 		return stateCompound;
-	}
-	
-	public static final PaletteRegistrar INSTANCE = new PaletteRegistrar();
-	
-	private PaletteRegistrar()
-	{
-		
 	}
 }

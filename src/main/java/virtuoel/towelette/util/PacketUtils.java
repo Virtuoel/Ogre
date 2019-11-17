@@ -45,10 +45,13 @@ public class PacketUtils
 		buffer.writeInt(chunkPos.z);
 		buffer.writeVarInt(records);
 		
+		@SuppressWarnings("unchecked")
+		final ChunkStateLayer<O, S> c = ((ChunkStateLayer<O, S>) chunk);
+		
 		for (int i = 0; i < records; ++i)
 		{
 			buffer.writeShort(positions[i]);
-			buffer.writeVarInt(data.getIds().getId(((ChunkStateLayer) chunk).getState(PaletteRegistrar.PALETTES.getId(data), toBlockPos(chunkPos, positions[i]))));
+			buffer.writeVarInt(data.getIds().getId(c.getState(PaletteRegistrar.PALETTES.getId(data), toBlockPos(chunkPos, positions[i]))));
 		}
 		
 		return buffer;

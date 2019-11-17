@@ -6,15 +6,15 @@ import net.minecraft.state.PropertyContainer;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.math.BlockPos;
 
-public interface ChunkStateLayer
+public interface ChunkStateLayer<O, S extends PropertyContainer<S>>
 {
 	@Nullable
-	<O, S extends PropertyContainer<S>> S setState(Identifier layer, BlockPos pos, S state, boolean unknownStateBoolean0912);
+	S setState(Identifier layer, BlockPos pos, S state, boolean unknownStateBoolean0912);
 	
-	default <O, S extends PropertyContainer<S>> S getState(Identifier layer, BlockPos pos)
+	default S getState(Identifier layer, BlockPos pos)
 	{
 		return getState(layer, pos.getX(), pos.getY(), pos.getZ());
 	}
 	
-	<O, S extends PropertyContainer<S>> S getState(Identifier layer, int x, int y, int z);
+	S getState(Identifier layer, int x, int y, int z);
 }

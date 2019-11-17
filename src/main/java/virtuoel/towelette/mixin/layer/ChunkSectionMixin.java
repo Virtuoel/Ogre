@@ -15,7 +15,6 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 import it.unimi.dsi.fastutil.objects.Object2ObjectLinkedOpenHashMap;
 import net.minecraft.block.BlockState;
-import net.minecraft.fluid.Fluid;
 import net.minecraft.fluid.FluidState;
 import net.minecraft.state.PropertyContainer;
 import net.minecraft.util.Identifier;
@@ -29,7 +28,7 @@ import virtuoel.towelette.api.PaletteData;
 import virtuoel.towelette.api.PaletteRegistrar;
 
 @Mixin(ChunkSection.class)
-public class ChunkSectionMixin implements ChunkSectionStateLayer
+public class ChunkSectionMixin<O, S extends PropertyContainer<S>> implements ChunkSectionStateLayer<O, S>
 {
 	@Shadow @Final static Palette<BlockState> palette;
 	@Shadow @Final PalettedContainer<BlockState> container;
@@ -92,7 +91,7 @@ public class ChunkSectionMixin implements ChunkSectionStateLayer
 	@Inject(at = @At("HEAD"), method = "getFluidState(III)Lnet/minecraft/fluid/FluidState;", cancellable = true)
 	public void onGetFluidState(int x, int y, int z, CallbackInfoReturnable<FluidState> info)
 	{
-		info.setReturnValue(this.<Fluid, FluidState>getState(PaletteRegistrar.FLUID_STATE, x, y, z));
+		info.setReturnValue((FluidState) getState(PaletteRegistrar.FLUID_STATE, x, y, z));
 	}
 	
 	@Inject(require = 0, at = @At("RETURN"), method = "fromPacket(Lnet/minecraft/util/PacketByteBuf;)V")
@@ -124,7 +123,7 @@ public class ChunkSectionMixin implements ChunkSectionStateLayer
 	}
 	
 	@Override
-	public <O, S extends PropertyContainer<S>> S setState(Identifier layer, int x, int y, int z, S state, boolean synchronous)
+	public S setState(Identifier layer, int x, int y, int z, S state, boolean synchronous)
 	{
 		final MutablePair<PalettedContainer<?>, Integer> holder = palettes.get(layer);
 		@SuppressWarnings("unchecked")
@@ -147,7 +146,7 @@ public class ChunkSectionMixin implements ChunkSectionStateLayer
 	}
 	
 	@Override
-	public <O, S extends PropertyContainer<S>> S getState(Identifier layer, int x, int y, int z)
+	public S getState(Identifier layer, int x, int y, int z)
 	{
 		final MutablePair<PalettedContainer<?>, Integer> data = palettes.get(layer);
 		@SuppressWarnings("unchecked")

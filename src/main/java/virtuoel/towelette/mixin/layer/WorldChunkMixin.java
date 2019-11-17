@@ -17,10 +17,10 @@ import virtuoel.towelette.api.PaletteData;
 import virtuoel.towelette.api.PaletteRegistrar;
 
 @Mixin(WorldChunk.class)
-public abstract class WorldChunkMixin implements ChunkStateLayer
+public abstract class WorldChunkMixin<O, S extends PropertyContainer<S>> implements ChunkStateLayer<O, S>
 {
 	@Override
-	public <O, S extends PropertyContainer<S>> S getState(Identifier layer, int x, int y, int z)
+	public S getState(Identifier layer, int x, int y, int z)
 	{
 		final WorldChunk self = (WorldChunk) (Object) this;
 		
@@ -33,7 +33,9 @@ public abstract class WorldChunkMixin implements ChunkStateLayer
 				ChunkSection section = sections[y >> 4];
 				if (!ChunkSection.isEmpty(section))
 				{
-					return ((ChunkSectionStateLayer) section).getState(layer, x & 15, y & 15, z & 15);
+					@SuppressWarnings("unchecked")
+					final ChunkSectionStateLayer<O, S> s = ((ChunkSectionStateLayer<O, S>) section);
+					return s.getState(layer, x & 15, y & 15, z & 15);
 				}
 			}
 			
@@ -52,7 +54,7 @@ public abstract class WorldChunkMixin implements ChunkStateLayer
 	}
 	
 	@Override
-	public <O, S extends PropertyContainer<S>> S setState(Identifier layer, BlockPos pos, S state, boolean pushed)
+	public S setState(Identifier layer, BlockPos pos, S state, boolean pushed)
 	{
 		final WorldChunk self = (WorldChunk) (Object) this;
 		final World world = self.getWorld();
@@ -77,8 +79,11 @@ public abstract class WorldChunkMixin implements ChunkStateLayer
 			sections[y >> 4] = section;
 		}
 		
+		@SuppressWarnings("unchecked")
+		final ChunkSectionStateLayer<O, S> s = ((ChunkSectionStateLayer<O, S>) section);
+		
 		final boolean wasEmpty = section.isEmpty();
-		final S oldState = ((ChunkSectionStateLayer) section).setState(layer, x, y & 15, z, state);
+		final S oldState = s.setState(layer, x, y & 15, z, state);
 		if(oldState == state)
 		{
 			return null;
@@ -93,7 +98,7 @@ public abstract class WorldChunkMixin implements ChunkStateLayer
 				world.getChunkManager().getLightingProvider().updateSectionStatus(pos, isEmpty);
 			}
 			
-			if(data.getEntry(((ChunkSectionStateLayer) section).<O, S>getState(layer, x, y & 15, z)) != entry)
+			if(data.getEntry(s.getState(layer, x, y & 15, z)) != entry)
 			{
 				return null;
 			}

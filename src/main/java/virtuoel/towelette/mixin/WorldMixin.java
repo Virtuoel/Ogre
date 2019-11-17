@@ -81,8 +81,9 @@ public abstract class WorldMixin<O, S extends PropertyContainer<S>> implements M
 		}
 		else
 		{
-			final WorldChunk chunk = self.getWorldChunk(pos);
-			return ((ChunkStateLayer) chunk).getState(layer, pos);
+			@SuppressWarnings("unchecked")
+			final ChunkStateLayer<O, S> chunk = ((ChunkStateLayer<O, S>) self.getWorldChunk(pos));
+			return chunk.getState(layer, pos);
 		}
 	}
 	
@@ -101,14 +102,16 @@ public abstract class WorldMixin<O, S extends PropertyContainer<S>> implements M
 		else
 		{
 			final WorldChunk chunk = self.getWorldChunk(pos);
-			final S oldState = ((ChunkStateLayer) chunk).setState(layer, pos, state, (flags & 64) != 0);
+			@SuppressWarnings("unchecked")
+			final ChunkStateLayer<O, S> c = ((ChunkStateLayer<O, S>) chunk);
+			final S oldState = c.setState(layer, pos, state, (flags & 64) != 0);
 			if(oldState == null)
 			{
 				return false;
 			}
 			else
 			{
-				final S newState = ((ChunkStateLayer) chunk).getState(layer, pos);
+				final S newState = c.getState(layer, pos);
 				
 				if(PaletteRegistrar.<O, S>getPaletteData(layer).shouldEnqueueLightUpdate(self, pos, newState, oldState))
 				{

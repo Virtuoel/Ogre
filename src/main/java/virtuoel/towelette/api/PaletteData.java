@@ -188,37 +188,37 @@ public class PaletteData<O, S extends PropertyContainer<S>>
 			this.invalidPositionSupplier = Optional.of(invalidPositionSupplier);
 			return this;
 		}
-
+		
 		public Builder<O, S> lightUpdatePredicate(LightUpdatePredicate<S> lightUpdatePredicate)
 		{
 			this.lightUpdatePredicate = lightUpdatePredicate;
 			return this;
 		}
-
+		
 		public Builder<O, S> registry(Registry<O> entryRegistry)
 		{
 			this.entryRegistry = entryRegistry;
 			return this;
 		}
-
+		
 		public Builder<O, S> entryFunction(Function<S, O> entryFunction)
 		{
 			this.entryFunction = entryFunction;
 			return this;
 		}
-
+		
 		public Builder<O, S> defaultStateFunction(Function<O, S> defaultStateFunction)
 		{
 			this.defaultStateFunction = defaultStateFunction;
 			return this;
 		}
-
+		
 		public Builder<O, S> managerFunction(Function<O, StateFactory<O, S>> managerFunction)
 		{
 			this.managerFunction = managerFunction;
 			return this;
 		}
-
+		
 		public Builder<O, S> emptyStateSupplier(Supplier<S> emptyStateSupplier)
 		{
 			this.emptyStateSupplier = emptyStateSupplier;

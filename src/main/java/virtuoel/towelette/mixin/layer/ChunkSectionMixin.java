@@ -14,18 +14,16 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 import it.unimi.dsi.fastutil.objects.Object2ObjectLinkedOpenHashMap;
-import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;
-import net.minecraft.block.Blocks;
 import net.minecraft.fluid.Fluid;
 import net.minecraft.fluid.FluidState;
 import net.minecraft.state.PropertyContainer;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.PacketByteBuf;
-import net.minecraft.util.registry.Registry;
 import net.minecraft.world.chunk.ChunkSection;
 import net.minecraft.world.chunk.Palette;
 import net.minecraft.world.chunk.PalettedContainer;
+import virtuoel.towelette.Towelette;
 import virtuoel.towelette.api.ChunkSectionStateLayer;
 import virtuoel.towelette.api.PaletteData;
 import virtuoel.towelette.api.PaletteRegistrar;
@@ -40,22 +38,7 @@ public class ChunkSectionMixin implements ChunkSectionStateLayer
 	
 	static
 	{
-		PaletteRegistrar.PALETTES.add(PaletteRegistrar.BLOCK_STATE,
-			PaletteData.<Block, BlockState>builder()
-			.palette(palette)
-			.ids(Block.STATE_IDS)
-			.deserializer(PaletteRegistrar::deserializeBlockState)
-			.serializer(PaletteRegistrar::serializeBlockState)
-			.emptyPredicate(BlockState::isAir)
-			.invalidPositionSupplier(Blocks.VOID_AIR::getDefaultState)
-			.lightUpdatePredicate(PaletteRegistrar::shouldUpdateBlockStateLight)
-			.registry(Registry.BLOCK)
-			.entryFunction(BlockState::getBlock)
-			.defaultStateFunction(Block::getDefaultState)
-			.managerFunction(Block::getStateFactory)
-			.emptyStateSupplier(Blocks.AIR::getDefaultState)
-			.build()
-		);
+		Towelette.registerBlockPaletteData(palette);
 	}
 	
 	@Inject(at = @At("RETURN"), method = "<init>(ISSS)V")

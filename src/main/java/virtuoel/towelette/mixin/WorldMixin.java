@@ -38,7 +38,7 @@ public abstract class WorldMixin implements ModifiableWorldMixin
 	@Inject(method = "updateNeighbor", at = @At(value = "INVOKE", shift = Shift.AFTER, target = "Lnet/minecraft/world/World;getBlockState(Lnet/minecraft/util/math/BlockPos;)Lnet/minecraft/block/BlockState;"))
 	private void onUpdateNeighborAfterNeighborUpdate(BlockPos pos, Block block, BlockPos otherPos, CallbackInfo info)
 	{
-		final FluidState state = getFluidState(pos);
+		final FluidState state = getFluidState(pos); // TODO FIXME layers
 		final UpdateableFluid f = (UpdateableFluid) state.getFluid();
 		f.neighborUpdate(state, (World) (Object) this, pos, otherPos);
 	}

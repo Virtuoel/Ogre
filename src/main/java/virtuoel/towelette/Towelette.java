@@ -10,6 +10,7 @@ import net.fabricmc.fabric.api.registry.CommandRegistry;
 import net.fabricmc.fabric.api.tag.TagRegistry;
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;
+import net.minecraft.block.Blocks;
 import net.minecraft.command.arguments.ArgumentTypes;
 import net.minecraft.command.arguments.BlockPosArgumentType;
 import net.minecraft.command.arguments.serialize.ArgumentSerializer;
@@ -24,6 +25,7 @@ import net.minecraft.util.Identifier;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.registry.Registry;
 import net.minecraft.world.chunk.ChunkSection;
+import net.minecraft.world.chunk.Palette;
 import virtuoel.towelette.api.PaletteData;
 import virtuoel.towelette.api.PaletteRegistrar;
 import virtuoel.towelette.api.ToweletteApi;
@@ -95,6 +97,26 @@ public class Towelette implements ModInitializer
 			
 			SetStateCommand.register(commandDispatcher);
 		});
+	}
+	
+	public static void registerBlockPaletteData(final Palette<BlockState> palette)
+	{
+		PaletteRegistrar.PALETTES.add(PaletteRegistrar.BLOCK_STATE,
+			PaletteData.<Block, BlockState>builder()
+			.palette(palette)
+			.ids(Block.STATE_IDS)
+			.deserializer(PaletteRegistrar::deserializeBlockState)
+			.serializer(PaletteRegistrar::serializeBlockState)
+			.emptyPredicate(BlockState::isAir)
+			.invalidPositionSupplier(Blocks.VOID_AIR::getDefaultState)
+			.lightUpdatePredicate(PaletteRegistrar::shouldUpdateBlockStateLight)
+			.registry(Registry.BLOCK)
+			.entryFunction(BlockState::getBlock)
+			.defaultStateFunction(Block::getDefaultState)
+			.managerFunction(Block::getStateFactory)
+			.emptyStateSupplier(Blocks.AIR::getDefaultState)
+			.build()
+		);
 	}
 	
 	public static Identifier id(final String name)

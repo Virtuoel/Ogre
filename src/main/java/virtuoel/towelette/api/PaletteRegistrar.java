@@ -113,16 +113,6 @@ public class PaletteRegistrar
 		});
 	}
 	
-	public static CompoundTag serializeBlockState(BlockState state)
-	{
-		return PaletteRegistrar.serializeState(state, Registry.BLOCK, BlockState::getBlock);
-	}
-	
-	public static CompoundTag serializeFluidState(FluidState state)
-	{
-		return PaletteRegistrar.serializeState(state, Registry.FLUID, FluidState::getFluid);
-	}
-	
 	public static <O, S extends PropertyContainer<S>> CompoundTag serializeState(S state, Registry<O> registry, Function<S, O> entryFunc)
 	{
 		final CompoundTag stateCompound = new CompoundTag();

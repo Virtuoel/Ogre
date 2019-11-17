@@ -83,9 +83,10 @@ public class Towelette implements ModInitializer
 				return commandSource.hasPermissionLevel(2);
 			}).then(CommandManager.argument("pos", BlockPosArgumentType.blockPos()).executes((context) ->
 			{
-				BlockPos pos = BlockPosArgumentType.getLoadedBlockPos(context, "pos");
-				FluidState state = context.getSource().getWorld().getFluidState(pos);
-				context.getSource().sendFeedback(new LiteralText(PaletteRegistrar.serializeFluidState(state).toString()), true);
+				final BlockPos pos = BlockPosArgumentType.getLoadedBlockPos(context, "pos");
+				final FluidState state = context.getSource().getWorld().getFluidState(pos);
+				final PaletteData<Fluid, FluidState> data = PaletteRegistrar.<Fluid, FluidState>getPaletteData(PaletteRegistrar.FLUID_STATE);
+				context.getSource().sendFeedback(new LiteralText(data.serializeState(state).toString()), true);
 				return 1;
 			})));
 			
@@ -94,9 +95,10 @@ public class Towelette implements ModInitializer
 				return commandSource.hasPermissionLevel(2);
 			}).then(CommandManager.argument("pos", BlockPosArgumentType.blockPos()).executes((context) ->
 			{
-				BlockPos pos = BlockPosArgumentType.getLoadedBlockPos(context, "pos");
-				BlockState state = context.getSource().getWorld().getBlockState(pos);
-				context.getSource().sendFeedback(new LiteralText(PaletteRegistrar.serializeBlockState(state).toString()), true);
+				final BlockPos pos = BlockPosArgumentType.getLoadedBlockPos(context, "pos");
+				final BlockState state = context.getSource().getWorld().getBlockState(pos);
+				final PaletteData<Block, BlockState> data = PaletteRegistrar.<Block, BlockState>getPaletteData(PaletteRegistrar.BLOCK_STATE);
+				context.getSource().sendFeedback(new LiteralText(data.serializeState(state).toString()), true);
 				return 1;
 			})));
 			

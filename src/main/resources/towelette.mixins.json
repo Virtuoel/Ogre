@@ -20,16 +20,18 @@
 		"WorldMixin",
 		"layer.CachedBlockPositionMixin",
 		"layer.ChunkHolderMixin",
-		"layer.ChunkMixin",
 		"layer.ChunkSectionMixin",
 		"layer.ChunkSerializerMixin",
+		"layer.EmptyChunkMixin",
 		"layer.ModifiableWorldMixin",
 		"layer.ServerChunkManagerMixin",
 		"layer.WorldChunkMixin"
 	],
 	"client":
 	[
-		"layer.client.ChunkSectionMixin"
+		"layer.client.ChunkRenderDataInvoker",
+		"layer.client.ChunkRendererMixin",
+		"layer.client.ChunkRendererRegionMixin"
 	],
 	"injectors":
 	{

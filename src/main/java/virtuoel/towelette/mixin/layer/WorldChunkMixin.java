@@ -1,5 +1,7 @@
 package virtuoel.towelette.mixin.layer;
 
+import javax.annotation.Nullable;
+
 import org.spongepowered.asm.mixin.Mixin;
 
 import net.minecraft.state.PropertyContainer;
@@ -54,6 +56,7 @@ public abstract class WorldChunkMixin<O, S extends PropertyContainer<S>> impleme
 	}
 	
 	@Override
+	@Nullable
 	public S setState(Identifier layer, BlockPos pos, S state, boolean pushed)
 	{
 		final WorldChunk self = (WorldChunk) (Object) this;

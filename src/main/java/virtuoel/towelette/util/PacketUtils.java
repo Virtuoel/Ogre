@@ -26,7 +26,8 @@ public class PacketUtils
 		buffer.writeVarInt(PaletteRegistrar.PALETTES.getRawId(data));
 		@SuppressWarnings("unchecked")
 		final BlockViewStateLayer<S> w = ((BlockViewStateLayer<S>) world);
-		buffer.writeVarInt(data.getIds().getId(w.getState(PaletteRegistrar.PALETTES.getId(data), pos)));
+		final Identifier layer = PaletteRegistrar.PALETTES.getId(data);
+		buffer.writeVarInt(data.getIds().getId(w.getState(layer, pos)));
 		return new CustomPayloadS2CPacket(UPDATE, buffer);
 	}
 	
@@ -47,11 +48,12 @@ public class PacketUtils
 		
 		@SuppressWarnings("unchecked")
 		final ChunkStateLayer<O, S> c = ((ChunkStateLayer<O, S>) chunk);
+		final Identifier layer = PaletteRegistrar.PALETTES.getId(data);
 		
 		for (int i = 0; i < records; ++i)
 		{
 			buffer.writeShort(positions[i]);
-			buffer.writeVarInt(data.getIds().getId(c.getState(PaletteRegistrar.PALETTES.getId(data), toBlockPos(chunkPos, positions[i]))));
+			buffer.writeVarInt(data.getIds().getId(c.getState(layer, toBlockPos(chunkPos, positions[i]))));
 		}
 		
 		return buffer;

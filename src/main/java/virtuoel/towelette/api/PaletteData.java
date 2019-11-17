@@ -1,10 +1,12 @@
 package virtuoel.towelette.api;
 
 import java.util.Optional;
+import java.util.Random;
 import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
 
+import net.minecraft.block.BlockRenderLayer;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.state.PropertyContainer;
 import net.minecraft.state.StateFactory;
@@ -12,6 +14,7 @@ import net.minecraft.util.IdList;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.registry.Registry;
 import net.minecraft.world.BlockView;
+import net.minecraft.world.ExtendedBlockView;
 import net.minecraft.world.World;
 import net.minecraft.world.chunk.Chunk;
 import net.minecraft.world.chunk.IdListPalette;
@@ -37,6 +40,11 @@ public class PaletteData<O, S extends PropertyContainer<S>>
 	private final Function<O, S> defaultStateFunction;
 	private final Function<O, StateFactory<O, S>> managerFunction;
 	private final Supplier<S> emptyStateSupplier;
+
+	private final OcclusionGraphCallback<S> occlusionGraphCallback;
+	private final Predicate<S> renderPredicate;
+	private final Function<S, BlockRenderLayer> renderLayerFunction;
+	private final StateTesselationCallback<S> tesselationCallback;
 	
 	private PaletteData(
 		final Palette<S> palette,
@@ -55,7 +63,12 @@ public class PaletteData<O, S extends PropertyContainer<S>>
 		final Function<S, O> entryFunction,
 		final Function<O, S> defaultStateFunction,
 		final Function<O, StateFactory<O, S>> managerFunction,
-		final Supplier<S> emptyStateSupplier
+		final Supplier<S> emptyStateSupplier,
+		
+		final OcclusionGraphCallback<S> occlusionGraphCallback,
+		final Predicate<S> renderPredicate,
+		final Function<S, BlockRenderLayer> renderLayerFunction,
+		final StateTesselationCallback<S> tesselationCallback
 	)
 	{
 		this.palette = palette;
@@ -75,6 +88,11 @@ public class PaletteData<O, S extends PropertyContainer<S>>
 		this.defaultStateFunction = defaultStateFunction;
 		this.managerFunction = managerFunction;
 		this.emptyStateSupplier = emptyStateSupplier;
+		
+		this.occlusionGraphCallback = occlusionGraphCallback;
+		this.renderPredicate = renderPredicate;
+		this.renderLayerFunction = renderLayerFunction;
+		this.tesselationCallback = tesselationCallback;
 	}
 	
 	public Palette<S> getPalette()
@@ -152,6 +170,26 @@ public class PaletteData<O, S extends PropertyContainer<S>>
 		return emptyStateSupplier.get();
 	}
 	
+	public void handleOcclusionGraph(Object chunkOcclusionGraphBuilder, S state, BlockView world, BlockPos pos)
+	{
+		occlusionGraphCallback.handleOcclusionGraph(chunkOcclusionGraphBuilder, state, world, pos);
+	}
+	
+	public boolean shouldRender(final S state)
+	{
+		return renderPredicate.test(state);
+	}
+	
+	public BlockRenderLayer getRenderLayer(final S state)
+	{
+		return renderLayerFunction.apply(state);
+	}
+	
+	public boolean tesselate(Object blockRenderManager, S state, BlockPos pos, ExtendedBlockView world, Object bufferBuilder, Random random)
+	{
+		return tesselationCallback.tesselateState(blockRenderManager, state, pos, world, bufferBuilder, random);
+	}
+	
 	public static <O, S extends PropertyContainer<S>> Builder<O, S>builder()
 	{
 		return new Builder<>();
@@ -177,6 +215,11 @@ public class PaletteData<O, S extends PropertyContainer<S>>
 		private Function<O, StateFactory<O, S>> managerFunction;
 		private Supplier<S> emptyStateSupplier;
 		
+		private OcclusionGraphCallback<S> occlusionGraphCallback = (b, s, w, p) -> {};
+		private Optional<Predicate<S>> renderPredicate = Optional.empty();
+		private Function<S, BlockRenderLayer> renderLayerFunction;
+		private StateTesselationCallback<S> tesselationCallback;
+		
 		private Builder()
 		{
 			
@@ -184,7 +227,7 @@ public class PaletteData<O, S extends PropertyContainer<S>>
 		
 		public Builder<O, S> palette(Palette<S> palette)
 		{
-			this.palette = Optional.of(palette);
+			this.palette = Optional.ofNullable(palette);
 			return this;
 		}
 		
@@ -214,7 +257,7 @@ public class PaletteData<O, S extends PropertyContainer<S>>
 		
 		public Builder<O, S> invalidPositionSupplier(Supplier<S> invalidPositionSupplier)
 		{
-			this.invalidPositionSupplier = Optional.of(invalidPositionSupplier);
+			this.invalidPositionSupplier = Optional.ofNullable(invalidPositionSupplier);
 			return this;
 		}
 		
@@ -272,6 +315,30 @@ public class PaletteData<O, S extends PropertyContainer<S>>
 			return this;
 		}
 		
+		public Builder<O, S> occlusionGraphCallback(OcclusionGraphCallback<S> occlusionGraphCallback)
+		{
+			this.occlusionGraphCallback = occlusionGraphCallback;
+			return this;
+		}
+		
+		public Builder<O, S> renderPredicate(Predicate<S> renderPredicate)
+		{
+			this.renderPredicate = Optional.ofNullable(renderPredicate);
+			return this;
+		}
+		
+		public Builder<O, S> renderLayerFunction(Function<S, BlockRenderLayer> renderLayerFunction)
+		{
+			this.renderLayerFunction = renderLayerFunction;
+			return this;
+		}
+		
+		public Builder<O, S> tesselationCallback(StateTesselationCallback<S> tesselationCallback)
+		{
+			this.tesselationCallback = tesselationCallback;
+			return this;
+		}
+		
 		public PaletteData<O, S> build()
 		{
 			return new PaletteData<>(
@@ -289,7 +356,11 @@ public class PaletteData<O, S extends PropertyContainer<S>>
 				entryFunction,
 				defaultStateFunction,
 				managerFunction,
-				emptyStateSupplier
+				emptyStateSupplier,
+				occlusionGraphCallback,
+				renderPredicate.orElse(emptyPredicate),
+				renderLayerFunction,
+				tesselationCallback
 			);
 		}
 	}

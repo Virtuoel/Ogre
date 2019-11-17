@@ -31,6 +31,7 @@ import virtuoel.towelette.api.PaletteRegistrar;
 import virtuoel.towelette.api.ToweletteApi;
 import virtuoel.towelette.command.arguments.StateArgumentType;
 import virtuoel.towelette.server.command.SetStateCommand;
+import virtuoel.towelette.util.PaletteUtils;
 
 public class Towelette implements ModInitializer
 {
@@ -66,6 +67,9 @@ public class Towelette implements ModInitializer
 			.defaultStateFunction(Fluid::getDefaultState)
 			.managerFunction(Fluid::getStateFactory)
 			.emptyStateSupplier(Fluids.EMPTY::getDefaultState)
+			.renderPredicate(PaletteUtils::shouldRenderFluidState)
+			.renderLayerFunction(FluidState::getRenderLayer)
+			.tesselationCallback(PaletteUtils::tesselateFluidState)
 			.build()
 		);
 		
@@ -120,6 +124,10 @@ public class Towelette implements ModInitializer
 			.defaultStateFunction(Block::getDefaultState)
 			.managerFunction(Block::getStateFactory)
 			.emptyStateSupplier(Blocks.AIR::getDefaultState)
+			.occlusionGraphCallback(PaletteUtils::handleBlockStateOcclusionGraph)
+			.renderPredicate(PaletteUtils::shouldRenderBlockState)
+			.renderLayerFunction(PaletteUtils::getBlockStateRenderLayer)
+			.tesselationCallback(PaletteUtils::tesselateBlockState)
 			.build()
 		);
 	}

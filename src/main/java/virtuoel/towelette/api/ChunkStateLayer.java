@@ -9,7 +9,7 @@ import net.minecraft.util.math.BlockPos;
 public interface ChunkStateLayer<O, S extends PropertyContainer<S>>
 {
 	@Nullable
-	S setState(Identifier layer, BlockPos pos, S state, boolean unknownStateBoolean0912);
+	S setState(Identifier layer, BlockPos pos, S state, boolean pushed);
 	
 	default S getState(Identifier layer, BlockPos pos)
 	{

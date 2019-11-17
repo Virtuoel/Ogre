@@ -2,8 +2,6 @@ package virtuoel.towelette.api;
 
 import java.util.Map.Entry;
 import java.util.function.Function;
-import java.util.function.Predicate;
-import java.util.function.Supplier;
 
 import com.google.common.collect.ImmutableMap;
 
@@ -15,14 +13,11 @@ import net.minecraft.nbt.CompoundTag;
 import net.minecraft.state.PropertyContainer;
 import net.minecraft.state.StateFactory;
 import net.minecraft.state.property.Property;
-import net.minecraft.util.IdList;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.registry.DefaultedRegistry;
 import net.minecraft.util.registry.Registry;
 import net.minecraft.world.BlockView;
-import net.minecraft.world.chunk.IdListPalette;
-import net.minecraft.world.chunk.Palette;
 import virtuoel.towelette.Towelette;
 
 public class PaletteRegistrar
@@ -31,51 +26,6 @@ public class PaletteRegistrar
 	
 	public static final Identifier BLOCK_STATE = PALETTES.getDefaultId();
 	public static final Identifier FLUID_STATE = new Identifier(ToweletteApi.MOD_ID, "fluid_state");
-	
-	public static <O, S extends PropertyContainer<S>> void registerPaletteData(
-		final Identifier id,
-		
-		final IdList<S> ids,
-		final Function<CompoundTag, S> deserializer,
-		final Function<S, CompoundTag> serializer,
-		
-		final Predicate<S> emptyPredicate,
-		final Supplier<S> invalidPositionSupplier,
-		final LightUpdatePredicate<S> lightUpdatePredicate,
-		
-		final Registry<O> entryRegistry,
-		final Function<S, O> entryFunction,
-		final Function<O, S> defaultStateFunction,
-		final Function<O, StateFactory<O, S>> managerFunction,
-		final Supplier<S> emptyStateSupplier
-	)
-	{
-		registerPaletteData(id, new IdListPalette<S>(ids, emptyStateSupplier.get()), ids, deserializer, serializer, emptyPredicate, invalidPositionSupplier, lightUpdatePredicate, entryRegistry, entryFunction, defaultStateFunction, managerFunction, emptyStateSupplier);
-	}
-	
-	public static <O, S extends PropertyContainer<S>> void registerPaletteData(
-		final Identifier id,
-		
-		final Palette<S> palette,
-		
-		final IdList<S> ids,
-		final Function<CompoundTag, S> deserializer,
-		final Function<S, CompoundTag> serializer,
-		
-		final Predicate<S> emptyPredicate,
-		final Supplier<S> invalidPositionSupplier,
-		final LightUpdatePredicate<S> lightUpdatePredicate,
-		
-		final Registry<O> entryRegistry,
-		final Function<S, O> entryFunction,
-		final Function<O, S> defaultStateFunction,
-		final Function<O, StateFactory<O, S>> managerFunction,
-		final Supplier<S> emptyStateSupplier
-	)
-	{
-		final PaletteData<O, S> data = new PaletteData<>(palette, ids, deserializer, serializer, emptyPredicate, invalidPositionSupplier, lightUpdatePredicate, entryRegistry, entryFunction, defaultStateFunction, managerFunction, emptyStateSupplier);
-		PALETTES.add(id, data);
-	}
 	
 	@SuppressWarnings("unchecked")
 	public static <O, S extends PropertyContainer<S>> PaletteData<O, S> getPaletteData(final Identifier id)

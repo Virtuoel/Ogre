@@ -40,7 +40,22 @@ public class ChunkSectionMixin implements ChunkSectionStateLayer
 	
 	static
 	{
-		PaletteRegistrar.<Block, BlockState>registerPaletteData(PaletteRegistrar.BLOCK_STATE, palette, Block.STATE_IDS, PaletteRegistrar::deserializeBlockState, PaletteRegistrar::serializeBlockState, BlockState::isAir, Blocks.VOID_AIR::getDefaultState, PaletteRegistrar::shouldUpdateBlockStateLight, Registry.BLOCK, BlockState::getBlock, Block::getDefaultState, Block::getStateFactory, Blocks.AIR::getDefaultState);
+		PaletteRegistrar.PALETTES.add(PaletteRegistrar.BLOCK_STATE,
+			PaletteData.<Block, BlockState>builder()
+			.palette(palette)
+			.ids(Block.STATE_IDS)
+			.deserializer(PaletteRegistrar::deserializeBlockState)
+			.serializer(PaletteRegistrar::serializeBlockState)
+			.emptyPredicate(BlockState::isAir)
+			.invalidPositionSupplier(Blocks.VOID_AIR::getDefaultState)
+			.lightUpdatePredicate(PaletteRegistrar::shouldUpdateBlockStateLight)
+			.registry(Registry.BLOCK)
+			.entryFunction(BlockState::getBlock)
+			.defaultStateFunction(Block::getDefaultState)
+			.managerFunction(Block::getStateFactory)
+			.emptyStateSupplier(Blocks.AIR::getDefaultState)
+			.build()
+		);
 	}
 	
 	@Inject(at = @At("RETURN"), method = "<init>(ISSS)V")

@@ -24,6 +24,7 @@ import net.minecraft.util.Identifier;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.registry.Registry;
 import net.minecraft.world.chunk.ChunkSection;
+import virtuoel.towelette.api.PaletteData;
 import virtuoel.towelette.api.PaletteRegistrar;
 import virtuoel.towelette.api.ToweletteApi;
 import virtuoel.towelette.command.arguments.StateArgumentType;
@@ -48,7 +49,21 @@ public class Towelette implements ModInitializer
 			PaletteRegistrar.class,
 			ChunkSection.class
 		);
-		PaletteRegistrar.<Fluid, FluidState>registerPaletteData(PaletteRegistrar.FLUID_STATE, Fluid.STATE_IDS, PaletteRegistrar::deserializeFluidState, PaletteRegistrar::serializeFluidState, FluidState::isEmpty, Fluids.EMPTY::getDefaultState, PaletteRegistrar::shouldUpdateFluidStateLight, Registry.FLUID, FluidState::getFluid, Fluid::getDefaultState, Fluid::getStateFactory, Fluids.EMPTY::getDefaultState);
+		
+		PaletteRegistrar.PALETTES.add(PaletteRegistrar.FLUID_STATE,
+			PaletteData.<Fluid, FluidState>builder()
+			.ids(Fluid.STATE_IDS)
+			.deserializer(PaletteRegistrar::deserializeFluidState)
+			.serializer(PaletteRegistrar::serializeFluidState)
+			.emptyPredicate(FluidState::isEmpty)
+			.lightUpdatePredicate(PaletteRegistrar::shouldUpdateFluidStateLight)
+			.registry(Registry.FLUID)
+			.entryFunction(FluidState::getFluid)
+			.defaultStateFunction(Fluid::getDefaultState)
+			.managerFunction(Fluid::getStateFactory)
+			.emptyStateSupplier(Fluids.EMPTY::getDefaultState)
+			.build()
+		);
 		
 		@SuppressWarnings("rawtypes") final ArgumentSerializer<StateArgumentType> stateSerializer = new ConstantArgumentSerializer<StateArgumentType>(StateArgumentType::create);
 		ArgumentTypes.register("state", StateArgumentType.class, stateSerializer);

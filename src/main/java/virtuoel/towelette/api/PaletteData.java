@@ -11,6 +11,7 @@ import net.minecraft.nbt.CompoundTag;
 import net.minecraft.state.PropertyContainer;
 import net.minecraft.state.StateFactory;
 import net.minecraft.util.IdList;
+import net.minecraft.util.Identifier;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.registry.Registry;
 import net.minecraft.world.BlockView;
@@ -25,8 +26,6 @@ public class PaletteData<O, S extends PropertyContainer<S>>
 {
 	private final Palette<S> palette;
 	private final IdList<S> ids;
-	private final Function<CompoundTag, S> deserializer;
-	private final Function<S, CompoundTag> serializer;
 	
 	private final Predicate<S> emptyPredicate;
 	private final Supplier<S> invalidPositionSupplier;
@@ -40,7 +39,8 @@ public class PaletteData<O, S extends PropertyContainer<S>>
 	private final Function<O, S> defaultStateFunction;
 	private final Function<O, StateFactory<O, S>> managerFunction;
 	private final Supplier<S> emptyStateSupplier;
-
+	private final Supplier<Identifier> defaultIdSupplier;
+	
 	private final OcclusionGraphCallback<S> occlusionGraphCallback;
 	private final Predicate<S> renderPredicate;
 	private final Function<S, BlockRenderLayer> renderLayerFunction;
@@ -49,8 +49,6 @@ public class PaletteData<O, S extends PropertyContainer<S>>
 	private PaletteData(
 		final Palette<S> palette,
 		final IdList<S> ids,
-		final Function<CompoundTag, S> deserializer,
-		final Function<S, CompoundTag> serializer,
 		
 		final Predicate<S> emptyPredicate,
 		final Supplier<S> invalidPositionSupplier,
@@ -64,6 +62,7 @@ public class PaletteData<O, S extends PropertyContainer<S>>
 		final Function<O, S> defaultStateFunction,
 		final Function<O, StateFactory<O, S>> managerFunction,
 		final Supplier<S> emptyStateSupplier,
+		final Supplier<Identifier> defaultIdSupplier,
 		
 		final OcclusionGraphCallback<S> occlusionGraphCallback,
 		final Predicate<S> renderPredicate,
@@ -73,8 +72,6 @@ public class PaletteData<O, S extends PropertyContainer<S>>
 	{
 		this.palette = palette;
 		this.ids = ids;
-		this.deserializer = deserializer;
-		this.serializer = serializer;
 		
 		this.emptyPredicate = emptyPredicate;
 		this.invalidPositionSupplier = invalidPositionSupplier;
@@ -88,6 +85,7 @@ public class PaletteData<O, S extends PropertyContainer<S>>
 		this.defaultStateFunction = defaultStateFunction;
 		this.managerFunction = managerFunction;
 		this.emptyStateSupplier = emptyStateSupplier;
+		this.defaultIdSupplier = defaultIdSupplier;
 		
 		this.occlusionGraphCallback = occlusionGraphCallback;
 		this.renderPredicate = renderPredicate;
@@ -107,7 +105,7 @@ public class PaletteData<O, S extends PropertyContainer<S>>
 	
 	public PalettedContainer<S> createContainer()
 	{
-		return new PalettedContainer<S>(palette, ids, deserializer, serializer, getEmptyState());
+		return new PalettedContainer<S>(palette, ids, this::deserializeState, this::serializeState, getEmptyState());
 	}
 	
 	public boolean isEmpty(final S state)
@@ -150,9 +148,19 @@ public class PaletteData<O, S extends PropertyContainer<S>>
 		return entryFunction.apply(state);
 	}
 	
+	public Optional<O> getEntryOrEmpty(final Identifier id)
+	{
+		return getRegistry().getOrEmpty(id);
+	}
+	
 	public S getDefaultState(final O entry)
 	{
 		return defaultStateFunction.apply(entry);
+	}
+	
+	public S getDefaultState(final Identifier id)
+	{
+		return getEntryOrEmpty(id).map(this::getDefaultState).orElseGet(emptyStateSupplier);
 	}
 	
 	public StateFactory<O, S> getManager(final S state)
@@ -190,6 +198,16 @@ public class PaletteData<O, S extends PropertyContainer<S>>
 		return tesselationCallback.tesselateState(blockRenderManager, state, pos, world, bufferBuilder, random);
 	}
 	
+	public S deserializeState(CompoundTag compound)
+	{
+		return PaletteRegistrar.deserializeState(compound, getRegistry(), defaultIdSupplier, defaultStateFunction, managerFunction);
+	}
+	
+	public CompoundTag serializeState(S state)
+	{
+		return PaletteRegistrar.serializeState(state, getRegistry(), entryFunction);
+	}
+	
 	public static <O, S extends PropertyContainer<S>> Builder<O, S>builder()
 	{
 		return new Builder<>();
@@ -199,8 +217,6 @@ public class PaletteData<O, S extends PropertyContainer<S>>
 	{
 		private Optional<Palette<S>> palette = Optional.empty();
 		private IdList<S> ids;
-		private Function<CompoundTag, S> deserializer;
-		private Function<S, CompoundTag> serializer;
 		
 		private Predicate<S> emptyPredicate;
 		private Optional<Supplier<S>> invalidPositionSupplier = Optional.empty();
@@ -214,6 +230,7 @@ public class PaletteData<O, S extends PropertyContainer<S>>
 		private Function<O, S> defaultStateFunction;
 		private Function<O, StateFactory<O, S>> managerFunction;
 		private Supplier<S> emptyStateSupplier;
+		private Supplier<Identifier> defaultIdSupplier = () -> entryRegistry.getId(entryFunction.apply(emptyStateSupplier.get()));
 		
 		private OcclusionGraphCallback<S> occlusionGraphCallback = (b, s, w, p) -> {};
 		private Optional<Predicate<S>> renderPredicate = Optional.empty();
@@ -234,18 +251,6 @@ public class PaletteData<O, S extends PropertyContainer<S>>
 		public Builder<O, S> ids(IdList<S> ids)
 		{
 			this.ids = ids;
-			return this;
-		}
-		
-		public Builder<O, S> deserializer(Function<CompoundTag, S> deserializer)
-		{
-			this.deserializer = deserializer;
-			return this;
-		}
-		
-		public Builder<O, S> serializer(Function<S, CompoundTag> serializer)
-		{
-			this.serializer = serializer;
 			return this;
 		}
 		
@@ -315,6 +320,12 @@ public class PaletteData<O, S extends PropertyContainer<S>>
 			return this;
 		}
 		
+		public Builder<O, S> defaultIdFunction(Supplier<Identifier> defaultIdSupplier)
+		{
+			this.defaultIdSupplier = defaultIdSupplier;
+			return this;
+		}
+		
 		public Builder<O, S> occlusionGraphCallback(OcclusionGraphCallback<S> occlusionGraphCallback)
 		{
 			this.occlusionGraphCallback = occlusionGraphCallback;
@@ -344,8 +355,6 @@ public class PaletteData<O, S extends PropertyContainer<S>>
 			return new PaletteData<>(
 				palette.orElseGet(() -> new IdListPalette<S>(ids, emptyStateSupplier.get())),
 				ids,
-				deserializer,
-				serializer,
 				emptyPredicate,
 				invalidPositionSupplier.orElse(emptyStateSupplier),
 				lightUpdatePredicate,
@@ -357,6 +366,7 @@ public class PaletteData<O, S extends PropertyContainer<S>>
 				defaultStateFunction,
 				managerFunction,
 				emptyStateSupplier,
+				defaultIdSupplier,
 				occlusionGraphCallback,
 				renderPredicate.orElse(emptyPredicate),
 				renderLayerFunction,

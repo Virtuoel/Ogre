@@ -2,6 +2,7 @@ package virtuoel.towelette.api;
 
 import java.util.Map.Entry;
 import java.util.function.Function;
+import java.util.function.Supplier;
 
 import com.google.common.collect.ImmutableMap;
 
@@ -80,19 +81,9 @@ public class PaletteRegistrar
 		return newState != oldState && (newState.getBlockState().getLightSubtracted(world, pos) != oldState.getBlockState().getLightSubtracted(world, pos) || newState.getBlockState().getLuminance() != oldState.getBlockState().getLuminance() || newState.getBlockState().hasSidedTransparency() || oldState.getBlockState().hasSidedTransparency());
 	}
 	
-	public static BlockState deserializeBlockState(CompoundTag compound)
+	public static <O, S extends PropertyContainer<S>> S deserializeState(CompoundTag compound, Registry<O> registry, Supplier<Identifier> defaultIdSupplier, Function<O, S> defaultStateFunc, Function<O, StateFactory<O, S>> stateManagerFunc)
 	{
-		return PaletteRegistrar.deserializeState(compound, Registry.BLOCK, Block::getDefaultState, Block::getStateFactory);
-	}
-	
-	public static FluidState deserializeFluidState(CompoundTag compound)
-	{
-		return PaletteRegistrar.deserializeState(compound, Registry.FLUID, Fluid::getDefaultState, Fluid::getStateFactory);
-	}
-	
-	public static <O, S extends PropertyContainer<S>> S deserializeState(CompoundTag compound, DefaultedRegistry<O> registry, Function<O, S> defaultStateFunc, Function<O, StateFactory<O, S>> stateManagerFunc)
-	{
-		final O entry = registry.get(compound.containsKey("Name", 8) ? new Identifier(compound.getString("Name")) : registry.getDefaultId());
+		final O entry = registry.get(compound.containsKey("Name", 8) ? new Identifier(compound.getString("Name")) : defaultIdSupplier.get());
 		S container = defaultStateFunc.apply(entry);
 		
 		if(compound.containsKey("Properties", 10))
@@ -100,9 +91,9 @@ public class PaletteRegistrar
 			final CompoundTag properties = compound.getCompound("Properties");
 			final StateFactory<O, S> stateFactory = stateManagerFunc.apply(entry);
 			
-			for(String key : properties.getKeys())
+			for(final String key : properties.getKeys())
 			{
-				Property<?> property = stateFactory.getProperty(key);
+				final Property<?> property = stateFactory.getProperty(key);
 				if(property != null)
 				{
 					container = withProperty(container, property, key, properties, compound);
@@ -141,7 +132,7 @@ public class PaletteRegistrar
 		{
 			final CompoundTag propertyCompound = new CompoundTag();
 			
-			for(Entry<Property<?>, Comparable<?>> entry : entries.entrySet())
+			for(final Entry<Property<?>, Comparable<?>> entry : entries.entrySet())
 			{
 				@SuppressWarnings("rawtypes")
 				final Property property = entry.getKey();

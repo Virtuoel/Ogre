@@ -8,6 +8,7 @@ import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.Blocks;
 import net.minecraft.block.FluidBlock;
+import net.minecraft.fluid.Fluid;
 import net.minecraft.fluid.FluidState;
 import net.minecraft.fluid.Fluids;
 import net.minecraft.fluid.LavaFluid;
@@ -27,7 +28,9 @@ public class LavaFluidMixin
 		final boolean replaceable = obj.isAir() || obj.getBlock().getMaterial(obj).isReplaceable() || obj.getBlock() instanceof FluidBlock;
 		if(replaceable)
 		{
-			((ModifiableWorldStateLayer) world).setState(PaletteRegistrar.FLUID_STATE, pos, Fluids.EMPTY.getDefaultState());
+			@SuppressWarnings("unchecked")
+			final ModifiableWorldStateLayer<Fluid, FluidState> w = ((ModifiableWorldStateLayer<Fluid, FluidState>) world);
+			w.setState(PaletteRegistrar.FLUID_STATE, pos, Fluids.EMPTY.getDefaultState());
 			return Blocks.WATER;
 		}
 		

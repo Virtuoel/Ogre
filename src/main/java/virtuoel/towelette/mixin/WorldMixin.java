@@ -2,6 +2,7 @@ package virtuoel.towelette.mixin;
 
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
+import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.At.Shift;
 import org.spongepowered.asm.mixin.injection.Inject;
@@ -21,17 +22,20 @@ import net.minecraft.tag.FluidTags;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Box;
+import net.minecraft.util.math.Direction;
 import net.minecraft.world.World;
 import net.minecraft.world.chunk.WorldChunk;
 import net.minecraft.world.level.LevelGeneratorType;
+import virtuoel.towelette.api.BlockViewStateLayer;
 import virtuoel.towelette.api.ChunkStateLayer;
-import virtuoel.towelette.api.StateUpdateableChunkManager;
+import virtuoel.towelette.api.PaletteData;
 import virtuoel.towelette.api.PaletteRegistrar;
+import virtuoel.towelette.api.StateUpdateableChunkManager;
 import virtuoel.towelette.api.UpdateableFluid;
 import virtuoel.towelette.mixin.layer.ModifiableWorldMixin;
 
 @Mixin(World.class)
-public abstract class WorldMixin implements ModifiableWorldMixin
+public abstract class WorldMixin<O, S extends PropertyContainer<S>> implements ModifiableWorldMixin<O, S>
 {
 	@Shadow abstract FluidState getFluidState(BlockPos pos);
 	
@@ -67,7 +71,7 @@ public abstract class WorldMixin implements ModifiableWorldMixin
 	}
 	
 	@Override
-	public <O, S extends PropertyContainer<S>> S getState(Identifier layer, BlockPos pos)
+	public S getState(Identifier layer, BlockPos pos)
 	{
 		final World self = World.class.cast(this);
 		if(World.isHeightInvalid(pos))
@@ -83,7 +87,7 @@ public abstract class WorldMixin implements ModifiableWorldMixin
 	}
 	
 	@Override
-	public <O, S extends PropertyContainer<S>> boolean setState(Identifier layer, BlockPos pos, S state, int flags)
+	public boolean setState(Identifier layer, BlockPos pos, S state, int flags)
 	{
 		final World self = World.class.cast(this);
 		if(World.isHeightInvalid(pos))
@@ -132,12 +136,81 @@ public abstract class WorldMixin implements ModifiableWorldMixin
 					
 					if (!self.isClient && (flags & 1) != 0)
 					{
-						self.updateNeighbors(pos, self.getBlockState(pos).getBlock());
+						// TODO
+						updateNeighbors(layer, self, pos);
 					}
 				}
 				
 				return true;
 			}
+		}
+	}
+	
+	@Unique
+	private static void updateNeighbors(Identifier layer, World world, BlockPos pos)
+	{
+		if (world.getLevelProperties().getGeneratorType() != LevelGeneratorType.DEBUG_ALL_BLOCK_STATES)
+		{
+			updateNeighborsAlways(layer, world, pos);
+		}
+		
+	}
+	
+	@Unique
+	private static void updateNeighborsAlways(Identifier layer, World world, BlockPos pos)
+	{
+		updateNeighbor(layer, world, pos.west(), pos);
+		updateNeighbor(layer, world, pos.east(), pos);
+		updateNeighbor(layer, world, pos.down(), pos);
+		updateNeighbor(layer, world, pos.up(), pos);
+		updateNeighbor(layer, world, pos.north(), pos);
+		updateNeighbor(layer, world, pos.south(), pos);
+	}
+	
+	@Unique
+	private static void updateNeighborsExcept(Identifier layer, World world, BlockPos pos, Direction direction)
+	{
+		if (direction != Direction.WEST)
+		{
+			updateNeighbor(layer, world, pos.west(), pos);
+		}
+		
+		if (direction != Direction.EAST)
+		{
+			updateNeighbor(layer, world, pos.east(), pos);
+		}
+		
+		if (direction != Direction.DOWN)
+		{
+			updateNeighbor(layer, world, pos.down(), pos);
+		}
+		
+		if (direction != Direction.UP)
+		{
+			updateNeighbor(layer, world, pos.up(), pos);
+		}
+		
+		if (direction != Direction.NORTH)
+		{
+			updateNeighbor(layer, world, pos.north(), pos);
+		}
+		
+		if (direction != Direction.SOUTH)
+		{
+			updateNeighbor(layer, world, pos.south(), pos);
+		}
+		
+	}
+	
+	@Unique
+	private static <O, S extends PropertyContainer<S>> void updateNeighbor(Identifier layer, World world, BlockPos pos, BlockPos otherPos)
+	{
+		if (!world.isClient())
+		{
+			final PaletteData<O, S> data = PaletteRegistrar.getPaletteData(layer);
+			@SuppressWarnings("unchecked")
+			final BlockViewStateLayer<S> w = ((BlockViewStateLayer<S>) world);
+			data.onNeighborUpdate(w.getState(layer, pos), world, pos, data.getEntry(w.getState(layer, otherPos)), otherPos, false);
 		}
 	}
 }

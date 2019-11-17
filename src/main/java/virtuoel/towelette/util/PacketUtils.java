@@ -20,11 +20,13 @@ public class PacketUtils
 	public static final Identifier UPDATE = Towelette.id("state_update");
 	public static final Identifier DELTA = Towelette.id("delta_update");
 	
-	public static CustomPayloadS2CPacket stateUpdate(PaletteData<?, ?> data, BlockView world, BlockPos pos)
+	public static <O, S extends PropertyContainer<S>> CustomPayloadS2CPacket stateUpdate(PaletteData<O, S> data, BlockView world, BlockPos pos)
 	{
 		final PacketByteBuf buffer = new PacketByteBuf(Unpooled.buffer()).writeBlockPos(pos);
 		buffer.writeVarInt(PaletteRegistrar.PALETTES.getRawId(data));
-		buffer.writeVarInt(data.getIds().getId(((BlockViewStateLayer) world).getState(PaletteRegistrar.PALETTES.getId(data), pos)));
+		@SuppressWarnings("unchecked")
+		final BlockViewStateLayer<S> w = ((BlockViewStateLayer<S>) world);
+		buffer.writeVarInt(data.getIds().getId(w.getState(PaletteRegistrar.PALETTES.getId(data), pos)));
 		return new CustomPayloadS2CPacket(UPDATE, buffer);
 	}
 	

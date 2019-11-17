@@ -34,7 +34,8 @@ public class StateArgument<O, S extends PropertyContainer<S>> implements Predica
 	@Override
 	public boolean test(CachedBlockPosition pos)
 	{
-		final S state = ((CachedStatePosition) pos).getState(layer);
+		@SuppressWarnings("unchecked")
+		final S state = ((CachedStatePosition<S>) pos).getState(layer);
 		
 		final O entry = PaletteRegistrar.<O, S>getPaletteData(layer).getEntry(this.state);
 		final O otherEntry = PaletteRegistrar.<O, S>getPaletteData(layer).getEntry(state);
@@ -57,8 +58,9 @@ public class StateArgument<O, S extends PropertyContainer<S>> implements Predica
 		}
 	}
 	
+	@SuppressWarnings("unchecked")
 	public boolean setState(ServerWorld world, BlockPos pos, int flags)
 	{
-		return ((ModifiableWorldStateLayer) world).setState(this.layer, pos, this.state, flags);
+		return ((ModifiableWorldStateLayer<O, S>) world).setState(this.layer, pos, this.state, flags);
 	}
 }

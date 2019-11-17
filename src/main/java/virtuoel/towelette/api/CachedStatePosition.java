@@ -1,8 +1,9 @@
 package virtuoel.towelette.api;
 
+import net.minecraft.state.PropertyContainer;
 import net.minecraft.util.Identifier;
 
-public interface CachedStatePosition
+public interface CachedStatePosition<S extends PropertyContainer<S>>
 {
-	<S> S getState(Identifier layer);
+	S getState(Identifier layer);
 }

@@ -14,6 +14,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 import net.minecraft.network.Packet;
 import net.minecraft.server.world.ChunkHolder;
+import net.minecraft.state.PropertyContainer;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.ChunkPos;
@@ -24,7 +25,7 @@ import virtuoel.towelette.api.PaletteRegistrar;
 import virtuoel.towelette.util.PacketUtils;
 
 @Mixin(ChunkHolder.class)
-public abstract class ChunkHolderMixin implements StateUpdateableChunkHolder
+public abstract class ChunkHolderMixin<O, S extends PropertyContainer<S>> implements StateUpdateableChunkHolder
 {
 	@Shadow int sectionsNeedingUpdateMask;
 	@Shadow int blockUpdateCount;
@@ -104,7 +105,7 @@ public abstract class ChunkHolderMixin implements StateUpdateableChunkHolder
 					final int y = positions[0] & 255;
 					final int z = (positions[0] >> 8 & 15) + this.pos.z * 16;
 					final BlockPos pos = new BlockPos(x, y, z);
-					this.sendPacketToPlayersWatching(PacketUtils.stateUpdate(PaletteRegistrar.getPaletteData(id), chunk.getWorld(), pos), false);
+					this.sendPacketToPlayersWatching(PacketUtils.<O, S>stateUpdate(PaletteRegistrar.getPaletteData(id), chunk.getWorld(), pos), false);
 				}
 				else if (updateCount == 64)
 				{

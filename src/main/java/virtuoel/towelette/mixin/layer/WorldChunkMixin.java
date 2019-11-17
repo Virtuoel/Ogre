@@ -52,7 +52,7 @@ public abstract class WorldChunkMixin implements ChunkStateLayer
 	}
 	
 	@Override
-	public <O, S extends PropertyContainer<S>> S setState(Identifier layer, BlockPos pos, S state, boolean unknownStateBoolean0912)
+	public <O, S extends PropertyContainer<S>> S setState(Identifier layer, BlockPos pos, S state, boolean pushed)
 	{
 		final WorldChunk self = (WorldChunk) (Object) this;
 		final World world = self.getWorld();
@@ -86,10 +86,7 @@ public abstract class WorldChunkMixin implements ChunkStateLayer
 		else
 		{
 			final O entry = data.getEntry(state);
-	//	*	self.getHeightmap(Heightmap.Type.MOTION_BLOCKING).trackUpdate(x, y, z, state.getBlockState());
-	//	*	self.getHeightmap(Heightmap.Type.MOTION_BLOCKING_NO_LEAVES).trackUpdate(x, y, z, state.getBlockState());
-	//	*	self.getHeightmap(Heightmap.Type.OCEAN_FLOOR).trackUpdate(x, y, z, state.getBlockState());
-	//	*	self.getHeightmap(Heightmap.Type.WORLD_SURFACE).trackUpdate(x, y, z, state.getBlockState());
+			data.trackHeightmapUpdate(self, x, y, z, state);
 			final boolean isEmpty = section.isEmpty();
 			if(wasEmpty != isEmpty)
 			{
@@ -104,7 +101,7 @@ public abstract class WorldChunkMixin implements ChunkStateLayer
 			{
 				if (!world.isClient)
 				{
-	//				((UpdateableFluid) state.getFluid()).onFluidAdded(state, world, pos, oldState);
+					data.onStateAdded(state, world, pos, oldState, pushed);
 				}
 				
 				self.setShouldSave(true);

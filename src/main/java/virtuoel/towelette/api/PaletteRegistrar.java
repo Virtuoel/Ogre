@@ -18,6 +18,9 @@ import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.registry.DefaultedRegistry;
 import net.minecraft.util.registry.Registry;
 import net.minecraft.world.BlockView;
+import net.minecraft.world.Heightmap;
+import net.minecraft.world.World;
+import net.minecraft.world.chunk.Chunk;
 import virtuoel.towelette.Towelette;
 
 public class PaletteRegistrar
@@ -37,6 +40,34 @@ public class PaletteRegistrar
 	public static <O, S extends PropertyContainer<S>> PaletteData<O, S> getPaletteData(final int id)
 	{
 		return (PaletteData<O, S>) (Object) PaletteRegistrar.PALETTES.get(id);
+	}
+	
+	public static void blockStateHeightmapUpdate(Chunk chunk, int x, int y, int z, BlockState state)
+	{
+		chunk.getHeightmap(Heightmap.Type.MOTION_BLOCKING).trackUpdate(x, y, z, state);
+		chunk.getHeightmap(Heightmap.Type.MOTION_BLOCKING_NO_LEAVES).trackUpdate(x, y, z, state);
+		chunk.getHeightmap(Heightmap.Type.OCEAN_FLOOR).trackUpdate(x, y, z, state);
+		chunk.getHeightmap(Heightmap.Type.WORLD_SURFACE).trackUpdate(x, y, z, state);
+	}
+	
+	public static void onBlockStateAdded(BlockState state, World world, BlockPos pos, BlockState oldState, boolean pushed)
+	{
+		state.onBlockAdded(world, pos, oldState, pushed);
+	}
+	
+	public static void onBlockStateNeighborUpdate(BlockState state, World world, BlockPos pos, Block other, BlockPos otherPos, boolean pushed)
+	{
+		state.neighborUpdate(world, pos, other, otherPos, pushed);
+	}
+	
+	public static void onFluidStateAdded(FluidState state, World world, BlockPos pos, FluidState oldState, boolean pushed)
+	{
+		((UpdateableFluid) state.getFluid()).onFluidAdded(state, world, pos, oldState);
+	}
+	
+	public static void onFluidStateNeighborUpdate(FluidState state, World world, BlockPos pos, Fluid other, BlockPos otherPos, boolean pushed)
+	{
+		((UpdateableFluid) state.getFluid()).neighborUpdate(state, world, pos, otherPos);
 	}
 	
 	public static boolean shouldUpdateBlockStateLight(BlockView world, BlockPos pos, BlockState newState, BlockState oldState)

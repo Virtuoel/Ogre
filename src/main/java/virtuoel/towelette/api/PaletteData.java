@@ -12,6 +12,8 @@ import net.minecraft.util.IdList;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.registry.Registry;
 import net.minecraft.world.BlockView;
+import net.minecraft.world.World;
+import net.minecraft.world.chunk.Chunk;
 import net.minecraft.world.chunk.IdListPalette;
 import net.minecraft.world.chunk.Palette;
 import net.minecraft.world.chunk.PalettedContainer;
@@ -26,6 +28,9 @@ public class PaletteData<O, S extends PropertyContainer<S>>
 	private final Predicate<S> emptyPredicate;
 	private final Supplier<S> invalidPositionSupplier;
 	private final LightUpdatePredicate<S> lightUpdatePredicate;
+	private final HeightmapUpdateConsumer<S> heightmapCallback;
+	private final StateAdditionConsumer<S> stateAdditionCallback;
+	private final StateNeighborUpdateConsumer<O, S> stateNeighborUpdateCallback;
 	
 	private final Registry<O> entryRegistry;
 	private final Function<S, O> entryFunction;
@@ -42,6 +47,9 @@ public class PaletteData<O, S extends PropertyContainer<S>>
 		final Predicate<S> emptyPredicate,
 		final Supplier<S> invalidPositionSupplier,
 		final LightUpdatePredicate<S> lightUpdatePredicate,
+		final HeightmapUpdateConsumer<S> heightmapCallback,
+		final StateAdditionConsumer<S> stateAdditionCallback,
+		final StateNeighborUpdateConsumer<O, S> stateNeighborUpdateCallback,
 		
 		final Registry<O> entryRegistry,
 		final Function<S, O> entryFunction,
@@ -58,6 +66,9 @@ public class PaletteData<O, S extends PropertyContainer<S>>
 		this.emptyPredicate = emptyPredicate;
 		this.invalidPositionSupplier = invalidPositionSupplier;
 		this.lightUpdatePredicate = lightUpdatePredicate;
+		this.heightmapCallback = heightmapCallback;
+		this.stateAdditionCallback = stateAdditionCallback;
+		this.stateNeighborUpdateCallback = stateNeighborUpdateCallback;
 		
 		this.entryRegistry = entryRegistry;
 		this.entryFunction = entryFunction;
@@ -94,6 +105,21 @@ public class PaletteData<O, S extends PropertyContainer<S>>
 	public boolean shouldEnqueueLightUpdate(BlockView world, BlockPos pos, S newState, S oldState)
 	{
 		return lightUpdatePredicate.test(world, pos, newState, oldState);
+	}
+	
+	public void trackHeightmapUpdate(Chunk chunk, int x, int y, int z, S state)
+	{
+		heightmapCallback.trackHeightmapUpdate(chunk, x, y, z, state);
+	}
+	
+	public void onStateAdded(S state, World world, BlockPos pos, S oldState, boolean pushed)
+	{
+		stateAdditionCallback.onStateAdded(state, world, pos, oldState, pushed);
+	}
+	
+	public void onNeighborUpdate(S state, World world, BlockPos pos, O other, BlockPos otherPos, boolean pushed)
+	{
+		stateNeighborUpdateCallback.onNeighborUpdate(state, world, pos, other, otherPos, pushed);
 	}
 	
 	public Registry<O> getRegistry()
@@ -141,6 +167,9 @@ public class PaletteData<O, S extends PropertyContainer<S>>
 		private Predicate<S> emptyPredicate;
 		private Optional<Supplier<S>> invalidPositionSupplier = Optional.empty();
 		private LightUpdatePredicate<S> lightUpdatePredicate;
+		private HeightmapUpdateConsumer<S> heightmapCallback = (c, x, y, z, s) -> {};
+		private StateAdditionConsumer<S> stateAdditionCallback = (s, w, p, o, b) -> {};
+		private StateNeighborUpdateConsumer<O, S> stateNeighborUpdateCallback = (s, w, p, e, o, u) -> {};
 		
 		private Registry<O> entryRegistry;
 		private Function<S, O> entryFunction;
@@ -195,6 +224,24 @@ public class PaletteData<O, S extends PropertyContainer<S>>
 			return this;
 		}
 		
+		public Builder<O, S> heightmapCallback(HeightmapUpdateConsumer<S> heightmapCallback)
+		{
+			this.heightmapCallback = heightmapCallback;
+			return this;
+		}
+		
+		public Builder<O, S> stateAdditionCallback(StateAdditionConsumer<S> stateAdditionCallback)
+		{
+			this.stateAdditionCallback = stateAdditionCallback;
+			return this;
+		}
+		
+		public Builder<O, S> stateNeighborUpdateCallback(StateNeighborUpdateConsumer<O, S> stateNeighborUpdateCallback)
+		{
+			this.stateNeighborUpdateCallback = stateNeighborUpdateCallback;
+			return this;
+		}
+		
 		public Builder<O, S> registry(Registry<O> entryRegistry)
 		{
 			this.entryRegistry = entryRegistry;
@@ -235,6 +282,9 @@ public class PaletteData<O, S extends PropertyContainer<S>>
 				emptyPredicate,
 				invalidPositionSupplier.orElse(emptyStateSupplier),
 				lightUpdatePredicate,
+				heightmapCallback,
+				stateAdditionCallback,
+				stateNeighborUpdateCallback,
 				entryRegistry,
 				entryFunction,
 				defaultStateFunction,

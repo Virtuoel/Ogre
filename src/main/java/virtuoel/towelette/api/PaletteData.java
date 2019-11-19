@@ -18,7 +18,6 @@ import net.minecraft.world.BlockView;
 import net.minecraft.world.ExtendedBlockView;
 import net.minecraft.world.World;
 import net.minecraft.world.chunk.Chunk;
-import net.minecraft.world.chunk.IdListPalette;
 import net.minecraft.world.chunk.Palette;
 import net.minecraft.world.chunk.PalettedContainer;
 
@@ -215,7 +214,7 @@ public class PaletteData<O, S extends PropertyContainer<S>>
 	
 	public static class Builder<O, S extends PropertyContainer<S>>
 	{
-		private Optional<Palette<S>> palette = Optional.empty();
+		private Palette<S> palette;
 		private IdList<S> ids;
 		
 		private Predicate<S> emptyPredicate;
@@ -244,7 +243,7 @@ public class PaletteData<O, S extends PropertyContainer<S>>
 		
 		public Builder<O, S> palette(Palette<S> palette)
 		{
-			this.palette = Optional.ofNullable(palette);
+			this.palette = palette;
 			return this;
 		}
 		
@@ -353,7 +352,7 @@ public class PaletteData<O, S extends PropertyContainer<S>>
 		public PaletteData<O, S> build()
 		{
 			return new PaletteData<>(
-				palette.orElseGet(() -> new IdListPalette<S>(ids, emptyStateSupplier.get())),
+				palette,
 				ids,
 				emptyPredicate,
 				invalidPositionSupplier.orElse(emptyStateSupplier),

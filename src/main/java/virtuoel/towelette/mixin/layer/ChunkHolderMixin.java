@@ -20,12 +20,13 @@ import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.ChunkPos;
 import net.minecraft.world.chunk.WorldChunk;
 import net.minecraft.world.chunk.light.LightingProvider;
-import virtuoel.towelette.api.StateUpdateableChunkHolder;
+import virtuoel.towelette.api.PaletteData;
 import virtuoel.towelette.api.PaletteRegistrar;
+import virtuoel.towelette.api.StateUpdateableChunkHolder;
 import virtuoel.towelette.util.PacketUtils;
 
 @Mixin(ChunkHolder.class)
-public abstract class ChunkHolderMixin<O, S extends PropertyContainer<S>> implements StateUpdateableChunkHolder
+public abstract class ChunkHolderMixin implements StateUpdateableChunkHolder
 {
 	@Shadow int sectionsNeedingUpdateMask;
 	@Shadow int blockUpdateCount;
@@ -46,13 +47,13 @@ public abstract class ChunkHolderMixin<O, S extends PropertyContainer<S>> implem
 	}
 	
 	@Override
-	public void markForStateUpdate(Identifier layer, int x, int y, int z)
+	public <O, S extends PropertyContainer<S>> void markForStateUpdate(PaletteData<O, S> layer, int x, int y, int z)
 	{
 		if (this.getWorldChunk() != null)
 		{
 			this.sectionsNeedingUpdateMask |= 1 << (y >> 4);
 			
-			final MutablePair<short[], Integer> data = updateMap.get(layer);
+			final MutablePair<short[], Integer> data = updateMap.get(PaletteRegistrar.PALETTES.getId(layer));
 			
 			final short[] positions = data.getLeft();
 			int updateCount = data.getRight();
@@ -99,13 +100,15 @@ public abstract class ChunkHolderMixin<O, S extends PropertyContainer<S>> implem
 			
 			if (updateCount != 0)
 			{
+				final PaletteData<?, ?> layer = PaletteRegistrar.getPaletteData(id);
+				
 				if (updateCount == 1)
 				{
 					final int x = (positions[0] >> 12 & 15) + this.pos.x * 16;
 					final int y = positions[0] & 255;
 					final int z = (positions[0] >> 8 & 15) + this.pos.z * 16;
 					final BlockPos pos = new BlockPos(x, y, z);
-					this.sendPacketToPlayersWatching(PacketUtils.<O, S>stateUpdate(PaletteRegistrar.getPaletteData(id), chunk.getWorld(), pos), false);
+					this.sendPacketToPlayersWatching(PacketUtils.stateUpdate(layer, chunk.getWorld(), pos), false);
 				}
 				else if (updateCount == 64)
 				{
@@ -115,7 +118,7 @@ public abstract class ChunkHolderMixin<O, S extends PropertyContainer<S>> implem
 				}
 				else
 				{
-					this.sendPacketToPlayersWatching(PacketUtils.deltaUpdate(PaletteRegistrar.getPaletteData(id), updateCount, positions, chunk), false);
+					this.sendPacketToPlayersWatching(PacketUtils.deltaUpdate(layer, updateCount, positions, chunk), false);
 				}
 				
 				data.setRight(0);

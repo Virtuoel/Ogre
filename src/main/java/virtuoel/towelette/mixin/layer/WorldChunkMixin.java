@@ -5,7 +5,6 @@ import javax.annotation.Nullable;
 import org.spongepowered.asm.mixin.Mixin;
 
 import net.minecraft.state.PropertyContainer;
-import net.minecraft.util.Identifier;
 import net.minecraft.util.crash.CrashException;
 import net.minecraft.util.crash.CrashReport;
 import net.minecraft.util.crash.CrashReportSection;
@@ -19,10 +18,10 @@ import virtuoel.towelette.api.PaletteData;
 import virtuoel.towelette.api.PaletteRegistrar;
 
 @Mixin(WorldChunk.class)
-public abstract class WorldChunkMixin<O, S extends PropertyContainer<S>> implements ChunkStateLayer<O, S>
+public abstract class WorldChunkMixin implements ChunkStateLayer
 {
 	@Override
-	public S getState(Identifier layer, int x, int y, int z)
+	public <O, S extends PropertyContainer<S>> S getState(PaletteData<O, S> layer, int x, int y, int z)
 	{
 		final WorldChunk self = (WorldChunk) (Object) this;
 		
@@ -32,20 +31,18 @@ public abstract class WorldChunkMixin<O, S extends PropertyContainer<S>> impleme
 		{
 			if (y >= 0 && y >> 4 < sections.length)
 			{
-				ChunkSection section = sections[y >> 4];
+				final ChunkSection section = sections[y >> 4];
 				if (!ChunkSection.isEmpty(section))
 				{
-					@SuppressWarnings("unchecked")
-					final ChunkSectionStateLayer<O, S> s = ((ChunkSectionStateLayer<O, S>) section);
-					return s.getState(layer, x & 15, y & 15, z & 15);
+					return ((ChunkSectionStateLayer) section).getState(layer, x & 15, y & 15, z & 15);
 				}
 			}
 			
-			return PaletteRegistrar.<O, S>getPaletteData(layer).getEmptyState();
+			return layer.getEmptyState();
 		}
 		catch (Throwable t)
 		{
-			final CrashReport report = CrashReport.create(t, "Getting state from layer " + layer.toString());
+			final CrashReport report = CrashReport.create(t, "Getting state from layer " + PaletteRegistrar.PALETTES.getId(layer).toString());
 			final CrashReportSection section = report.addElement("State being got");
 			section.add("Location", () ->
 			{
@@ -57,7 +54,7 @@ public abstract class WorldChunkMixin<O, S extends PropertyContainer<S>> impleme
 	
 	@Override
 	@Nullable
-	public S setState(Identifier layer, BlockPos pos, S state, boolean pushed)
+	public <O, S extends PropertyContainer<S>> S setState(PaletteData<O, S> layer, BlockPos pos, S state, boolean pushed)
 	{
 		final WorldChunk self = (WorldChunk) (Object) this;
 		final World world = self.getWorld();
@@ -68,12 +65,10 @@ public abstract class WorldChunkMixin<O, S extends PropertyContainer<S>> impleme
 		
 		final ChunkSection[] sections = self.getSectionArray();
 		
-		final PaletteData<O, S> data = PaletteRegistrar.getPaletteData(layer);
-		
 		ChunkSection section = sections[y >> 4];
 		if(section == WorldChunk.EMPTY_SECTION)
 		{
-			if(data.isEmpty(state))
+			if(layer.isEmpty(state))
 			{
 				return null;
 			}
@@ -82,8 +77,7 @@ public abstract class WorldChunkMixin<O, S extends PropertyContainer<S>> impleme
 			sections[y >> 4] = section;
 		}
 		
-		@SuppressWarnings("unchecked")
-		final ChunkSectionStateLayer<O, S> s = ((ChunkSectionStateLayer<O, S>) section);
+		final ChunkSectionStateLayer s = ((ChunkSectionStateLayer) section);
 		
 		final boolean wasEmpty = section.isEmpty();
 		final S oldState = s.setState(layer, x, y & 15, z, state);
@@ -93,15 +87,15 @@ public abstract class WorldChunkMixin<O, S extends PropertyContainer<S>> impleme
 		}
 		else
 		{
-			final O entry = data.getEntry(state);
-			data.trackHeightmapUpdate(self, x, y, z, state);
+			final O entry = layer.getEntry(state);
+			layer.trackHeightmapUpdate(self, x, y, z, state);
 			final boolean isEmpty = section.isEmpty();
 			if(wasEmpty != isEmpty)
 			{
 				world.getChunkManager().getLightingProvider().updateSectionStatus(pos, isEmpty);
 			}
 			
-			if(data.getEntry(s.getState(layer, x, y & 15, z)) != entry)
+			if(layer.getEntry(s.getState(layer, x, y & 15, z)) != entry)
 			{
 				return null;
 			}
@@ -109,7 +103,7 @@ public abstract class WorldChunkMixin<O, S extends PropertyContainer<S>> impleme
 			{
 				if (!world.isClient)
 				{
-					data.onStateAdded(state, world, pos, oldState, pushed);
+					layer.onStateAdded(state, world, pos, oldState, pushed);
 				}
 				
 				self.setShouldSave(true);

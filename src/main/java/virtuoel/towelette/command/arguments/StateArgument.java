@@ -7,19 +7,19 @@ import net.minecraft.block.pattern.CachedBlockPosition;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.state.PropertyContainer;
 import net.minecraft.state.property.Property;
-import net.minecraft.util.Identifier;
 import net.minecraft.util.math.BlockPos;
 import virtuoel.towelette.api.CachedStatePosition;
 import virtuoel.towelette.api.ModifiableWorldStateLayer;
-import virtuoel.towelette.api.PaletteRegistrar;
+import virtuoel.towelette.api.PaletteData;
 
 public class StateArgument<O, S extends PropertyContainer<S>> implements Predicate<CachedBlockPosition>
 {
-	private final Identifier layer;
 	private final S state;
 	private final Set<Property<?>> properties;
 	
-	public StateArgument(Identifier layer, S state, Set<Property<?>> properties)
+	private PaletteData<O, S> layer;
+	
+	public StateArgument(PaletteData<O, S> layer, S state, Set<Property<?>> properties)
 	{
 		this.layer = layer;
 		this.state = state;
@@ -34,11 +34,10 @@ public class StateArgument<O, S extends PropertyContainer<S>> implements Predica
 	@Override
 	public boolean test(CachedBlockPosition pos)
 	{
-		@SuppressWarnings("unchecked")
-		final S state = ((CachedStatePosition<S>) pos).getState(layer);
+		final S state = ((CachedStatePosition) pos).getState(layer);
 		
-		final O entry = PaletteRegistrar.<O, S>getPaletteData(layer).getEntry(this.state);
-		final O otherEntry = PaletteRegistrar.<O, S>getPaletteData(layer).getEntry(state);
+		final O entry = layer.getEntry(this.state);
+		final O otherEntry = layer.getEntry(state);
 		
 		if(otherEntry != entry)
 		{
@@ -58,9 +57,8 @@ public class StateArgument<O, S extends PropertyContainer<S>> implements Predica
 		}
 	}
 	
-	@SuppressWarnings("unchecked")
 	public boolean setState(ServerWorld world, BlockPos pos, int flags)
 	{
-		return ((ModifiableWorldStateLayer<O, S>) world).setState(this.layer, pos, this.state, flags);
+		return ((ModifiableWorldStateLayer) world).setState(this.layer, pos, this.state, flags);
 	}
 }

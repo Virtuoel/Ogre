@@ -19,10 +19,11 @@ import net.minecraft.world.World;
 import net.minecraft.world.chunk.WorldChunk;
 import virtuoel.towelette.api.BlockViewStateLayer;
 import virtuoel.towelette.api.ChunkStateLayer;
+import virtuoel.towelette.api.PaletteData;
 import virtuoel.towelette.api.PaletteRegistrar;
 
 @Mixin(ChunkRendererRegion.class)
-public abstract class ChunkRendererRegionMixin<O, S extends PropertyContainer<S>> implements BlockViewStateLayer<S>
+public abstract class ChunkRendererRegionMixin implements BlockViewStateLayer
 {
 	@Shadow @Final int xSize;
 	@Shadow @Final int ySize;
@@ -32,24 +33,26 @@ public abstract class ChunkRendererRegionMixin<O, S extends PropertyContainer<S>
 	
 	@Shadow abstract int getIndex(BlockPos pos);
 	
-	@Unique private Object2ObjectLinkedOpenHashMap<Identifier, S[]> states;
+	@Unique private Object2ObjectLinkedOpenHashMap<Identifier, PropertyContainer<?>[]> states;
 	
 	@Inject(at = @At("RETURN"), method = "<init>(ISSS)V")
-	private void onConstruct(World world, int x, int z, WorldChunk[][] chunks, BlockPos from, BlockPos to, CallbackInfo info)
+	private <O, S extends PropertyContainer<S>> void onConstruct(World world, int x, int z, WorldChunk[][] chunks, BlockPos from, BlockPos to, CallbackInfo info)
 	{
-		states = new Object2ObjectLinkedOpenHashMap<Identifier, S[]>();
+		states = new Object2ObjectLinkedOpenHashMap<Identifier, PropertyContainer<?>[]>();
 		
 		boolean blockState = false;
 		boolean fluidState = false;
-		for(final Identifier layer : PaletteRegistrar.PALETTES.getIds())
+		for(final Identifier id : PaletteRegistrar.PALETTES.getIds())
 		{
-			Object array;
-			if(!blockState && layer.equals(PaletteRegistrar.BLOCK_STATE))
+			final PaletteData<O, S> layer = PaletteRegistrar.getPaletteData(id);
+			
+			final PropertyContainer<?>[] array;
+			if(!blockState && layer == PaletteRegistrar.BLOCKS)
 			{
 				blockState = true;
 				array = blockStates;
 			}
-			else if(!fluidState && layer.equals(PaletteRegistrar.FLUID_STATE))
+			else if(!fluidState && layer == PaletteRegistrar.FLUIDS)
 			{
 				fluidState = true;
 				array = fluidStates;
@@ -57,30 +60,23 @@ public abstract class ChunkRendererRegionMixin<O, S extends PropertyContainer<S>
 			else
 			{
 				array = new PropertyContainer[xSize * ySize * zSize];
-				@SuppressWarnings("unchecked")
-				final S[] stateArray = (S[]) array;
 				
-				int index;
 				for(final BlockPos pos : BlockPos.iterate(from, to))
 				{
-					int chunkX = (pos.getX() >> 4) - x;
-					int chunkZ = (pos.getZ() >> 4) - z;
-					@SuppressWarnings("unchecked")
-					ChunkStateLayer<O, S> chunk = ((ChunkStateLayer<O, S>) chunks[chunkX][chunkZ]);
-					index = this.getIndex(pos);
-					stateArray[index] = chunk.getState(layer, pos);
+					final int chunkX = (pos.getX() >> 4) - x;
+					final int chunkZ = (pos.getZ() >> 4) - z;
+					array[getIndex(pos)] = ((ChunkStateLayer) chunks[chunkX][chunkZ]).getState(layer, pos);
 				}
 			}
 			
-			@SuppressWarnings("unchecked")
-			final S[] stateArray = (S[]) array;
-			states.put(layer, stateArray);
+			states.put(id, array);
 		}
 	}
 	
+	@SuppressWarnings("unchecked")
 	@Override
-	public S getState(Identifier layer, BlockPos pos)
+	public <O, S extends PropertyContainer<S>> S getState(PaletteData<O, S> layer, BlockPos pos)
 	{
-		return states.get(layer)[this.getIndex(pos)];
+		return (S) states.get(PaletteRegistrar.PALETTES.getId(layer))[this.getIndex(pos)];
 	}
 }

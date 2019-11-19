@@ -10,28 +10,20 @@ import net.fabricmc.fabric.api.registry.CommandRegistry;
 import net.fabricmc.fabric.api.tag.TagRegistry;
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;
-import net.minecraft.block.Blocks;
 import net.minecraft.command.arguments.ArgumentTypes;
 import net.minecraft.command.arguments.BlockPosArgumentType;
-import net.minecraft.command.arguments.serialize.ArgumentSerializer;
 import net.minecraft.command.arguments.serialize.ConstantArgumentSerializer;
-import net.minecraft.fluid.Fluid;
 import net.minecraft.fluid.FluidState;
-import net.minecraft.fluid.Fluids;
 import net.minecraft.server.command.CommandManager;
 import net.minecraft.tag.Tag;
 import net.minecraft.text.LiteralText;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.registry.Registry;
-import net.minecraft.world.chunk.ChunkSection;
-import net.minecraft.world.chunk.Palette;
-import virtuoel.towelette.api.PaletteData;
 import virtuoel.towelette.api.PaletteRegistrar;
 import virtuoel.towelette.api.ToweletteApi;
+import virtuoel.towelette.command.arguments.LayerArgumentType;
 import virtuoel.towelette.command.arguments.StateArgumentType;
 import virtuoel.towelette.server.command.SetStateCommand;
-import virtuoel.towelette.util.PaletteUtils;
 
 public class Towelette implements ModInitializer
 {
@@ -42,10 +34,7 @@ public class Towelette implements ModInitializer
 	
 	static
 	{
-		Reflection.initialize(
-			PaletteRegistrar.class,
-			ChunkSection.class
-		);
+		Reflection.initialize(PaletteRegistrar.class);
 	}
 	
 	public static boolean ignoreBlockStateFluids(BlockState state)
@@ -56,28 +45,8 @@ public class Towelette implements ModInitializer
 	@Override
 	public void onInitialize()
 	{
-		PaletteRegistrar.PALETTES.add(PaletteRegistrar.FLUID_STATE,
-			PaletteData.<Fluid, FluidState>builder()
-			.ids(Fluid.STATE_IDS)
-			.emptyPredicate(FluidState::isEmpty)
-			.lightUpdatePredicate(PaletteUtils::shouldUpdateFluidStateLight)
-			.stateAdditionCallback(PaletteUtils::onFluidStateAdded)
-			.stateNeighborUpdateCallback(PaletteUtils::onFluidStateNeighborUpdate)
-			.registry(Registry.FLUID)
-			.entryFunction(FluidState::getFluid)
-			.defaultStateFunction(Fluid::getDefaultState)
-			.managerFunction(Fluid::getStateFactory)
-			.emptyStateSupplier(Fluids.EMPTY::getDefaultState)
-			.defaultIdFunction(Registry.FLUID::getDefaultId)
-			.renderPredicate(PaletteUtils.Client::shouldRenderFluidState)
-			.renderLayerFunction(PaletteUtils.Client::getFluidStateRenderLayer)
-			.tesselationCallback(PaletteUtils.Client::tesselateFluidState)
-			.build()
-		);
-		
-		@SuppressWarnings("rawtypes") final ArgumentSerializer<StateArgumentType> stateSerializer = new ConstantArgumentSerializer<StateArgumentType>(StateArgumentType::create);
-		ArgumentTypes.register("state", StateArgumentType.class, stateSerializer);
-	//	ArgumentTypes.register("state_predicate", StatePredicateArgumentType.class, new ConstantArgumentSerializer<StatePredicateArgumentType>(StatePredicateArgumentType::create));
+		ArgumentTypes.register("state", StateArgumentType.class, new ConstantArgumentSerializer<StateArgumentType>(StateArgumentType::create));
+		ArgumentTypes.register("layer", LayerArgumentType.class, new ConstantArgumentSerializer<LayerArgumentType>(LayerArgumentType::layer));
 		
 		CommandRegistry.INSTANCE.register(false, commandDispatcher ->
 		{
@@ -93,8 +62,7 @@ public class Towelette implements ModInitializer
 					{
 						final BlockPos pos = BlockPosArgumentType.getLoadedBlockPos(context, "pos");
 						final FluidState state = context.getSource().getWorld().getFluidState(pos);
-						final PaletteData<Fluid, FluidState> data = PaletteRegistrar.<Fluid, FluidState>getPaletteData(PaletteRegistrar.FLUID_STATE);
-						context.getSource().sendFeedback(new LiteralText(data.serializeState(state).toString()), true);
+						context.getSource().sendFeedback(new LiteralText(PaletteRegistrar.FLUIDS.serializeState(state).toString()), true);
 						return 1;
 					})
 				)
@@ -112,8 +80,7 @@ public class Towelette implements ModInitializer
 					{
 						final BlockPos pos = BlockPosArgumentType.getLoadedBlockPos(context, "pos");
 						final BlockState state = context.getSource().getWorld().getBlockState(pos);
-						final PaletteData<Block, BlockState> data = PaletteRegistrar.<Block, BlockState>getPaletteData(PaletteRegistrar.BLOCK_STATE);
-						context.getSource().sendFeedback(new LiteralText(data.serializeState(state).toString()), true);
+						context.getSource().sendFeedback(new LiteralText(PaletteRegistrar.BLOCKS.serializeState(state).toString()), true);
 						return 1;
 					})
 				)
@@ -121,32 +88,6 @@ public class Towelette implements ModInitializer
 			
 			SetStateCommand.register(commandDispatcher);
 		});
-	}
-	
-	public static void registerBlockPaletteData(final Palette<BlockState> palette)
-	{
-		PaletteRegistrar.PALETTES.add(PaletteRegistrar.BLOCK_STATE,
-			PaletteData.<Block, BlockState>builder()
-			.palette(palette)
-			.ids(Block.STATE_IDS)
-			.emptyPredicate(BlockState::isAir)
-			.invalidPositionSupplier(Blocks.VOID_AIR::getDefaultState)
-			.lightUpdatePredicate(PaletteUtils::shouldUpdateBlockStateLight)
-			.heightmapCallback(PaletteUtils::blockStateHeightmapUpdate)
-			.stateAdditionCallback(PaletteUtils::onBlockStateAdded)
-			.stateNeighborUpdateCallback(PaletteUtils::onBlockStateNeighborUpdate)
-			.registry(Registry.BLOCK)
-			.entryFunction(BlockState::getBlock)
-			.defaultStateFunction(Block::getDefaultState)
-			.managerFunction(Block::getStateFactory)
-			.emptyStateSupplier(Blocks.AIR::getDefaultState)
-			.defaultIdFunction(Registry.BLOCK::getDefaultId)
-			.occlusionGraphCallback(PaletteUtils.Client::handleBlockStateOcclusionGraph)
-			.renderPredicate(PaletteUtils.Client::shouldRenderBlockState)
-			.renderLayerFunction(PaletteUtils.Client::getBlockStateRenderLayer)
-			.tesselationCallback(PaletteUtils.Client::tesselateBlockState)
-			.build()
-		);
 	}
 	
 	public static Identifier id(final String name)

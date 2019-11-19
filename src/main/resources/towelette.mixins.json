@@ -20,6 +20,7 @@
 		"WorldMixin",
 		"layer.CachedBlockPositionMixin",
 		"layer.ChunkHolderMixin",
+		"layer.ChunkSectionAccessor",
 		"layer.ChunkSectionMixin",
 		"layer.ChunkSerializerMixin",
 		"layer.EmptyChunkMixin",

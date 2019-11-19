@@ -209,9 +209,8 @@ public abstract class BaseFluidMixin
 	@Inject(at = @At(value = "HEAD"), method = "flow", cancellable = true)
 	private void onFlowPre(IWorld world, BlockPos pos, BlockState blockState, Direction direction, FluidState fluidState, CallbackInfo info)
 	{
-		@SuppressWarnings("unchecked")
-		final ModifiableWorldStateLayer<Fluid, FluidState> w = ((ModifiableWorldStateLayer<Fluid, FluidState>) world);
-		w.setState(PaletteRegistrar.FLUID_STATE, pos, fluidState, fluidState.isEmpty() ? 3 : 2);
+		final ModifiableWorldStateLayer w = ((ModifiableWorldStateLayer) world);
+		w.setState(PaletteRegistrar.FLUIDS, pos, fluidState, fluidState.isEmpty() ? 3 : 2);
 		
 		if(blockState.matches(Towelette.DISPLACEABLE) && !blockState.matches(Towelette.UNDISPLACEABLE))
 		{
@@ -255,9 +254,8 @@ public abstract class BaseFluidMixin
 	{
 		if(!(blockState.getBlock() instanceof FluidFillable))
 		{
-			@SuppressWarnings("unchecked")
-			final ModifiableWorldStateLayer<Fluid, FluidState> w = ((ModifiableWorldStateLayer<Fluid, FluidState>) world);
-			w.setState(PaletteRegistrar.FLUID_STATE, pos, fluidState, fluidState.isEmpty() ? 3 : 2);
+			final ModifiableWorldStateLayer w = ((ModifiableWorldStateLayer) world);
+			w.setState(PaletteRegistrar.FLUIDS, pos, fluidState, fluidState.isEmpty() ? 3 : 2);
 		}
 	}
 	
@@ -270,8 +268,7 @@ public abstract class BaseFluidMixin
 	@Inject(method = "onScheduledTick", at = @At(value = "INVOKE", shift = Shift.AFTER, target = "Lnet/minecraft/world/World;setBlockState(Lnet/minecraft/util/math/BlockPos;Lnet/minecraft/block/BlockState;I)Z"))
 	private void onOnScheduledTick(World world, BlockPos pos, FluidState fluidState, CallbackInfo info)
 	{
-		@SuppressWarnings("unchecked")
-		final ModifiableWorldStateLayer<Fluid, FluidState> w = ((ModifiableWorldStateLayer<Fluid, FluidState>) world);
-		w.setState(PaletteRegistrar.FLUID_STATE, pos, fluidState, fluidState.isEmpty() ? 3 : 2);
+		final ModifiableWorldStateLayer w = ((ModifiableWorldStateLayer) world);
+		w.setState(PaletteRegistrar.FLUIDS, pos, fluidState, fluidState.isEmpty() ? 3 : 2);
 	}
 }

@@ -1,16 +1,15 @@
 package virtuoel.towelette.api;
 
 import net.minecraft.state.PropertyContainer;
-import net.minecraft.util.Identifier;
 
-public interface ChunkSectionStateLayer<O, S extends PropertyContainer<S>>
+public interface ChunkSectionStateLayer
 {
-	default S setState(Identifier layer, int x, int y, int z, S state)
+	default <O, S extends PropertyContainer<S>> S setState(PaletteData<O, S> layer, int x, int y, int z, S state)
 	{
 		return setState(layer, x, y, z, state, true);
 	}
 	
-	S setState(Identifier layer, int x, int y, int z, S state, boolean synchronous);
+	<O, S extends PropertyContainer<S>> S setState(PaletteData<O, S> layer, int x, int y, int z, S state, boolean synchronous);
 	
-	S getState(Identifier layer, int x, int y, int z);
+	<O, S extends PropertyContainer<S>> S getState(PaletteData<O, S> layer, int x, int y, int z);
 }

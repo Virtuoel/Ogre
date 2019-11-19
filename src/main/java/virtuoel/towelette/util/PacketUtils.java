@@ -24,10 +24,8 @@ public class PacketUtils
 	{
 		final PacketByteBuf buffer = new PacketByteBuf(Unpooled.buffer()).writeBlockPos(pos);
 		buffer.writeVarInt(PaletteRegistrar.PALETTES.getRawId(data));
-		@SuppressWarnings("unchecked")
-		final BlockViewStateLayer<S> w = ((BlockViewStateLayer<S>) world);
-		final Identifier layer = PaletteRegistrar.PALETTES.getId(data);
-		buffer.writeVarInt(data.getIds().getId(w.getState(layer, pos)));
+		final BlockViewStateLayer w = ((BlockViewStateLayer) world);
+		buffer.writeVarInt(data.getIds().getId(w.getState(data, pos)));
 		return new CustomPayloadS2CPacket(UPDATE, buffer);
 	}
 	
@@ -36,24 +34,22 @@ public class PacketUtils
 		return new CustomPayloadS2CPacket(DELTA, writeDelta(data, new PacketByteBuf(Unpooled.buffer()), records, positions, chunk));
 	}
 	
-	private static <O, S extends PropertyContainer<S>> PacketByteBuf writeDelta(PaletteData<O, S> data, PacketByteBuf buffer, int records, short[] positions, WorldChunk chunk)
+	private static <O, S extends PropertyContainer<S>> PacketByteBuf writeDelta(PaletteData<O, S> layer, PacketByteBuf buffer, int records, short[] positions, WorldChunk chunk)
 	{
 		final ChunkPos chunkPos = chunk.getPos();
 		
-		buffer.writeVarInt(PaletteRegistrar.PALETTES.getRawId(data));
+		buffer.writeVarInt(PaletteRegistrar.PALETTES.getRawId(layer));
 		
 		buffer.writeInt(chunkPos.x);
 		buffer.writeInt(chunkPos.z);
 		buffer.writeVarInt(records);
 		
-		@SuppressWarnings("unchecked")
-		final ChunkStateLayer<O, S> c = ((ChunkStateLayer<O, S>) chunk);
-		final Identifier layer = PaletteRegistrar.PALETTES.getId(data);
+		final ChunkStateLayer c = ((ChunkStateLayer) chunk);
 		
 		for (int i = 0; i < records; ++i)
 		{
 			buffer.writeShort(positions[i]);
-			buffer.writeVarInt(data.getIds().getId(c.getState(layer, toBlockPos(chunkPos, positions[i]))));
+			buffer.writeVarInt(layer.getIds().getId(c.getState(layer, toBlockPos(chunkPos, positions[i]))));
 		}
 		
 		return buffer;

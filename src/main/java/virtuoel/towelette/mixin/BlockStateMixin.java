@@ -14,7 +14,6 @@ import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Direction;
 import net.minecraft.world.IWorld;
 import net.minecraft.world.World;
-import virtuoel.towelette.Towelette;
 import virtuoel.towelette.util.FluidUtils;
 
 @Mixin(BlockState.class)
@@ -51,9 +50,6 @@ public abstract class BlockStateMixin
 	@Inject(at = @At("HEAD"), method = "getFluidState", cancellable = true)
 	private void getFluidState(CallbackInfoReturnable<FluidState> info)
 	{
-		if(Towelette.ignoreBlockStateFluids((BlockState) (Object) this))
-		{
-			info.setReturnValue(Fluids.EMPTY.getDefaultState());
-		}
+		info.setReturnValue(Fluids.EMPTY.getDefaultState());
 	}
 }

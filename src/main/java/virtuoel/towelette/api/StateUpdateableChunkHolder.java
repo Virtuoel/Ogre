@@ -1,8 +1,8 @@
 package virtuoel.towelette.api;
 
-import net.minecraft.util.Identifier;
+import net.minecraft.state.PropertyContainer;
 
 public interface StateUpdateableChunkHolder
 {
-	void markForStateUpdate(Identifier layer, int x, int y, int z);
+	<O, S extends PropertyContainer<S>> void markForStateUpdate(PaletteData<O, S> layer, int x, int y, int z);
 }

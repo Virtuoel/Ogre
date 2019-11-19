@@ -13,54 +13,86 @@ import com.mojang.brigadier.suggestion.SuggestionsBuilder;
 
 import net.minecraft.server.command.ServerCommandSource;
 import net.minecraft.state.PropertyContainer;
-import net.minecraft.util.Identifier;
-import virtuoel.towelette.api.PaletteRegistrar;
+import virtuoel.towelette.api.PaletteData;
 
-public class StateArgumentType <O, S extends PropertyContainer<S>> implements ArgumentType<StateArgument<O, S>>
+public class StateArgumentType implements ArgumentType<StateArgument<?, ?>>
 {
 	private static final Collection<String> EXAMPLES = Arrays.asList("stone", "minecraft:stone", "stone[foo=bar]");
 	
-	public static <O, S extends PropertyContainer<S>> StateArgumentType<O, S> create()
+	public static StateArgumentType create()
 	{
-		return new StateArgumentType<O, S>(PaletteRegistrar.BLOCK_STATE);
+		return create("layer");
 	}
 	
-	public StateArgumentType(Identifier layer)
+	public static StateArgumentType create(String layerArgumentName)
 	{
-		this.layer = layer;
+		return create(StateArgumentType::parsePaletteData, layerArgumentName);
 	}
 	
-	Identifier layer;
+	private static PaletteData<?, ?> parsePaletteData(StringReader reader) throws CommandSyntaxException
+	{
+		return virtuoel.towelette.api.PaletteRegistrar.FLUIDS;
+		/* // TODO very broken
+		final int pos = reader.getCursor();
+		
+		int offset = 0;
+		while(reader.peek(--offset) != ' ');
+		reader.setCursor(pos + offset);
+		
+		final PaletteData<?, ?> layer = new LayerArgumentType().parse(reader);
+		
+		reader.setCursor(pos);
+		return layer;
+		*/
+	}
 	
+	public static StateArgumentType create(ArgumentType<PaletteData<?, ?>> layerIdParser, String layerArgumentName)
+	{
+		return new StateArgumentType(layerIdParser, layerArgumentName);
+	}
+	
+	final ArgumentType<PaletteData<?, ?>> readerLayerFunction;
+	final String layerArgumentName;
+	
+	public <U> StateArgumentType(ArgumentType<PaletteData<?, ?>> readerLayerFunction, String layerArgumentName)
+	{
+		this.readerLayerFunction = readerLayerFunction;
+		this.layerArgumentName = layerArgumentName;
+	}
+	
+	@SuppressWarnings({ "unchecked", "rawtypes" })
 	@Override
-	public StateArgument<O, S> parse(StringReader stringReader_1) throws CommandSyntaxException
+	public StateArgument<?, ?> parse(StringReader reader) throws CommandSyntaxException
 	{
-		StateArgumentParser<O, S> FluidArgumentParser_1 = new StateArgumentParser<O, S>(stringReader_1, layer).parse(true);
-		return new StateArgument<O, S>(layer, FluidArgumentParser_1.getState(), FluidArgumentParser_1.getProperties().keySet());
+		final PaletteData<?, ?> layer = readerLayerFunction.parse(reader);
+		final StateArgumentParser parser = new StateArgumentParser(reader).parse(layer);
+		return new StateArgument(layer, parser.getState(), parser.getStateProperties().keySet());
 	}
 	
-	public static <O, S extends PropertyContainer<S>> StateArgument<O, S> getArgument(CommandContext<ServerCommandSource> commandContext_1, String string_1)
+	@SuppressWarnings("unchecked")
+	public static <O, S extends PropertyContainer<S>> StateArgument<O, S> getArgument(CommandContext<ServerCommandSource> context, String name)
 	{
-		return commandContext_1.getArgument(string_1, StateArgument.class);
+		return context.getArgument(name, StateArgument.class);
 	}
 	
+	@SuppressWarnings("unchecked")
 	@Override
-	public <U> CompletableFuture<Suggestions> listSuggestions(CommandContext<U> commandContext_1, SuggestionsBuilder suggestionsBuilder_1)
+	public <U> CompletableFuture<Suggestions> listSuggestions(CommandContext<U> context, SuggestionsBuilder builder)
 	{
-		StringReader stringReader_1 = new StringReader(suggestionsBuilder_1.getInput());
-		stringReader_1.setCursor(suggestionsBuilder_1.getStart());
-		StateArgumentParser<O, S> FluidArgumentParser_1 = new StateArgumentParser<O, S>(stringReader_1, layer);
+		StringReader reader = new StringReader(builder.getInput());
+		reader.setCursor(builder.getStart());
+		StateArgumentParser parser = new StateArgumentParser(reader);
 		
 		try
-		{
-			FluidArgumentParser_1.parse(true);
+		{ // TODO FIXME layer-sensitive parsing
+			parser.parse(context.getArgument(layerArgumentName, PaletteData.class));
 		}
-		catch(CommandSyntaxException var6)
+		catch(CommandSyntaxException e)
 		{
 			
 		}
 		
-		return FluidArgumentParser_1.getSuggestions(suggestionsBuilder_1);
+		return parser.getSuggestions(builder);
 	}
 	
 	@Override

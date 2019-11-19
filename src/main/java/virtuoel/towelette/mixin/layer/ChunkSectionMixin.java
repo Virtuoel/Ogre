@@ -20,37 +20,31 @@ import net.minecraft.state.PropertyContainer;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.PacketByteBuf;
 import net.minecraft.world.chunk.ChunkSection;
-import net.minecraft.world.chunk.Palette;
 import net.minecraft.world.chunk.PalettedContainer;
-import virtuoel.towelette.Towelette;
 import virtuoel.towelette.api.ChunkSectionStateLayer;
 import virtuoel.towelette.api.PaletteData;
 import virtuoel.towelette.api.PaletteRegistrar;
 
 @Mixin(ChunkSection.class)
-public class ChunkSectionMixin<O, S extends PropertyContainer<S>> implements ChunkSectionStateLayer<O, S>
+public class ChunkSectionMixin implements ChunkSectionStateLayer
 {
-	@Shadow @Final static Palette<BlockState> palette;
 	@Shadow @Final PalettedContainer<BlockState> container;
 	
 	@Unique private Object2ObjectLinkedOpenHashMap<Identifier, MutablePair<PalettedContainer<?>, Integer>> palettes;
-	
-	static
-	{
-		Towelette.registerBlockPaletteData(palette);
-	}
 	
 	@Inject(at = @At("RETURN"), method = "<init>(ISSS)V")
 	private void onConstruct(int yOffset, short nonEmptyBlockCount, short randomTickableBlockCount, short nonEmptyFluidCount, CallbackInfo info)
 	{
 		palettes = new Object2ObjectLinkedOpenHashMap<Identifier, MutablePair<PalettedContainer<?>, Integer>>();
 		
-		palettes.put(PaletteRegistrar.BLOCK_STATE, new MutablePair<PalettedContainer<?>, Integer>(container, 0));
+		final Identifier blocks = PaletteRegistrar.PALETTES.getId(PaletteRegistrar.BLOCKS);
+		
+		palettes.put(blocks, new MutablePair<PalettedContainer<?>, Integer>(container, 0));
 		
 		boolean blockState = false;
 		for(final Identifier id : PaletteRegistrar.PALETTES.getIds())
 		{
-			if(!blockState && id.equals(PaletteRegistrar.BLOCK_STATE))
+			if(!blockState && id.equals(blocks))
 			{
 				blockState = true;
 				continue;
@@ -91,7 +85,7 @@ public class ChunkSectionMixin<O, S extends PropertyContainer<S>> implements Chu
 	@Inject(at = @At("HEAD"), method = "getFluidState(III)Lnet/minecraft/fluid/FluidState;", cancellable = true)
 	public void onGetFluidState(int x, int y, int z, CallbackInfoReturnable<FluidState> info)
 	{
-		info.setReturnValue((FluidState) getState(PaletteRegistrar.FLUID_STATE, x, y, z));
+		info.setReturnValue((FluidState) getState(PaletteRegistrar.FLUIDS, x, y, z));
 	}
 	
 	@Inject(require = 0, at = @At("RETURN"), method = "fromPacket(Lnet/minecraft/util/PacketByteBuf;)V")
@@ -123,21 +117,19 @@ public class ChunkSectionMixin<O, S extends PropertyContainer<S>> implements Chu
 	}
 	
 	@Override
-	public S setState(Identifier layer, int x, int y, int z, S state, boolean synchronous)
+	public <O, S extends PropertyContainer<S>> S setState(PaletteData<O, S> layer, int x, int y, int z, S state, boolean synchronous)
 	{
-		final MutablePair<PalettedContainer<?>, Integer> holder = palettes.get(layer);
+		final MutablePair<PalettedContainer<?>, Integer> holder = palettes.get(PaletteRegistrar.PALETTES.getId(layer));
 		@SuppressWarnings("unchecked")
 		final PalettedContainer<S> container = ((PalettedContainer<S>) holder.getLeft());
 		final S old_state = synchronous ? container.setSync(x, y, z, state) : container.set(x, y, z, state);
 		
-		final PaletteData<O, S> data = PaletteRegistrar.getPaletteData(layer);
-		
-		if(!data.isEmpty(old_state))
+		if(!layer.isEmpty(old_state))
 		{
 			holder.setRight(holder.getRight() - 1);
 		}
 		
-		if(!data.isEmpty(state))
+		if(!layer.isEmpty(state))
 		{
 			holder.setRight(holder.getRight() + 1);
 		}
@@ -146,9 +138,9 @@ public class ChunkSectionMixin<O, S extends PropertyContainer<S>> implements Chu
 	}
 	
 	@Override
-	public S getState(Identifier layer, int x, int y, int z)
+	public <O, S extends PropertyContainer<S>> S getState(PaletteData<O, S> layer, int x, int y, int z)
 	{
-		final MutablePair<PalettedContainer<?>, Integer> data = palettes.get(layer);
+		final MutablePair<PalettedContainer<?>, Integer> data = palettes.get(PaletteRegistrar.PALETTES.getId(layer));
 		@SuppressWarnings("unchecked")
 		final PalettedContainer<S> container = ((PalettedContainer<S>) data.getLeft());
 		

@@ -39,7 +39,7 @@ import virtuoel.towelette.api.PaletteRegistrar;
 import virtuoel.towelette.util.client.RenderUtils;
 
 @Mixin(ChunkRenderer.class)
-public abstract class ChunkRendererMixin<O, S extends PropertyContainer<S>>
+public abstract class ChunkRendererMixin
 {
 	@Shadow @Final Set<BlockEntity> blockEntities;
 	@Shadow @Final WorldRenderer renderer;
@@ -47,7 +47,7 @@ public abstract class ChunkRendererMixin<O, S extends PropertyContainer<S>>
 	@Shadow abstract void endBufferBuilding(BlockRenderLayer renderLayer, float x, float y, float z, BufferBuilder builder, ChunkRenderData data);
 	
 	@Inject(at = @At("HEAD"), method = "rebuildChunk(FFFLnet/minecraft/client/render/chunk/ChunkRenderTask;)V", cancellable = true)
-	public void onRebuildChunk(float x, float y, float z, ChunkRenderTask task, CallbackInfo info)
+	public <O, S extends PropertyContainer<S>> void onRebuildChunk(float x, float y, float z, ChunkRenderTask task, CallbackInfo info)
 	{
 		final ChunkRenderer self = (ChunkRenderer) (Object) this;
 		final ChunkRenderData renderData = new ChunkRenderData();
@@ -112,21 +112,20 @@ public abstract class ChunkRendererMixin<O, S extends PropertyContainer<S>>
 						}
 					}
 					
-					for (final Identifier layer : PaletteRegistrar.PALETTES.getIds())
+					for (final Identifier id : PaletteRegistrar.PALETTES.getIds())
 					{
-						final PaletteData<O, S> data = PaletteRegistrar.<O, S>getPaletteData(layer);
+						final PaletteData<O, S> layer = PaletteRegistrar.<O, S>getPaletteData(id);
 						
-						@SuppressWarnings("unchecked")
-						BlockViewStateLayer<S> world = ((BlockViewStateLayer<S>) region);
+						BlockViewStateLayer world = ((BlockViewStateLayer) region);
 						final S state = world.getState(layer, pos);
 						
 					//	data.handleOcclusionGraph(builder, state, region, pos);
 						
 						// TODO occlusion and BE render callbacks
 						
-						if (data.shouldRender(state))
+						if (layer.shouldRender(state))
 						{
-							final BlockRenderLayer blockRenderLayer = data.getRenderLayer(state);
+							final BlockRenderLayer blockRenderLayer = layer.getRenderLayer(state);
 							final int layerOrdinal = blockRenderLayer.ordinal();
 							final BufferBuilder bufferBuilder = task.getBufferBuilders().get(layerOrdinal);
 							if (!renderData.isBufferInitialized(blockRenderLayer))
@@ -135,7 +134,7 @@ public abstract class ChunkRendererMixin<O, S extends PropertyContainer<S>>
 								beginBufferBuilding(bufferBuilder, origin);
 							}
 							
-							layerFlags[layerOrdinal] |= data.tesselate(blockRenderManager, state, pos, region, bufferBuilder, random);
+							layerFlags[layerOrdinal] |= layer.tesselate(blockRenderManager, state, pos, region, bufferBuilder, random);
 						}
 					}
 				}

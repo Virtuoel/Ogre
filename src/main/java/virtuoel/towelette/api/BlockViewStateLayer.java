@@ -1,10 +1,9 @@
 package virtuoel.towelette.api;
 
 import net.minecraft.state.PropertyContainer;
-import net.minecraft.util.Identifier;
 import net.minecraft.util.math.BlockPos;
 
-public interface BlockViewStateLayer<S extends PropertyContainer<S>>
+public interface BlockViewStateLayer
 {
-	S getState(Identifier layer, BlockPos pos);
+	<O, S extends PropertyContainer<S>> S getState(PaletteData<O, S> layer, BlockPos pos);
 }

@@ -105,9 +105,8 @@ public class BucketItemMixin
 	@Inject(at = @At(value = "RETURN", ordinal = 2), method = "use", locals = LocalCapture.CAPTURE_FAILSOFT)
 	private void onUse(World world, PlayerEntity player, Hand hand, CallbackInfoReturnable<TypedActionResult<ItemStack>> info, ItemStack held, BlockHitResult hitResult, BlockPos pos, BlockState state, Fluid drained, ItemStack filled)
 	{
-		@SuppressWarnings("unchecked")
-		final ModifiableWorldStateLayer<Fluid, FluidState> w = ((ModifiableWorldStateLayer<Fluid, FluidState>) world);
-		w.setState(PaletteRegistrar.FLUID_STATE, pos, Fluids.EMPTY.getDefaultState(), 11);
+		final ModifiableWorldStateLayer w = ((ModifiableWorldStateLayer) world);
+		w.setState(PaletteRegistrar.FLUIDS, pos, Fluids.EMPTY.getDefaultState(), 11);
 	}
 	/*
 	@Inject(at = @At(value = "RETURN", shift = Shift.BEFORE, ordinal = 3), method = "use", locals = LocalCapture.CAPTURE_FAILSOFT)
@@ -119,8 +118,7 @@ public class BucketItemMixin
 	@Inject(at = @At(value = "INVOKE", shift = Shift.AFTER, target = "playEmptyingSound"), method = "placeFluid")
 	private void onPlaceFluid(@Nullable PlayerEntity player, World world, BlockPos pos, @Nullable BlockHitResult result, CallbackInfoReturnable<Boolean> info)
 	{
-		@SuppressWarnings("unchecked")
-		final ModifiableWorldStateLayer<Fluid, FluidState> w = ((ModifiableWorldStateLayer<Fluid, FluidState>) world);
-		w.setState(PaletteRegistrar.FLUID_STATE, pos, this.fluid.getDefaultState(), 11);
+		final ModifiableWorldStateLayer w = ((ModifiableWorldStateLayer) world);
+		w.setState(PaletteRegistrar.FLUIDS, pos, this.fluid.getDefaultState(), 11);
 	}
 }

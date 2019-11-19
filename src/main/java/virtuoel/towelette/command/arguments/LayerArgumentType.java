@@ -1,0 +1,69 @@
+package virtuoel.towelette.command.arguments;
+
+import java.util.Collection;
+import java.util.concurrent.CompletableFuture;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
+
+import com.mojang.brigadier.StringReader;
+import com.mojang.brigadier.arguments.ArgumentType;
+import com.mojang.brigadier.context.CommandContext;
+import com.mojang.brigadier.exceptions.CommandSyntaxException;
+import com.mojang.brigadier.exceptions.DynamicCommandExceptionType;
+import com.mojang.brigadier.suggestion.Suggestions;
+import com.mojang.brigadier.suggestion.SuggestionsBuilder;
+
+import net.minecraft.server.command.CommandSource;
+import net.minecraft.server.command.ServerCommandSource;
+import net.minecraft.state.PropertyContainer;
+import net.minecraft.text.TranslatableText;
+import net.minecraft.util.Identifier;
+import virtuoel.towelette.api.PaletteData;
+import virtuoel.towelette.api.PaletteRegistrar;
+
+public class LayerArgumentType implements ArgumentType<PaletteData<?, ?>>
+{
+	private static final Collection<String> EXAMPLES =
+		Stream.of(PaletteRegistrar.BLOCKS, PaletteRegistrar.FLUIDS)
+		.map(PaletteRegistrar.PALETTES::getId)
+		.map(Identifier::toString)
+		.collect(Collectors.toList());
+	
+	public static final DynamicCommandExceptionType INVALID_LAYER_EXCEPTION = new DynamicCommandExceptionType(arg ->
+	{
+		return new TranslatableText("argument.layer.invalid", arg);
+	});
+	
+	@Override
+	public PaletteData<?, ?> parse(StringReader reader) throws CommandSyntaxException
+	{
+		final Identifier id = Identifier.fromCommandInput(reader);
+		return PaletteRegistrar.PALETTES.getOrEmpty(id).orElseThrow(() ->
+		{
+			return INVALID_LAYER_EXCEPTION.createWithContext(reader, id);
+		});
+	}
+	
+	@Override
+	public <S> CompletableFuture<Suggestions> listSuggestions(CommandContext<S> context, SuggestionsBuilder builder)
+	{
+		return CommandSource.suggestIdentifiers(PaletteRegistrar.PALETTES.getIds(), builder);
+	}
+	
+	@Override
+	public Collection<String> getExamples()
+	{
+		return EXAMPLES;
+	}
+	
+	public static LayerArgumentType layer()
+	{
+		return new LayerArgumentType();
+	}
+	
+	@SuppressWarnings("unchecked")
+	public static <O, S extends PropertyContainer<S>> PaletteData<O, S> getLayerArgument(CommandContext<ServerCommandSource> context, String name)
+	{
+		return context.getArgument(name, PaletteData.class);
+	}
+}

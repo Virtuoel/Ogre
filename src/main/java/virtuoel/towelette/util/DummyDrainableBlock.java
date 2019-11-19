@@ -27,9 +27,8 @@ public class DummyDrainableBlock extends Block implements FluidDrainable
 		final FluidState fluidState = world.getFluidState(pos);
 		if(!fluidState.isEmpty())
 		{
-			@SuppressWarnings("unchecked")
-			final ModifiableWorldStateLayer<Fluid, FluidState> w = ((ModifiableWorldStateLayer<Fluid, FluidState>) world);
-			w.setState(PaletteRegistrar.FLUID_STATE, pos, Fluids.EMPTY.getDefaultState(), 11);
+			final ModifiableWorldStateLayer w = ((ModifiableWorldStateLayer) world);
+			w.setState(PaletteRegistrar.FLUIDS, pos, Fluids.EMPTY.getDefaultState(), 11);
 		}
 		
 		return fluidState.getFluid();

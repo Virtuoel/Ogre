@@ -1,9 +1,9 @@
 package virtuoel.towelette.api;
 
-import net.minecraft.util.Identifier;
+import net.minecraft.state.PropertyContainer;
 import net.minecraft.util.math.BlockPos;
 
 public interface StateUpdateableChunkManager
 {
-	void onStateUpdate(Identifier layer, BlockPos pos);
+	<O, S extends PropertyContainer<S>> void onStateUpdate(PaletteData<O, S> layer, BlockPos pos);
 }

@@ -19,7 +19,6 @@ import net.minecraft.server.world.ChunkHolder;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.state.PropertyContainer;
 import net.minecraft.tag.FluidTags;
-import net.minecraft.util.Identifier;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Box;
 import net.minecraft.util.math.Direction;
@@ -29,13 +28,12 @@ import net.minecraft.world.level.LevelGeneratorType;
 import virtuoel.towelette.api.BlockViewStateLayer;
 import virtuoel.towelette.api.ChunkStateLayer;
 import virtuoel.towelette.api.PaletteData;
-import virtuoel.towelette.api.PaletteRegistrar;
 import virtuoel.towelette.api.StateUpdateableChunkManager;
 import virtuoel.towelette.api.UpdateableFluid;
 import virtuoel.towelette.mixin.layer.ModifiableWorldMixin;
 
 @Mixin(World.class)
-public abstract class WorldMixin<O, S extends PropertyContainer<S>> implements ModifiableWorldMixin<O, S>
+public abstract class WorldMixin implements ModifiableWorldMixin
 {
 	@Shadow abstract FluidState getFluidState(BlockPos pos);
 	
@@ -71,24 +69,22 @@ public abstract class WorldMixin<O, S extends PropertyContainer<S>> implements M
 	}
 	
 	@Override
-	public S getState(Identifier layer, BlockPos pos)
+	public <O, S extends PropertyContainer<S>> S getState(PaletteData<O, S> layer, BlockPos pos)
 	{
 		final World self = World.class.cast(this);
 		if(World.isHeightInvalid(pos))
 		{
-			final S state = PaletteRegistrar.<O, S>getPaletteData(layer).getInvalidPositionState();
-			return state;
+			return layer.getInvalidPositionState();
 		}
 		else
 		{
-			@SuppressWarnings("unchecked")
-			final ChunkStateLayer<O, S> chunk = ((ChunkStateLayer<O, S>) self.getWorldChunk(pos));
+			final ChunkStateLayer chunk = ((ChunkStateLayer) self.getWorldChunk(pos));
 			return chunk.getState(layer, pos);
 		}
 	}
 	
 	@Override
-	public boolean setState(Identifier layer, BlockPos pos, S state, int flags)
+	public <O, S extends PropertyContainer<S>> boolean setState(PaletteData<O, S> layer, BlockPos pos, S state, int flags)
 	{
 		final World self = World.class.cast(this);
 		if(World.isHeightInvalid(pos))
@@ -102,8 +98,7 @@ public abstract class WorldMixin<O, S extends PropertyContainer<S>> implements M
 		else
 		{
 			final WorldChunk chunk = self.getWorldChunk(pos);
-			@SuppressWarnings("unchecked")
-			final ChunkStateLayer<O, S> c = ((ChunkStateLayer<O, S>) chunk);
+			final ChunkStateLayer c = ((ChunkStateLayer) chunk);
 			final S oldState = c.setState(layer, pos, state, (flags & 64) != 0);
 			if(oldState == null)
 			{
@@ -113,7 +108,7 @@ public abstract class WorldMixin<O, S extends PropertyContainer<S>> implements M
 			{
 				final S newState = c.getState(layer, pos);
 				
-				if(PaletteRegistrar.<O, S>getPaletteData(layer).shouldEnqueueLightUpdate(self, pos, newState, oldState))
+				if(layer.shouldEnqueueLightUpdate(self, pos, newState, oldState))
 				{
 					self.getChunkManager().getLightingProvider().enqueueLightUpdate(pos);
 				}
@@ -150,7 +145,7 @@ public abstract class WorldMixin<O, S extends PropertyContainer<S>> implements M
 	}
 	
 	@Unique
-	private static void updateNeighbors(Identifier layer, World world, BlockPos pos)
+	private static <O, S extends PropertyContainer<S>> void updateNeighbors(PaletteData<O, S> layer, World world, BlockPos pos)
 	{
 		if (world.getLevelProperties().getGeneratorType() != LevelGeneratorType.DEBUG_ALL_BLOCK_STATES)
 		{
@@ -160,7 +155,7 @@ public abstract class WorldMixin<O, S extends PropertyContainer<S>> implements M
 	}
 	
 	@Unique
-	private static void updateNeighborsAlways(Identifier layer, World world, BlockPos pos)
+	private static <O, S extends PropertyContainer<S>> void updateNeighborsAlways(PaletteData<O, S> layer, World world, BlockPos pos)
 	{
 		updateNeighbor(layer, world, pos.west(), pos);
 		updateNeighbor(layer, world, pos.east(), pos);
@@ -171,7 +166,7 @@ public abstract class WorldMixin<O, S extends PropertyContainer<S>> implements M
 	}
 	
 	@Unique
-	private static void updateNeighborsExcept(Identifier layer, World world, BlockPos pos, Direction direction)
+	private static <O, S extends PropertyContainer<S>> void updateNeighborsExcept(PaletteData<O, S> layer, World world, BlockPos pos, Direction direction)
 	{
 		if (direction != Direction.WEST)
 		{
@@ -206,14 +201,12 @@ public abstract class WorldMixin<O, S extends PropertyContainer<S>> implements M
 	}
 	
 	@Unique
-	private static <O, S extends PropertyContainer<S>> void updateNeighbor(Identifier layer, World world, BlockPos pos, BlockPos otherPos)
+	private static <O, S extends PropertyContainer<S>> void updateNeighbor(PaletteData<O, S> layer, World world, BlockPos pos, BlockPos otherPos)
 	{
 		if (!world.isClient())
 		{
-			final PaletteData<O, S> data = PaletteRegistrar.getPaletteData(layer);
-			@SuppressWarnings("unchecked")
-			final BlockViewStateLayer<S> w = ((BlockViewStateLayer<S>) world);
-			data.onNeighborUpdate(w.getState(layer, pos), world, pos, data.getEntry(w.getState(layer, otherPos)), otherPos, false);
+			final BlockViewStateLayer w = ((BlockViewStateLayer) world);
+			layer.onNeighborUpdate(w.getState(layer, pos), world, pos, layer.getEntry(w.getState(layer, otherPos)), otherPos, false);
 		}
 	}
 }

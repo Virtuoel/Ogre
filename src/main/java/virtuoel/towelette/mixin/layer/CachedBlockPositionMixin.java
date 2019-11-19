@@ -15,9 +15,11 @@ import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.ViewableWorld;
 import virtuoel.towelette.api.BlockViewStateLayer;
 import virtuoel.towelette.api.CachedStatePosition;
+import virtuoel.towelette.api.PaletteData;
+import virtuoel.towelette.api.PaletteRegistrar;
 
 @Mixin(CachedBlockPosition.class)
-public class CachedBlockPositionMixin<S extends PropertyContainer<S>> implements CachedStatePosition<S>
+public class CachedBlockPositionMixin implements CachedStatePosition
 {
 	@Shadow @Final ViewableWorld world;
 	@Shadow @Final BlockPos pos;
@@ -27,13 +29,13 @@ public class CachedBlockPositionMixin<S extends PropertyContainer<S>> implements
 	
 	@SuppressWarnings("unchecked")
 	@Override
-	public S getState(Identifier layer)
+	public <O, S extends PropertyContainer<S>> S getState(PaletteData<O, S> layer)
 	{
-		return (S) states.computeIfAbsent(layer, key ->
+		return (S) states.computeIfAbsent(PaletteRegistrar.PALETTES.getId(layer), key ->
 		{
 			if(this.forceLoad || this.world.isBlockLoaded(this.pos))
 			{
-				return ((BlockViewStateLayer<S>) this.world).getState(key, this.pos);
+				return ((BlockViewStateLayer) this.world).getState(layer, this.pos);
 			}
 			
 			return null;

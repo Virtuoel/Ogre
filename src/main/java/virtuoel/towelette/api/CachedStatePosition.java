@@ -4,5 +4,5 @@ import net.minecraft.state.PropertyContainer;
 
 public interface CachedStatePosition
 {
-	<O, S extends PropertyContainer<S>> S getState(PaletteData<O, S> layer);
+	<O, S extends PropertyContainer<S>> S getState(LayerData<O, S> layer);
 }

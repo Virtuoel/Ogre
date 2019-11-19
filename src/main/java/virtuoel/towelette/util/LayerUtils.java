@@ -19,7 +19,7 @@ import net.minecraft.world.World;
 import net.minecraft.world.chunk.Chunk;
 import virtuoel.towelette.api.UpdateableFluid;
 
-public class PaletteUtils
+public class LayerUtils
 {
 	public static void blockStateHeightmapUpdate(Chunk chunk, int x, int y, int z, BlockState state)
 	{

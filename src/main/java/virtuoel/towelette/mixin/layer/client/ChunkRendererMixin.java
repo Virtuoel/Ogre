@@ -34,8 +34,8 @@ import net.minecraft.util.Identifier;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.chunk.WorldChunk;
 import virtuoel.towelette.api.BlockViewStateLayer;
-import virtuoel.towelette.api.PaletteData;
-import virtuoel.towelette.api.PaletteRegistrar;
+import virtuoel.towelette.api.LayerData;
+import virtuoel.towelette.api.LayerRegistrar;
 import virtuoel.towelette.util.client.RenderUtils;
 
 @Mixin(ChunkRenderer.class)
@@ -112,9 +112,9 @@ public abstract class ChunkRendererMixin
 						}
 					}
 					
-					for (final Identifier id : PaletteRegistrar.PALETTES.getIds())
+					for (final Identifier id : LayerRegistrar.LAYERS.getIds())
 					{
-						final PaletteData<O, S> layer = PaletteRegistrar.<O, S>getPaletteData(id);
+						final LayerData<O, S> layer = LayerRegistrar.<O, S>getLayerData(id);
 						
 						BlockViewStateLayer world = ((BlockViewStateLayer) region);
 						final S state = world.getState(layer, pos);

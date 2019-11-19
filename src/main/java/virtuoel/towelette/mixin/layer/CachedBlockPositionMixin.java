@@ -15,8 +15,8 @@ import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.ViewableWorld;
 import virtuoel.towelette.api.BlockViewStateLayer;
 import virtuoel.towelette.api.CachedStatePosition;
-import virtuoel.towelette.api.PaletteData;
-import virtuoel.towelette.api.PaletteRegistrar;
+import virtuoel.towelette.api.LayerData;
+import virtuoel.towelette.api.LayerRegistrar;
 
 @Mixin(CachedBlockPosition.class)
 public class CachedBlockPositionMixin implements CachedStatePosition
@@ -29,9 +29,9 @@ public class CachedBlockPositionMixin implements CachedStatePosition
 	
 	@SuppressWarnings("unchecked")
 	@Override
-	public <O, S extends PropertyContainer<S>> S getState(PaletteData<O, S> layer)
+	public <O, S extends PropertyContainer<S>> S getState(LayerData<O, S> layer)
 	{
-		return (S) states.computeIfAbsent(PaletteRegistrar.PALETTES.getId(layer), key ->
+		return (S) states.computeIfAbsent(LayerRegistrar.LAYERS.getId(layer), key ->
 		{
 			if(this.forceLoad || this.world.isBlockLoaded(this.pos))
 			{

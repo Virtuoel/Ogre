@@ -9,8 +9,8 @@ import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.ChunkPos;
 import net.minecraft.world.World;
 import virtuoel.towelette.api.ModifiableWorldStateLayer;
-import virtuoel.towelette.api.PaletteData;
-import virtuoel.towelette.api.PaletteRegistrar;
+import virtuoel.towelette.api.LayerData;
+import virtuoel.towelette.api.LayerRegistrar;
 import virtuoel.towelette.util.PacketUtils;
 
 public class ToweletteClient implements ClientModInitializer
@@ -26,7 +26,7 @@ public class ToweletteClient implements ClientModInitializer
 	{
 		final World world = packetContext.getPlayer().world;
 		
-		final PaletteData<O, S> layer = PaletteRegistrar.getPaletteData(packetByteBuf.readVarInt());
+		final LayerData<O, S> layer = LayerRegistrar.getLayerData(packetByteBuf.readVarInt());
 		
 		final ChunkPos chunkPos = new ChunkPos(packetByteBuf.readInt(), packetByteBuf.readInt());
 		final int length = packetByteBuf.readVarInt();
@@ -56,7 +56,7 @@ public class ToweletteClient implements ClientModInitializer
 		
 		final BlockPos pos = packetByteBuf.readBlockPos();
 		
-		final PaletteData<O, S> layer = PaletteRegistrar.getPaletteData(packetByteBuf.readVarInt());
+		final LayerData<O, S> layer = LayerRegistrar.getLayerData(packetByteBuf.readVarInt());
 		
 		final S state = layer.getIds().get(packetByteBuf.readVarInt());
 		

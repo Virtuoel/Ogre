@@ -27,7 +27,7 @@ import net.minecraft.world.chunk.WorldChunk;
 import net.minecraft.world.level.LevelGeneratorType;
 import virtuoel.towelette.api.BlockViewStateLayer;
 import virtuoel.towelette.api.ChunkStateLayer;
-import virtuoel.towelette.api.PaletteData;
+import virtuoel.towelette.api.LayerData;
 import virtuoel.towelette.api.StateUpdateableChunkManager;
 import virtuoel.towelette.api.UpdateableFluid;
 import virtuoel.towelette.mixin.layer.ModifiableWorldMixin;
@@ -69,7 +69,7 @@ public abstract class WorldMixin implements ModifiableWorldMixin
 	}
 	
 	@Override
-	public <O, S extends PropertyContainer<S>> S getState(PaletteData<O, S> layer, BlockPos pos)
+	public <O, S extends PropertyContainer<S>> S getState(LayerData<O, S> layer, BlockPos pos)
 	{
 		final World self = World.class.cast(this);
 		if(World.isHeightInvalid(pos))
@@ -84,7 +84,7 @@ public abstract class WorldMixin implements ModifiableWorldMixin
 	}
 	
 	@Override
-	public <O, S extends PropertyContainer<S>> boolean setState(PaletteData<O, S> layer, BlockPos pos, S state, int flags)
+	public <O, S extends PropertyContainer<S>> boolean setState(LayerData<O, S> layer, BlockPos pos, S state, int flags)
 	{
 		final World self = World.class.cast(this);
 		if(World.isHeightInvalid(pos))
@@ -145,7 +145,7 @@ public abstract class WorldMixin implements ModifiableWorldMixin
 	}
 	
 	@Unique
-	private static <O, S extends PropertyContainer<S>> void updateNeighbors(PaletteData<O, S> layer, World world, BlockPos pos)
+	private static <O, S extends PropertyContainer<S>> void updateNeighbors(LayerData<O, S> layer, World world, BlockPos pos)
 	{
 		if (world.getLevelProperties().getGeneratorType() != LevelGeneratorType.DEBUG_ALL_BLOCK_STATES)
 		{
@@ -155,7 +155,7 @@ public abstract class WorldMixin implements ModifiableWorldMixin
 	}
 	
 	@Unique
-	private static <O, S extends PropertyContainer<S>> void updateNeighborsAlways(PaletteData<O, S> layer, World world, BlockPos pos)
+	private static <O, S extends PropertyContainer<S>> void updateNeighborsAlways(LayerData<O, S> layer, World world, BlockPos pos)
 	{
 		updateNeighbor(layer, world, pos.west(), pos);
 		updateNeighbor(layer, world, pos.east(), pos);
@@ -166,7 +166,7 @@ public abstract class WorldMixin implements ModifiableWorldMixin
 	}
 	
 	@Unique
-	private static <O, S extends PropertyContainer<S>> void updateNeighborsExcept(PaletteData<O, S> layer, World world, BlockPos pos, Direction direction)
+	private static <O, S extends PropertyContainer<S>> void updateNeighborsExcept(LayerData<O, S> layer, World world, BlockPos pos, Direction direction)
 	{
 		if (direction != Direction.WEST)
 		{
@@ -201,7 +201,7 @@ public abstract class WorldMixin implements ModifiableWorldMixin
 	}
 	
 	@Unique
-	private static <O, S extends PropertyContainer<S>> void updateNeighbor(PaletteData<O, S> layer, World world, BlockPos pos, BlockPos otherPos)
+	private static <O, S extends PropertyContainer<S>> void updateNeighbor(LayerData<O, S> layer, World world, BlockPos pos, BlockPos otherPos)
 	{
 		if (!world.isClient())
 		{

@@ -10,16 +10,16 @@ import net.minecraft.state.property.Property;
 import net.minecraft.util.math.BlockPos;
 import virtuoel.towelette.api.CachedStatePosition;
 import virtuoel.towelette.api.ModifiableWorldStateLayer;
-import virtuoel.towelette.api.PaletteData;
+import virtuoel.towelette.api.LayerData;
 
 public class StateArgument<O, S extends PropertyContainer<S>> implements Predicate<CachedBlockPosition>
 {
 	private final S state;
 	private final Set<Property<?>> properties;
 	
-	private PaletteData<O, S> layer;
+	private LayerData<O, S> layer;
 	
-	public StateArgument(PaletteData<O, S> layer, S state, Set<Property<?>> properties)
+	public StateArgument(LayerData<O, S> layer, S state, Set<Property<?>> properties)
 	{
 		this.layer = layer;
 		this.state = state;

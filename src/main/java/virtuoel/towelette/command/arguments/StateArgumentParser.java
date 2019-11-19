@@ -25,7 +25,7 @@ import net.minecraft.state.StateFactory;
 import net.minecraft.state.property.Property;
 import net.minecraft.text.TranslatableText;
 import net.minecraft.util.Identifier;
-import virtuoel.towelette.api.PaletteData;
+import virtuoel.towelette.api.LayerData;
 
 public class StateArgumentParser
 {
@@ -78,9 +78,9 @@ public class StateArgumentParser
 	}
 	
 	@SuppressWarnings("rawtypes")
-	private PaletteData layer;
+	private LayerData layer;
 	
-	public <O, S extends PropertyContainer<S>> StateArgumentParser parse(PaletteData<O, S> layer) throws CommandSyntaxException
+	public <O, S extends PropertyContainer<S>> StateArgumentParser parse(LayerData<O, S> layer) throws CommandSyntaxException
 	{
 		this.layer = layer;
 		

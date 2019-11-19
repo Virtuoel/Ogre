@@ -14,14 +14,14 @@ import net.minecraft.world.chunk.ChunkSection;
 import net.minecraft.world.chunk.WorldChunk;
 import virtuoel.towelette.api.ChunkSectionStateLayer;
 import virtuoel.towelette.api.ChunkStateLayer;
-import virtuoel.towelette.api.PaletteData;
-import virtuoel.towelette.api.PaletteRegistrar;
+import virtuoel.towelette.api.LayerData;
+import virtuoel.towelette.api.LayerRegistrar;
 
 @Mixin(WorldChunk.class)
 public abstract class WorldChunkMixin implements ChunkStateLayer
 {
 	@Override
-	public <O, S extends PropertyContainer<S>> S getState(PaletteData<O, S> layer, int x, int y, int z)
+	public <O, S extends PropertyContainer<S>> S getState(LayerData<O, S> layer, int x, int y, int z)
 	{
 		final WorldChunk self = (WorldChunk) (Object) this;
 		
@@ -42,7 +42,7 @@ public abstract class WorldChunkMixin implements ChunkStateLayer
 		}
 		catch (Throwable t)
 		{
-			final CrashReport report = CrashReport.create(t, "Getting state from layer " + PaletteRegistrar.PALETTES.getId(layer).toString());
+			final CrashReport report = CrashReport.create(t, "Getting state from layer " + LayerRegistrar.LAYERS.getId(layer).toString());
 			final CrashReportSection section = report.addElement("State being got");
 			section.add("Location", () ->
 			{
@@ -54,7 +54,7 @@ public abstract class WorldChunkMixin implements ChunkStateLayer
 	
 	@Override
 	@Nullable
-	public <O, S extends PropertyContainer<S>> S setState(PaletteData<O, S> layer, BlockPos pos, S state, boolean pushed)
+	public <O, S extends PropertyContainer<S>> S setState(LayerData<O, S> layer, BlockPos pos, S state, boolean pushed)
 	{
 		final WorldChunk self = (WorldChunk) (Object) this;
 		final World world = self.getWorld();

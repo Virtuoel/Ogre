@@ -8,20 +8,20 @@ import net.minecraft.state.PropertyContainer;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.chunk.EmptyChunk;
 import virtuoel.towelette.api.ChunkStateLayer;
-import virtuoel.towelette.api.PaletteData;
+import virtuoel.towelette.api.LayerData;
 
 @Mixin(EmptyChunk.class)
 public abstract class EmptyChunkMixin implements ChunkStateLayer
 {
 	@Override
 	@Nullable
-	public <O, S extends PropertyContainer<S>> S setState(PaletteData<O, S> layer, BlockPos pos, S state, boolean pushed)
+	public <O, S extends PropertyContainer<S>> S setState(LayerData<O, S> layer, BlockPos pos, S state, boolean pushed)
 	{
 		return null;
 	}
 	
 	@Override
-	public <O, S extends PropertyContainer<S>> S getState(PaletteData<O, S> layer, int x, int y, int z)
+	public <O, S extends PropertyContainer<S>> S getState(LayerData<O, S> layer, int x, int y, int z)
 	{
 		return layer.getInvalidPositionState();
 	}

@@ -34,7 +34,7 @@ import net.minecraft.world.ViewableWorld;
 import net.minecraft.world.World;
 import virtuoel.towelette.Towelette;
 import virtuoel.towelette.api.ModifiableWorldStateLayer;
-import virtuoel.towelette.api.PaletteRegistrar;
+import virtuoel.towelette.api.LayerRegistrar;
 import virtuoel.towelette.util.FluidUtils;
 import virtuoel.towelette.util.StateNeighborGroup;
 
@@ -210,7 +210,7 @@ public abstract class BaseFluidMixin
 	private void onFlowPre(IWorld world, BlockPos pos, BlockState blockState, Direction direction, FluidState fluidState, CallbackInfo info)
 	{
 		final ModifiableWorldStateLayer w = ((ModifiableWorldStateLayer) world);
-		w.setState(PaletteRegistrar.FLUIDS, pos, fluidState, fluidState.isEmpty() ? 3 : 2);
+		w.setState(LayerRegistrar.FLUID, pos, fluidState, fluidState.isEmpty() ? 3 : 2);
 		
 		if(blockState.matches(Towelette.DISPLACEABLE) && !blockState.matches(Towelette.UNDISPLACEABLE))
 		{
@@ -255,7 +255,7 @@ public abstract class BaseFluidMixin
 		if(!(blockState.getBlock() instanceof FluidFillable))
 		{
 			final ModifiableWorldStateLayer w = ((ModifiableWorldStateLayer) world);
-			w.setState(PaletteRegistrar.FLUIDS, pos, fluidState, fluidState.isEmpty() ? 3 : 2);
+			w.setState(LayerRegistrar.FLUID, pos, fluidState, fluidState.isEmpty() ? 3 : 2);
 		}
 	}
 	
@@ -269,6 +269,6 @@ public abstract class BaseFluidMixin
 	private void onOnScheduledTick(World world, BlockPos pos, FluidState fluidState, CallbackInfo info)
 	{
 		final ModifiableWorldStateLayer w = ((ModifiableWorldStateLayer) world);
-		w.setState(PaletteRegistrar.FLUIDS, pos, fluidState, fluidState.isEmpty() ? 3 : 2);
+		w.setState(LayerRegistrar.FLUID, pos, fluidState, fluidState.isEmpty() ? 3 : 2);
 	}
 }

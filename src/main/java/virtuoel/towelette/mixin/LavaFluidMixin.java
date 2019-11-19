@@ -15,7 +15,7 @@ import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Direction;
 import net.minecraft.world.IWorld;
 import virtuoel.towelette.api.ModifiableWorldStateLayer;
-import virtuoel.towelette.api.PaletteRegistrar;
+import virtuoel.towelette.api.LayerRegistrar;
 
 @Mixin(LavaFluid.class)
 public class LavaFluidMixin
@@ -28,7 +28,7 @@ public class LavaFluidMixin
 		if(replaceable)
 		{
 			final ModifiableWorldStateLayer w = ((ModifiableWorldStateLayer) world);
-			w.setState(PaletteRegistrar.FLUIDS, pos, Fluids.EMPTY.getDefaultState());
+			w.setState(LayerRegistrar.FLUID, pos, Fluids.EMPTY.getDefaultState());
 			return Blocks.WATER;
 		}
 		

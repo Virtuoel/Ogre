@@ -29,7 +29,7 @@ import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Direction;
 import net.minecraft.world.World;
 import virtuoel.towelette.api.ModifiableWorldStateLayer;
-import virtuoel.towelette.api.PaletteRegistrar;
+import virtuoel.towelette.api.LayerRegistrar;
 
 @Mixin(BucketItem.class)
 public class BucketItemMixin
@@ -106,19 +106,20 @@ public class BucketItemMixin
 	private void onUse(World world, PlayerEntity player, Hand hand, CallbackInfoReturnable<TypedActionResult<ItemStack>> info, ItemStack held, BlockHitResult hitResult, BlockPos pos, BlockState state, Fluid drained, ItemStack filled)
 	{
 		final ModifiableWorldStateLayer w = ((ModifiableWorldStateLayer) world);
-		w.setState(PaletteRegistrar.FLUIDS, pos, Fluids.EMPTY.getDefaultState(), 11);
+		w.setState(LayerRegistrar.FLUID, pos, Fluids.EMPTY.getDefaultState(), 11);
 	}
 	/*
 	@Inject(at = @At(value = "RETURN", shift = Shift.BEFORE, ordinal = 3), method = "use", locals = LocalCapture.CAPTURE_FAILSOFT)
 	private void onUse2(World world, PlayerEntity player, Hand hand, CallbackInfoReturnable<TypedActionResult<ItemStack>> info, ItemStack held, BlockHitResult hitResult, BlockPos pos, BlockState state)
 	{
-		((ModifiableWorldStateLayer) world).setState(PaletteRegistrar.FLUID_STATE, pos, Fluids.EMPTY.getDefaultState(), 11);
+		final ModifiableWorldStateLayer w = ((ModifiableWorldStateLayer) world);
+		w.setState(LayerRegistrar.FLUID, pos, Fluids.EMPTY.getDefaultState(), 11);
 	}
 	*/
 	@Inject(at = @At(value = "INVOKE", shift = Shift.AFTER, target = "playEmptyingSound"), method = "placeFluid")
 	private void onPlaceFluid(@Nullable PlayerEntity player, World world, BlockPos pos, @Nullable BlockHitResult result, CallbackInfoReturnable<Boolean> info)
 	{
 		final ModifiableWorldStateLayer w = ((ModifiableWorldStateLayer) world);
-		w.setState(PaletteRegistrar.FLUIDS, pos, this.fluid.getDefaultState(), 11);
+		w.setState(LayerRegistrar.FLUID, pos, this.fluid.getDefaultState(), 11);
 	}
 }

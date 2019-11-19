@@ -18,14 +18,14 @@ import net.minecraft.server.command.ServerCommandSource;
 import net.minecraft.state.PropertyContainer;
 import net.minecraft.text.TranslatableText;
 import net.minecraft.util.Identifier;
-import virtuoel.towelette.api.PaletteData;
-import virtuoel.towelette.api.PaletteRegistrar;
+import virtuoel.towelette.api.LayerData;
+import virtuoel.towelette.api.LayerRegistrar;
 
-public class LayerArgumentType implements ArgumentType<PaletteData<?, ?>>
+public class LayerArgumentType implements ArgumentType<LayerData<?, ?>>
 {
 	private static final Collection<String> EXAMPLES =
-		Stream.of(PaletteRegistrar.BLOCKS, PaletteRegistrar.FLUIDS)
-		.map(PaletteRegistrar.PALETTES::getId)
+		Stream.of(LayerRegistrar.BLOCK, LayerRegistrar.FLUID)
+		.map(LayerRegistrar.LAYERS::getId)
 		.map(Identifier::toString)
 		.collect(Collectors.toList());
 	
@@ -35,10 +35,10 @@ public class LayerArgumentType implements ArgumentType<PaletteData<?, ?>>
 	});
 	
 	@Override
-	public PaletteData<?, ?> parse(StringReader reader) throws CommandSyntaxException
+	public LayerData<?, ?> parse(StringReader reader) throws CommandSyntaxException
 	{
 		final Identifier id = Identifier.fromCommandInput(reader);
-		return PaletteRegistrar.PALETTES.getOrEmpty(id).orElseThrow(() ->
+		return LayerRegistrar.LAYERS.getOrEmpty(id).orElseThrow(() ->
 		{
 			return INVALID_LAYER_EXCEPTION.createWithContext(reader, id);
 		});
@@ -47,7 +47,7 @@ public class LayerArgumentType implements ArgumentType<PaletteData<?, ?>>
 	@Override
 	public <S> CompletableFuture<Suggestions> listSuggestions(CommandContext<S> context, SuggestionsBuilder builder)
 	{
-		return CommandSource.suggestIdentifiers(PaletteRegistrar.PALETTES.getIds(), builder);
+		return CommandSource.suggestIdentifiers(LayerRegistrar.LAYERS.getIds(), builder);
 	}
 	
 	@Override
@@ -62,8 +62,8 @@ public class LayerArgumentType implements ArgumentType<PaletteData<?, ?>>
 	}
 	
 	@SuppressWarnings("unchecked")
-	public static <O, S extends PropertyContainer<S>> PaletteData<O, S> getLayerArgument(CommandContext<ServerCommandSource> context, String name)
+	public static <O, S extends PropertyContainer<S>> LayerData<O, S> getLayerArgument(CommandContext<ServerCommandSource> context, String name)
 	{
-		return context.getArgument(name, PaletteData.class);
+		return context.getArgument(name, LayerData.class);
 	}
 }

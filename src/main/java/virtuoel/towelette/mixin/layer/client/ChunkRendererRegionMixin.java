@@ -19,8 +19,8 @@ import net.minecraft.world.World;
 import net.minecraft.world.chunk.WorldChunk;
 import virtuoel.towelette.api.BlockViewStateLayer;
 import virtuoel.towelette.api.ChunkStateLayer;
-import virtuoel.towelette.api.PaletteData;
-import virtuoel.towelette.api.PaletteRegistrar;
+import virtuoel.towelette.api.LayerData;
+import virtuoel.towelette.api.LayerRegistrar;
 
 @Mixin(ChunkRendererRegion.class)
 public abstract class ChunkRendererRegionMixin implements BlockViewStateLayer
@@ -42,17 +42,17 @@ public abstract class ChunkRendererRegionMixin implements BlockViewStateLayer
 		
 		boolean blockState = false;
 		boolean fluidState = false;
-		for(final Identifier id : PaletteRegistrar.PALETTES.getIds())
+		for(final Identifier id : LayerRegistrar.LAYERS.getIds())
 		{
-			final PaletteData<O, S> layer = PaletteRegistrar.getPaletteData(id);
+			final LayerData<O, S> layer = LayerRegistrar.getLayerData(id);
 			
 			final PropertyContainer<?>[] array;
-			if(!blockState && layer == PaletteRegistrar.BLOCKS)
+			if(!blockState && layer == LayerRegistrar.BLOCK)
 			{
 				blockState = true;
 				array = blockStates;
 			}
-			else if(!fluidState && layer == PaletteRegistrar.FLUIDS)
+			else if(!fluidState && layer == LayerRegistrar.FLUID)
 			{
 				fluidState = true;
 				array = fluidStates;
@@ -75,8 +75,8 @@ public abstract class ChunkRendererRegionMixin implements BlockViewStateLayer
 	
 	@SuppressWarnings("unchecked")
 	@Override
-	public <O, S extends PropertyContainer<S>> S getState(PaletteData<O, S> layer, BlockPos pos)
+	public <O, S extends PropertyContainer<S>> S getState(LayerData<O, S> layer, BlockPos pos)
 	{
-		return (S) states.get(PaletteRegistrar.PALETTES.getId(layer))[this.getIndex(pos)];
+		return (S) states.get(LayerRegistrar.LAYERS.getId(layer))[this.getIndex(pos)];
 	}
 }

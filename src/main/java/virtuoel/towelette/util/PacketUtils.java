@@ -12,33 +12,33 @@ import net.minecraft.world.chunk.WorldChunk;
 import virtuoel.towelette.Towelette;
 import virtuoel.towelette.api.BlockViewStateLayer;
 import virtuoel.towelette.api.ChunkStateLayer;
-import virtuoel.towelette.api.PaletteData;
-import virtuoel.towelette.api.PaletteRegistrar;
+import virtuoel.towelette.api.LayerData;
+import virtuoel.towelette.api.LayerRegistrar;
 
 public class PacketUtils
 {
 	public static final Identifier UPDATE = Towelette.id("state_update");
 	public static final Identifier DELTA = Towelette.id("delta_update");
 	
-	public static <O, S extends PropertyContainer<S>> CustomPayloadS2CPacket stateUpdate(PaletteData<O, S> data, BlockView world, BlockPos pos)
+	public static <O, S extends PropertyContainer<S>> CustomPayloadS2CPacket stateUpdate(LayerData<O, S> data, BlockView world, BlockPos pos)
 	{
 		final PacketByteBuf buffer = new PacketByteBuf(Unpooled.buffer()).writeBlockPos(pos);
-		buffer.writeVarInt(PaletteRegistrar.PALETTES.getRawId(data));
+		buffer.writeVarInt(LayerRegistrar.LAYERS.getRawId(data));
 		final BlockViewStateLayer w = ((BlockViewStateLayer) world);
 		buffer.writeVarInt(data.getIds().getId(w.getState(data, pos)));
 		return new CustomPayloadS2CPacket(UPDATE, buffer);
 	}
 	
-	public static CustomPayloadS2CPacket deltaUpdate(PaletteData<?, ?> data, int records, short[] positions, WorldChunk chunk)
+	public static CustomPayloadS2CPacket deltaUpdate(LayerData<?, ?> data, int records, short[] positions, WorldChunk chunk)
 	{
 		return new CustomPayloadS2CPacket(DELTA, writeDelta(data, new PacketByteBuf(Unpooled.buffer()), records, positions, chunk));
 	}
 	
-	private static <O, S extends PropertyContainer<S>> PacketByteBuf writeDelta(PaletteData<O, S> layer, PacketByteBuf buffer, int records, short[] positions, WorldChunk chunk)
+	private static <O, S extends PropertyContainer<S>> PacketByteBuf writeDelta(LayerData<O, S> layer, PacketByteBuf buffer, int records, short[] positions, WorldChunk chunk)
 	{
 		final ChunkPos chunkPos = chunk.getPos();
 		
-		buffer.writeVarInt(PaletteRegistrar.PALETTES.getRawId(layer));
+		buffer.writeVarInt(LayerRegistrar.LAYERS.getRawId(layer));
 		
 		buffer.writeInt(chunkPos.x);
 		buffer.writeInt(chunkPos.z);

@@ -8,7 +8,7 @@ import net.minecraft.server.world.ServerChunkManager;
 import net.minecraft.state.PropertyContainer;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.ChunkPos;
-import virtuoel.towelette.api.PaletteData;
+import virtuoel.towelette.api.LayerData;
 import virtuoel.towelette.api.StateUpdateableChunkHolder;
 import virtuoel.towelette.api.StateUpdateableChunkManager;
 
@@ -18,7 +18,7 @@ public abstract class ServerChunkManagerMixin implements StateUpdateableChunkMan
 	@Shadow abstract ChunkHolder getChunkHolder(long pos);
 	
 	@Override
-	public <O, S extends PropertyContainer<S>> void onStateUpdate(PaletteData<O, S> layer, BlockPos pos)
+	public <O, S extends PropertyContainer<S>> void onStateUpdate(LayerData<O, S> layer, BlockPos pos)
 	{
 		ChunkHolder chunkHolder = this.getChunkHolder(ChunkPos.toLong(pos.getX() >> 4, pos.getZ() >> 4));
 		if (chunkHolder != null)

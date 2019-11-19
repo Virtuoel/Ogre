@@ -18,7 +18,7 @@ import net.minecraft.state.PropertyContainer;
 import net.minecraft.text.TranslatableText;
 import net.minecraft.util.math.BlockPos;
 import virtuoel.towelette.api.ModifiableWorldStateLayer;
-import virtuoel.towelette.api.PaletteData;
+import virtuoel.towelette.api.LayerData;
 import virtuoel.towelette.command.arguments.LayerArgumentType;
 import virtuoel.towelette.command.arguments.StateArgument;
 import virtuoel.towelette.command.arguments.StateArgumentType;
@@ -56,7 +56,7 @@ public class SetStateCommand
 	
 	private static <O, S extends PropertyContainer<S>> int runKeep(CommandContext<ServerCommandSource> context) throws CommandSyntaxException
 	{
-		final PaletteData<O, S> layer = LayerArgumentType.getLayerArgument(context, "layer");
+		final LayerData<O, S> layer = LayerArgumentType.getLayerArgument(context, "layer");
 		final StateArgument<O, S> state = StateArgumentType.getArgument(context, "state");
 		final BlockPos pos = BlockPosArgumentType.getLoadedBlockPos(context, "pos");
 		return run(context.getSource(), pos, state, cachedPos ->

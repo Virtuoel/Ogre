@@ -19,7 +19,7 @@ import net.minecraft.tag.Tag;
 import net.minecraft.text.LiteralText;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.math.BlockPos;
-import virtuoel.towelette.api.PaletteRegistrar;
+import virtuoel.towelette.api.LayerRegistrar;
 import virtuoel.towelette.api.ToweletteApi;
 import virtuoel.towelette.command.arguments.LayerArgumentType;
 import virtuoel.towelette.command.arguments.StateArgumentType;
@@ -34,7 +34,7 @@ public class Towelette implements ModInitializer
 	
 	static
 	{
-		Reflection.initialize(PaletteRegistrar.class);
+		Reflection.initialize(LayerRegistrar.class);
 	}
 	
 	public static boolean ignoreBlockStateFluids(BlockState state)
@@ -62,7 +62,7 @@ public class Towelette implements ModInitializer
 					{
 						final BlockPos pos = BlockPosArgumentType.getLoadedBlockPos(context, "pos");
 						final FluidState state = context.getSource().getWorld().getFluidState(pos);
-						context.getSource().sendFeedback(new LiteralText(PaletteRegistrar.FLUIDS.serializeState(state).toString()), true);
+						context.getSource().sendFeedback(new LiteralText(LayerRegistrar.FLUID.serializeState(state).toString()), true);
 						return 1;
 					})
 				)
@@ -80,7 +80,7 @@ public class Towelette implements ModInitializer
 					{
 						final BlockPos pos = BlockPosArgumentType.getLoadedBlockPos(context, "pos");
 						final BlockState state = context.getSource().getWorld().getBlockState(pos);
-						context.getSource().sendFeedback(new LiteralText(PaletteRegistrar.BLOCKS.serializeState(state).toString()), true);
+						context.getSource().sendFeedback(new LiteralText(LayerRegistrar.BLOCK.serializeState(state).toString()), true);
 						return 1;
 					})
 				)

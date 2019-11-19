@@ -20,8 +20,8 @@ import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.ChunkPos;
 import net.minecraft.world.chunk.WorldChunk;
 import net.minecraft.world.chunk.light.LightingProvider;
-import virtuoel.towelette.api.PaletteData;
-import virtuoel.towelette.api.PaletteRegistrar;
+import virtuoel.towelette.api.LayerData;
+import virtuoel.towelette.api.LayerRegistrar;
 import virtuoel.towelette.api.StateUpdateableChunkHolder;
 import virtuoel.towelette.util.PacketUtils;
 
@@ -40,20 +40,20 @@ public abstract class ChunkHolderMixin implements StateUpdateableChunkHolder
 	@Inject(at = @At("RETURN"), method = "<init>(Lnet/minecraft/util/math/ChunkPos;ILnet/minecraft/world/chunk/light/LightingProvider;Lnet/minecraft/server/world/ChunkHolder$LevelUpdateListener;Lnet/minecraft/server/world/ChunkHolder$PlayersWatchingChunkProvider;)V")
 	private void onConstruct(ChunkPos pos, int level, LightingProvider lightingProvider, ChunkHolder.LevelUpdateListener listener, ChunkHolder.PlayersWatchingChunkProvider provider, CallbackInfo info)
 	{
-		for(final Identifier id : PaletteRegistrar.PALETTES.getIds())
+		for(final Identifier id : LayerRegistrar.LAYERS.getIds())
 		{
 			updateMap.put(id, new MutablePair<short[], Integer>(new short[64], 0));
 		}
 	}
 	
 	@Override
-	public <O, S extends PropertyContainer<S>> void markForStateUpdate(PaletteData<O, S> layer, int x, int y, int z)
+	public <O, S extends PropertyContainer<S>> void markForStateUpdate(LayerData<O, S> layer, int x, int y, int z)
 	{
 		if (this.getWorldChunk() != null)
 		{
 			this.sectionsNeedingUpdateMask |= 1 << (y >> 4);
 			
-			final MutablePair<short[], Integer> data = updateMap.get(PaletteRegistrar.PALETTES.getId(layer));
+			final MutablePair<short[], Integer> data = updateMap.get(LayerRegistrar.LAYERS.getId(layer));
 			
 			final short[] positions = data.getLeft();
 			int updateCount = data.getRight();
@@ -85,7 +85,7 @@ public abstract class ChunkHolderMixin implements StateUpdateableChunkHolder
 	@Inject(at = @At("HEAD"), method = "flushUpdates(Lnet/minecraft/world/chunk/WorldChunk;)V")
 	private void onPreFlushUpdates(WorldChunk chunk, CallbackInfo info)
 	{
-		for(final Identifier id : PaletteRegistrar.PALETTES.getIds())
+		for(final Identifier id : LayerRegistrar.LAYERS.getIds())
 		{
 			final MutablePair<short[], Integer> data = updateMap.get(id);
 			
@@ -100,7 +100,7 @@ public abstract class ChunkHolderMixin implements StateUpdateableChunkHolder
 			
 			if (updateCount != 0)
 			{
-				final PaletteData<?, ?> layer = PaletteRegistrar.getPaletteData(id);
+				final LayerData<?, ?> layer = LayerRegistrar.getLayerData(id);
 				
 				if (updateCount == 1)
 				{

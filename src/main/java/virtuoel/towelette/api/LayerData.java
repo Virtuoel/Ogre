@@ -21,7 +21,7 @@ import net.minecraft.world.chunk.Chunk;
 import net.minecraft.world.chunk.Palette;
 import net.minecraft.world.chunk.PalettedContainer;
 
-public class PaletteData<O, S extends PropertyContainer<S>>
+public class LayerData<O, S extends PropertyContainer<S>>
 {
 	private final Palette<S> palette;
 	private final IdList<S> ids;
@@ -45,7 +45,7 @@ public class PaletteData<O, S extends PropertyContainer<S>>
 	private final Function<S, BlockRenderLayer> renderLayerFunction;
 	private final StateTesselationCallback<S> tesselationCallback;
 	
-	private PaletteData(
+	private LayerData(
 		final Palette<S> palette,
 		final IdList<S> ids,
 		
@@ -199,12 +199,12 @@ public class PaletteData<O, S extends PropertyContainer<S>>
 	
 	public S deserializeState(CompoundTag compound)
 	{
-		return PaletteRegistrar.deserializeState(compound, getRegistry(), defaultIdSupplier, defaultStateFunction, managerFunction);
+		return LayerRegistrar.deserializeState(compound, getRegistry(), defaultIdSupplier, defaultStateFunction, managerFunction);
 	}
 	
 	public CompoundTag serializeState(S state)
 	{
-		return PaletteRegistrar.serializeState(state, getRegistry(), entryFunction);
+		return LayerRegistrar.serializeState(state, getRegistry(), entryFunction);
 	}
 	
 	public static <O, S extends PropertyContainer<S>> Builder<O, S>builder()
@@ -349,9 +349,9 @@ public class PaletteData<O, S extends PropertyContainer<S>>
 			return this;
 		}
 		
-		public PaletteData<O, S> build()
+		public LayerData<O, S> build()
 		{
-			return new PaletteData<>(
+			return new LayerData<>(
 				palette,
 				ids,
 				emptyPredicate,

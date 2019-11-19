@@ -13,7 +13,7 @@ import com.mojang.brigadier.suggestion.SuggestionsBuilder;
 
 import net.minecraft.server.command.ServerCommandSource;
 import net.minecraft.state.PropertyContainer;
-import virtuoel.towelette.api.PaletteData;
+import virtuoel.towelette.api.LayerData;
 
 public class StateArgumentType implements ArgumentType<StateArgument<?, ?>>
 {
@@ -26,12 +26,12 @@ public class StateArgumentType implements ArgumentType<StateArgument<?, ?>>
 	
 	public static StateArgumentType create(String layerArgumentName)
 	{
-		return create(StateArgumentType::parsePaletteData, layerArgumentName);
+		return create(StateArgumentType::parseLayerData, layerArgumentName);
 	}
 	
-	private static PaletteData<?, ?> parsePaletteData(StringReader reader) throws CommandSyntaxException
+	private static LayerData<?, ?> parseLayerData(StringReader reader) throws CommandSyntaxException
 	{
-		return virtuoel.towelette.api.PaletteRegistrar.FLUIDS;
+		return virtuoel.towelette.api.LayerRegistrar.FLUID;
 		/* // TODO very broken
 		final int pos = reader.getCursor();
 		
@@ -39,22 +39,22 @@ public class StateArgumentType implements ArgumentType<StateArgument<?, ?>>
 		while(reader.peek(--offset) != ' ');
 		reader.setCursor(pos + offset);
 		
-		final PaletteData<?, ?> layer = new LayerArgumentType().parse(reader);
+		final LayerData<?, ?> layer = new LayerArgumentType().parse(reader);
 		
 		reader.setCursor(pos);
 		return layer;
 		*/
 	}
 	
-	public static StateArgumentType create(ArgumentType<PaletteData<?, ?>> layerIdParser, String layerArgumentName)
+	public static StateArgumentType create(ArgumentType<LayerData<?, ?>> layerIdParser, String layerArgumentName)
 	{
 		return new StateArgumentType(layerIdParser, layerArgumentName);
 	}
 	
-	final ArgumentType<PaletteData<?, ?>> readerLayerFunction;
+	final ArgumentType<LayerData<?, ?>> readerLayerFunction;
 	final String layerArgumentName;
 	
-	public <U> StateArgumentType(ArgumentType<PaletteData<?, ?>> readerLayerFunction, String layerArgumentName)
+	public <U> StateArgumentType(ArgumentType<LayerData<?, ?>> readerLayerFunction, String layerArgumentName)
 	{
 		this.readerLayerFunction = readerLayerFunction;
 		this.layerArgumentName = layerArgumentName;
@@ -64,7 +64,7 @@ public class StateArgumentType implements ArgumentType<StateArgument<?, ?>>
 	@Override
 	public StateArgument<?, ?> parse(StringReader reader) throws CommandSyntaxException
 	{
-		final PaletteData<?, ?> layer = readerLayerFunction.parse(reader);
+		final LayerData<?, ?> layer = readerLayerFunction.parse(reader);
 		final StateArgumentParser parser = new StateArgumentParser(reader).parse(layer);
 		return new StateArgument(layer, parser.getState(), parser.getStateProperties().keySet());
 	}
@@ -85,7 +85,7 @@ public class StateArgumentType implements ArgumentType<StateArgument<?, ?>>
 		
 		try
 		{ // TODO FIXME layer-sensitive parsing
-			parser.parse(context.getArgument(layerArgumentName, PaletteData.class));
+			parser.parse(context.getArgument(layerArgumentName, LayerData.class));
 		}
 		catch(CommandSyntaxException e)
 		{

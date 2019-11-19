@@ -26,19 +26,21 @@ import net.minecraft.util.registry.Registry;
 import net.minecraft.world.chunk.ChunkSection;
 import net.minecraft.world.chunk.IdListPalette;
 import net.minecraft.world.chunk.Palette;
-import virtuoel.towelette.Towelette;
 import virtuoel.towelette.mixin.layer.ChunkSectionAccessor;
-import virtuoel.towelette.util.PaletteUtils;
+import virtuoel.towelette.util.LayerUtils;
 
-public class PaletteRegistrar
+public class LayerRegistrar
 {
-	public static final DefaultedRegistry<PaletteData<?, ?>> PALETTES = Registry.REGISTRIES.add(Towelette.id("palettes"), new DefaultedRegistry<PaletteData<?, ?>>(ToweletteApi.MOD_ID + ":block_state"));
+	public static final DefaultedRegistry<LayerData<?, ?>> LAYERS = Registry.REGISTRIES.add(
+		new Identifier(ToweletteApi.MOD_ID, "layers"),
+		new DefaultedRegistry<LayerData<?, ?>>(ToweletteApi.MOD_ID + ":block_state")
+	);
 	
 	public static final Palette<BlockState> BLOCK_PALETTE;
 	public static final Palette<FluidState> FLUID_PALETTE;
 	
-	public static final PaletteData<Block, BlockState> BLOCKS;
-	public static final PaletteData<Fluid, FluidState> FLUIDS;
+	public static final LayerData<Block, BlockState> BLOCK;
+	public static final LayerData<Fluid, FluidState> FLUID;
 	
 	static
 	{
@@ -47,69 +49,69 @@ public class PaletteRegistrar
 		BLOCK_PALETTE = ChunkSectionAccessor.getBlockStatePalette();
 		FLUID_PALETTE = new IdListPalette<>(Fluid.STATE_IDS, Fluids.EMPTY.getDefaultState());
 		
-		BLOCKS = registerBlockLayer(PALETTES.getDefaultId());
-		FLUIDS = registerFluidLayer(new Identifier(ToweletteApi.MOD_ID, "fluid_state"));
+		BLOCK = registerBlockLayer(LAYERS.getDefaultId());
+		FLUID = registerFluidLayer(new Identifier(ToweletteApi.MOD_ID, "fluid_state"));
 	}
 	
-	public static PaletteData<Block, BlockState> registerBlockLayer(final Identifier id)
+	public static LayerData<Block, BlockState> registerBlockLayer(final Identifier id)
 	{
-		return PaletteRegistrar.PALETTES.add(id,
-			PaletteData.<Block, BlockState>builder()
-			.palette(PaletteRegistrar.BLOCK_PALETTE)
+		return LayerRegistrar.LAYERS.add(id,
+			LayerData.<Block, BlockState>builder()
+			.palette(LayerRegistrar.BLOCK_PALETTE)
 			.ids(Block.STATE_IDS)
 			.emptyPredicate(BlockState::isAir)
 			.invalidPositionSupplier(Blocks.VOID_AIR::getDefaultState)
-			.lightUpdatePredicate(PaletteUtils::shouldUpdateBlockStateLight)
-			.heightmapCallback(PaletteUtils::blockStateHeightmapUpdate)
-			.stateAdditionCallback(PaletteUtils::onBlockStateAdded)
-			.stateNeighborUpdateCallback(PaletteUtils::onBlockStateNeighborUpdate)
+			.lightUpdatePredicate(LayerUtils::shouldUpdateBlockStateLight)
+			.heightmapCallback(LayerUtils::blockStateHeightmapUpdate)
+			.stateAdditionCallback(LayerUtils::onBlockStateAdded)
+			.stateNeighborUpdateCallback(LayerUtils::onBlockStateNeighborUpdate)
 			.registry(Registry.BLOCK)
 			.entryFunction(BlockState::getBlock)
 			.defaultStateFunction(Block::getDefaultState)
 			.managerFunction(Block::getStateFactory)
 			.emptyStateSupplier(Blocks.AIR::getDefaultState)
 			.defaultIdFunction(Registry.BLOCK::getDefaultId)
-			.occlusionGraphCallback(PaletteUtils.Client::handleBlockStateOcclusionGraph)
-			.renderPredicate(PaletteUtils.Client::shouldRenderBlockState)
-			.renderLayerFunction(PaletteUtils.Client::getBlockStateRenderLayer)
-			.tesselationCallback(PaletteUtils.Client::tesselateBlockState)
+			.occlusionGraphCallback(LayerUtils.Client::handleBlockStateOcclusionGraph)
+			.renderPredicate(LayerUtils.Client::shouldRenderBlockState)
+			.renderLayerFunction(LayerUtils.Client::getBlockStateRenderLayer)
+			.tesselationCallback(LayerUtils.Client::tesselateBlockState)
 			.build()
 		);
 	}
 	
-	public static PaletteData<Fluid, FluidState> registerFluidLayer(final Identifier id)
+	public static LayerData<Fluid, FluidState> registerFluidLayer(final Identifier id)
 	{
-		return PaletteRegistrar.PALETTES.add(id,
-			PaletteData.<Fluid, FluidState>builder()
-			.palette(PaletteRegistrar.FLUID_PALETTE)
+		return LayerRegistrar.LAYERS.add(id,
+			LayerData.<Fluid, FluidState>builder()
+			.palette(LayerRegistrar.FLUID_PALETTE)
 			.ids(Fluid.STATE_IDS)
 			.emptyPredicate(FluidState::isEmpty)
-			.lightUpdatePredicate(PaletteUtils::shouldUpdateFluidStateLight)
-			.stateAdditionCallback(PaletteUtils::onFluidStateAdded)
-			.stateNeighborUpdateCallback(PaletteUtils::onFluidStateNeighborUpdate)
+			.lightUpdatePredicate(LayerUtils::shouldUpdateFluidStateLight)
+			.stateAdditionCallback(LayerUtils::onFluidStateAdded)
+			.stateNeighborUpdateCallback(LayerUtils::onFluidStateNeighborUpdate)
 			.registry(Registry.FLUID)
 			.entryFunction(FluidState::getFluid)
 			.defaultStateFunction(Fluid::getDefaultState)
 			.managerFunction(Fluid::getStateFactory)
 			.emptyStateSupplier(Fluids.EMPTY::getDefaultState)
 			.defaultIdFunction(Registry.FLUID::getDefaultId)
-			.renderPredicate(PaletteUtils.Client::shouldRenderFluidState)
-			.renderLayerFunction(PaletteUtils.Client::getFluidStateRenderLayer)
-			.tesselationCallback(PaletteUtils.Client::tesselateFluidState)
+			.renderPredicate(LayerUtils.Client::shouldRenderFluidState)
+			.renderLayerFunction(LayerUtils.Client::getFluidStateRenderLayer)
+			.tesselationCallback(LayerUtils.Client::tesselateFluidState)
 			.build()
 		);
 	}
 	
 	@SuppressWarnings("unchecked")
-	public static <O, S extends PropertyContainer<S>> PaletteData<O, S> getPaletteData(final Identifier id)
+	public static <O, S extends PropertyContainer<S>> LayerData<O, S> getLayerData(final Identifier id)
 	{
-		return (PaletteData<O, S>) PaletteRegistrar.PALETTES.get(id);
+		return (LayerData<O, S>) LayerRegistrar.LAYERS.get(id);
 	}
 	
 	@SuppressWarnings("unchecked")
-	public static <O, S extends PropertyContainer<S>> PaletteData<O, S> getPaletteData(final int id)
+	public static <O, S extends PropertyContainer<S>> LayerData<O, S> getLayerData(final int id)
 	{
-		return (PaletteData<O, S>) PaletteRegistrar.PALETTES.get(id);
+		return (LayerData<O, S>) LayerRegistrar.LAYERS.get(id);
 	}
 	
 	public static <O, S extends PropertyContainer<S>> S deserializeState(CompoundTag compound, Registry<O> registry, Supplier<Identifier> defaultIdSupplier, Function<O, S> defaultStateFunc, Function<O, StateFactory<O, S>> stateManagerFunc)

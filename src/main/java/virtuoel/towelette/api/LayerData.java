@@ -33,6 +33,8 @@ public class LayerData<O, S extends PropertyContainer<S>>
 	private final StateAdditionConsumer<S> stateAdditionCallback;
 	private final StateNeighborUpdateConsumer<O, S> stateNeighborUpdateCallback;
 	
+	private final Predicate<S> randomTickPredicate;
+	
 	private final Registry<O> entryRegistry;
 	private final Function<S, O> entryFunction;
 	private final Function<O, S> defaultStateFunction;
@@ -56,6 +58,8 @@ public class LayerData<O, S extends PropertyContainer<S>>
 		final StateAdditionConsumer<S> stateAdditionCallback,
 		final StateNeighborUpdateConsumer<O, S> stateNeighborUpdateCallback,
 		
+		final Predicate<S> randomTickPredicate,
+		
 		final Registry<O> entryRegistry,
 		final Function<S, O> entryFunction,
 		final Function<O, S> defaultStateFunction,
@@ -78,6 +82,8 @@ public class LayerData<O, S extends PropertyContainer<S>>
 		this.heightmapCallback = heightmapCallback;
 		this.stateAdditionCallback = stateAdditionCallback;
 		this.stateNeighborUpdateCallback = stateNeighborUpdateCallback;
+		
+		this.randomTickPredicate = randomTickPredicate;
 		
 		this.entryRegistry = entryRegistry;
 		this.entryFunction = entryFunction;
@@ -135,6 +141,11 @@ public class LayerData<O, S extends PropertyContainer<S>>
 	public void onNeighborUpdate(S state, World world, BlockPos pos, O other, BlockPos otherPos, boolean pushed)
 	{
 		stateNeighborUpdateCallback.onNeighborUpdate(state, world, pos, other, otherPos, pushed);
+	}
+	
+	public boolean hasRandomTicks(S state)
+	{
+		return randomTickPredicate.test(state);
 	}
 	
 	public Registry<O> getRegistry()
@@ -224,6 +235,8 @@ public class LayerData<O, S extends PropertyContainer<S>>
 		private StateAdditionConsumer<S> stateAdditionCallback = (s, w, p, o, b) -> {};
 		private StateNeighborUpdateConsumer<O, S> stateNeighborUpdateCallback = (s, w, p, e, o, u) -> {};
 		
+		private Predicate<S> randomTickPredicate = s -> false;
+		
 		private Registry<O> entryRegistry;
 		private Function<S, O> entryFunction;
 		private Function<O, S> defaultStateFunction;
@@ -286,6 +299,12 @@ public class LayerData<O, S extends PropertyContainer<S>>
 		public Builder<O, S> stateNeighborUpdateCallback(StateNeighborUpdateConsumer<O, S> stateNeighborUpdateCallback)
 		{
 			this.stateNeighborUpdateCallback = stateNeighborUpdateCallback;
+			return this;
+		}
+		
+		public Builder<O, S> randomTickPredicate(Predicate<S> randomTickPredicate)
+		{
+			this.randomTickPredicate = randomTickPredicate;
 			return this;
 		}
 		
@@ -354,18 +373,23 @@ public class LayerData<O, S extends PropertyContainer<S>>
 			return new LayerData<>(
 				palette,
 				ids,
+				
 				emptyPredicate,
 				invalidPositionSupplier.orElse(emptyStateSupplier),
 				lightUpdatePredicate,
 				heightmapCallback,
 				stateAdditionCallback,
 				stateNeighborUpdateCallback,
+				
+				randomTickPredicate,
+				
 				entryRegistry,
 				entryFunction,
 				defaultStateFunction,
 				managerFunction,
 				emptyStateSupplier,
 				defaultIdSupplier,
+				
 				occlusionGraphCallback,
 				renderPredicate.orElse(emptyPredicate),
 				renderLayerFunction,

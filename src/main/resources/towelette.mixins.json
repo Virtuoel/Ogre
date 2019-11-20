@@ -15,6 +15,7 @@
 		"IceBlockMixin",
 		"LavaFluidMixin",
 		"TrapdoorBlockMixin",
+		"ViewableWorldMixin",
 		"VoxelShapeAccessor",
 		"WorldMixin",
 		"layer.CachedBlockPositionMixin",

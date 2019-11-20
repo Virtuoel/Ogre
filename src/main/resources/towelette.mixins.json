@@ -2,7 +2,6 @@
 	"required": true,
 	"package": "virtuoel.towelette.mixin",
 	"compatibilityLevel": "JAVA_8",
-	"plugin": "virtuoel.towelette.mixin.ToweletteMixinConfigPlugin",
 	"mixins":
 	[
 		"BaseFluidMixin",

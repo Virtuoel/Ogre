@@ -9,8 +9,8 @@ import net.minecraft.fluid.FluidState;
 import net.minecraft.fluid.Fluids;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.IWorld;
-import virtuoel.towelette.api.ModifiableWorldStateLayer;
 import virtuoel.towelette.api.LayerRegistrar;
+import virtuoel.towelette.api.ModifiableWorldStateLayer;
 
 public class DummyDrainableBlock extends Block implements FluidDrainable
 {
@@ -24,13 +24,30 @@ public class DummyDrainableBlock extends Block implements FluidDrainable
 	@Override
 	public Fluid tryDrainFluid(IWorld world, BlockPos pos, BlockState state)
 	{
+		final Fluid fluid;
 		final FluidState fluidState = world.getFluidState(pos);
-		if(!fluidState.isEmpty())
+		if(fluidState.isStill())
 		{
+			fluid = fluidState.getFluid();
+		}
+		else
+		{
+			fluid = Fluids.EMPTY;
+		}
+		
+		if(fluid != Fluids.EMPTY)
+		{
+			final BlockState blockState = world.getBlockState(pos);
+			final Block block = blockState.getBlock();
+			if (block instanceof FluidDrainable)
+			{
+				((FluidDrainable) block).tryDrainFluid(world, pos, blockState);
+			}
+			
 			final ModifiableWorldStateLayer w = ((ModifiableWorldStateLayer) world);
 			w.setState(LayerRegistrar.FLUID, pos, Fluids.EMPTY.getDefaultState(), 11);
 		}
 		
-		return fluidState.getFluid();
+		return fluid;
 	}
 }

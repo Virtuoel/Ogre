@@ -13,10 +13,10 @@ import org.spongepowered.asm.mixin.injection.callback.LocalCapture;
 
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;
-import net.minecraft.block.Blocks;
 import net.minecraft.block.FluidFillable;
 import net.minecraft.block.Material;
 import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.fluid.BaseFluid;
 import net.minecraft.fluid.Fluid;
 import net.minecraft.fluid.FluidState;
 import net.minecraft.fluid.Fluids;
@@ -28,23 +28,19 @@ import net.minecraft.util.hit.BlockHitResult;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Direction;
 import net.minecraft.world.World;
-import virtuoel.towelette.api.ModifiableWorldStateLayer;
 import virtuoel.towelette.api.LayerRegistrar;
+import virtuoel.towelette.api.ModifiableWorldStateLayer;
+import virtuoel.towelette.util.DummyDrainableBlock;
 
 @Mixin(BucketItem.class)
-public class BucketItemMixin
+public abstract class BucketItemMixin
 {
 	@Shadow Fluid fluid;
 	
 	@Redirect(method = "use", at = @At(value = "INVOKE", ordinal = 0, target = "Lnet/minecraft/world/World;getBlockState(Lnet/minecraft/util/math/BlockPos;)Lnet/minecraft/block/BlockState;"))
 	private BlockState onUseGetBlockStateProxy(World obj, BlockPos blockPos)
 	{
-		final FluidState state = obj.getFluidState(blockPos);
-		if(!state.isEmpty() && !state.isStill())
-		{
-			return Blocks.AIR.getDefaultState();
-		}
-		return obj.getBlockState(blockPos);
+		return DummyDrainableBlock.INSTANCE.getDefaultState();
 	}
 	
 	@Redirect(method = "use", at = @At(value = "FIELD", ordinal = 2, target = "Lnet/minecraft/item/BucketItem;fluid:Lnet/minecraft/fluid/Fluid;"))
@@ -108,18 +104,12 @@ public class BucketItemMixin
 		final ModifiableWorldStateLayer w = ((ModifiableWorldStateLayer) world);
 		w.setState(LayerRegistrar.FLUID, pos, Fluids.EMPTY.getDefaultState(), 11);
 	}
-	/*
-	@Inject(at = @At(value = "RETURN", shift = Shift.BEFORE, ordinal = 3), method = "use", locals = LocalCapture.CAPTURE_FAILSOFT)
-	private void onUse2(World world, PlayerEntity player, Hand hand, CallbackInfoReturnable<TypedActionResult<ItemStack>> info, ItemStack held, BlockHitResult hitResult, BlockPos pos, BlockState state)
-	{
-		final ModifiableWorldStateLayer w = ((ModifiableWorldStateLayer) world);
-		w.setState(LayerRegistrar.FLUID, pos, Fluids.EMPTY.getDefaultState(), 11);
-	}
-	*/
+	
 	@Inject(at = @At(value = "INVOKE", shift = Shift.AFTER, target = "playEmptyingSound"), method = "placeFluid")
 	private void onPlaceFluid(@Nullable PlayerEntity player, World world, BlockPos pos, @Nullable BlockHitResult result, CallbackInfoReturnable<Boolean> info)
 	{
 		final ModifiableWorldStateLayer w = ((ModifiableWorldStateLayer) world);
-		w.setState(LayerRegistrar.FLUID, pos, this.fluid.getDefaultState(), 11);
+		final FluidState fluidState = this.fluid instanceof BaseFluid ? ((BaseFluid) this.fluid).getStill(false) : this.fluid.getDefaultState();
+		w.setState(LayerRegistrar.FLUID, pos, fluidState, 11);
 	}
 }

@@ -4,6 +4,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.concurrent.CompletableFuture;
 
+import com.google.gson.JsonObject;
 import com.mojang.brigadier.StringReader;
 import com.mojang.brigadier.arguments.ArgumentType;
 import com.mojang.brigadier.context.CommandContext;
@@ -11,60 +12,49 @@ import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import com.mojang.brigadier.suggestion.Suggestions;
 import com.mojang.brigadier.suggestion.SuggestionsBuilder;
 
+import net.minecraft.command.arguments.serialize.ArgumentSerializer;
 import net.minecraft.server.command.ServerCommandSource;
 import net.minecraft.state.PropertyContainer;
+import net.minecraft.util.Identifier;
+import net.minecraft.util.PacketByteBuf;
 import virtuoel.towelette.api.LayerData;
+import virtuoel.towelette.api.LayerRegistrar;
 
-public class StateArgumentType implements ArgumentType<StateArgument<?, ?>>
+public class StateArgumentType<O, S extends PropertyContainer<S>> implements ArgumentType<StateArgument<O, S>>
 {
 	private static final Collection<String> EXAMPLES = Arrays.asList("stone", "minecraft:stone", "stone[foo=bar]");
 	
-	public static StateArgumentType create()
+	public static <O, S extends PropertyContainer<S>> StateArgumentType<O, S> create(String id)
 	{
-		return create("layer");
+		return create(new Identifier(id));
 	}
 	
-	public static StateArgumentType create(String layerArgumentName)
+	public static <O, S extends PropertyContainer<S>> StateArgumentType<O, S> create(Identifier id)
 	{
-		return create(StateArgumentType::parseLayerData, layerArgumentName);
+		return create(LayerRegistrar.<O, S>getLayerData(id));
 	}
 	
-	private static LayerData<?, ?> parseLayerData(StringReader reader) throws CommandSyntaxException
+	public static <O, S extends PropertyContainer<S>> StateArgumentType<O, S> create(LayerData<O, S> layer)
 	{
-		return virtuoel.towelette.api.LayerRegistrar.FLUID;
-		/* // TODO very broken
-		final int pos = reader.getCursor();
-		
-		int offset = 0;
-		while(reader.peek(--offset) != ' ');
-		reader.setCursor(pos + offset);
-		
-		final LayerData<?, ?> layer = new LayerArgumentType().parse(reader);
-		
-		reader.setCursor(pos);
+		return new StateArgumentType<O, S>(layer);
+	}
+	
+	final LayerData<O, S> layer;
+	
+	public StateArgumentType(LayerData<O, S> layer)
+	{
+		this.layer = layer;
+	}
+	
+	public LayerData<O, S> getLayer()
+	{
 		return layer;
-		*/
-	}
-	
-	public static StateArgumentType create(ArgumentType<LayerData<?, ?>> layerIdParser, String layerArgumentName)
-	{
-		return new StateArgumentType(layerIdParser, layerArgumentName);
-	}
-	
-	final ArgumentType<LayerData<?, ?>> readerLayerFunction;
-	final String layerArgumentName;
-	
-	public <U> StateArgumentType(ArgumentType<LayerData<?, ?>> readerLayerFunction, String layerArgumentName)
-	{
-		this.readerLayerFunction = readerLayerFunction;
-		this.layerArgumentName = layerArgumentName;
 	}
 	
 	@SuppressWarnings({ "unchecked", "rawtypes" })
 	@Override
-	public StateArgument<?, ?> parse(StringReader reader) throws CommandSyntaxException
+	public StateArgument<O, S> parse(StringReader reader) throws CommandSyntaxException
 	{
-		final LayerData<?, ?> layer = readerLayerFunction.parse(reader);
 		final StateArgumentParser parser = new StateArgumentParser(reader).parse(layer);
 		return new StateArgument(layer, parser.getState(), parser.getStateProperties().keySet());
 	}
@@ -75,17 +65,16 @@ public class StateArgumentType implements ArgumentType<StateArgument<?, ?>>
 		return context.getArgument(name, StateArgument.class);
 	}
 	
-	@SuppressWarnings("unchecked")
 	@Override
 	public <U> CompletableFuture<Suggestions> listSuggestions(CommandContext<U> context, SuggestionsBuilder builder)
 	{
-		StringReader reader = new StringReader(builder.getInput());
+		final StringReader reader = new StringReader(builder.getInput());
 		reader.setCursor(builder.getStart());
-		StateArgumentParser parser = new StateArgumentParser(reader);
+		final StateArgumentParser parser = new StateArgumentParser(reader);
 		
 		try
-		{ // TODO FIXME layer-sensitive parsing
-			parser.parse(context.getArgument(layerArgumentName, LayerData.class));
+		{
+			parser.parse(layer);
 		}
 		catch(CommandSyntaxException e)
 		{
@@ -99,5 +88,28 @@ public class StateArgumentType implements ArgumentType<StateArgument<?, ?>>
 	public Collection<String> getExamples()
 	{
 		return EXAMPLES;
+	}
+	
+	@SuppressWarnings("rawtypes")
+	public static class Serializer implements ArgumentSerializer<StateArgumentType>
+	{
+		@Override
+		public void toPacket(StateArgumentType argType, PacketByteBuf buffer)
+		{
+			buffer.writeIdentifier(LayerRegistrar.LAYERS.getId(argType.getLayer()));
+		}
+		
+		@SuppressWarnings("unchecked")
+		@Override
+		public StateArgumentType fromPacket(PacketByteBuf buffer)
+		{
+			return new StateArgumentType(LayerRegistrar.LAYERS.get(buffer.readIdentifier()));
+		}
+		
+		@Override
+		public void toJson(StateArgumentType argType, JsonObject json)
+		{
+			json.addProperty("id", LayerRegistrar.LAYERS.getId(argType.getLayer()).toString());
+		}
 	}
 }

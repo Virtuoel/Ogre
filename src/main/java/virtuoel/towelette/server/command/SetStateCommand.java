@@ -17,9 +17,9 @@ import net.minecraft.server.world.ServerWorld;
 import net.minecraft.state.PropertyContainer;
 import net.minecraft.text.TranslatableText;
 import net.minecraft.util.math.BlockPos;
-import virtuoel.towelette.api.ModifiableWorldStateLayer;
 import virtuoel.towelette.api.LayerData;
-import virtuoel.towelette.command.arguments.LayerArgumentType;
+import virtuoel.towelette.api.LayerRegistrar;
+import virtuoel.towelette.api.ModifiableWorldStateLayer;
 import virtuoel.towelette.command.arguments.StateArgument;
 import virtuoel.towelette.command.arguments.StateArgumentType;
 
@@ -27,23 +27,27 @@ public class SetStateCommand
 {
 	private static final SimpleCommandExceptionType FAILED_EXCEPTION = new SimpleCommandExceptionType(new TranslatableText("commands.setstate.failed"));
 	
-	public static void register(CommandDispatcher<ServerCommandSource> commandDispatcher_1)
+	public static void register(LayerData<?, ?> layer, CommandDispatcher<ServerCommandSource> dispatcher)
 	{
-		commandDispatcher_1.register(
+		dispatcher.register(
 			CommandManager.literal("setstate")
 			.requires(source -> source.hasPermissionLevel(2))
-			.then(CommandManager.argument("pos", BlockPosArgumentType.blockPos()))
-			.then(CommandManager.argument("layer", LayerArgumentType.layer()))
 			.then(
-				CommandManager.argument("state", StateArgumentType.create())
-				.executes(SetStateCommand::run)
+				CommandManager.argument("pos", BlockPosArgumentType.blockPos())
 				.then(
-					CommandManager.literal("keep")
-					.executes(SetStateCommand::runKeep)
-				)
-				.then(
-					CommandManager.literal("replace")
-					.executes(SetStateCommand::run)
+					CommandManager.literal(LayerRegistrar.LAYERS.getId(layer).toString())
+					.then(
+						CommandManager.argument("state", StateArgumentType.create(layer))
+						.executes(SetStateCommand::run)
+						.then(
+							CommandManager.literal("keep")
+							.executes(SetStateCommand::runKeep)
+						)
+						.then(
+							CommandManager.literal("replace")
+							.executes(SetStateCommand::run)
+						)
+					)
 				)
 			)
 		);
@@ -56,8 +60,8 @@ public class SetStateCommand
 	
 	private static <O, S extends PropertyContainer<S>> int runKeep(CommandContext<ServerCommandSource> context) throws CommandSyntaxException
 	{
-		final LayerData<O, S> layer = LayerArgumentType.getLayerArgument(context, "layer");
 		final StateArgument<O, S> state = StateArgumentType.getArgument(context, "state");
+		final LayerData<O, S> layer = state.getLayer();
 		final BlockPos pos = BlockPosArgumentType.getLoadedBlockPos(context, "pos");
 		return run(context.getSource(), pos, state, cachedPos ->
 		{
@@ -79,7 +83,6 @@ public class SetStateCommand
 		}
 		else
 		{
-		//	serverWorld_1.updateNeighbors(blockPos_1, blockArgument_1.getFluidState().getBlockState().getBlock());
 			source.sendFeedback(new TranslatableText("commands.setstate.success", pos.getX(), pos.getY(), pos.getZ()), true);
 			return 1;
 		}

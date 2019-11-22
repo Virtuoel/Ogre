@@ -6,23 +6,20 @@ import org.apache.logging.log4j.Logger;
 import com.google.common.reflect.Reflection;
 
 import net.fabricmc.api.ModInitializer;
+import net.fabricmc.fabric.api.event.registry.RegistryEntryAddedCallback;
 import net.fabricmc.fabric.api.registry.CommandRegistry;
 import net.fabricmc.fabric.api.tag.TagRegistry;
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;
 import net.minecraft.command.arguments.ArgumentTypes;
-import net.minecraft.command.arguments.BlockPosArgumentType;
 import net.minecraft.command.arguments.serialize.ConstantArgumentSerializer;
-import net.minecraft.fluid.FluidState;
-import net.minecraft.server.command.CommandManager;
 import net.minecraft.tag.Tag;
-import net.minecraft.text.LiteralText;
 import net.minecraft.util.Identifier;
-import net.minecraft.util.math.BlockPos;
 import virtuoel.towelette.api.LayerRegistrar;
 import virtuoel.towelette.api.ToweletteApi;
 import virtuoel.towelette.command.arguments.LayerArgumentType;
 import virtuoel.towelette.command.arguments.StateArgumentType;
+import virtuoel.towelette.server.command.GetStateCommand;
 import virtuoel.towelette.server.command.SetStateCommand;
 
 public class Towelette implements ModInitializer
@@ -45,48 +42,25 @@ public class Towelette implements ModInitializer
 	@Override
 	public void onInitialize()
 	{
-		ArgumentTypes.register("state", StateArgumentType.class, new ConstantArgumentSerializer<StateArgumentType>(StateArgumentType::create));
+		ArgumentTypes.register("state", StateArgumentType.class, new StateArgumentType.Serializer());
 		ArgumentTypes.register("layer", LayerArgumentType.class, new ConstantArgumentSerializer<LayerArgumentType>(LayerArgumentType::layer));
 		
-		CommandRegistry.INSTANCE.register(false, commandDispatcher ->
+		LayerRegistrar.LAYERS.forEach(layer ->
 		{
-			commandDispatcher.register(
-				CommandManager.literal("getfluid")
-				.requires(commandSource ->
-				{
-					return commandSource.hasPermissionLevel(2);
-				})
-				.then(
-					CommandManager.argument("pos", BlockPosArgumentType.blockPos())
-					.executes(context ->
-					{
-						final BlockPos pos = BlockPosArgumentType.getLoadedBlockPos(context, "pos");
-						final FluidState state = context.getSource().getWorld().getFluidState(pos);
-						context.getSource().sendFeedback(new LiteralText(LayerRegistrar.FLUID.serializeState(state).toString()), true);
-						return 1;
-					})
-				)
-			);
-			
-			commandDispatcher.register(
-				CommandManager.literal("getblock")
-				.requires(commandSource ->
-				{
-					return commandSource.hasPermissionLevel(2);
-				})
-				.then(
-					CommandManager.argument("pos", BlockPosArgumentType.blockPos())
-					.executes(context ->
-					{
-						final BlockPos pos = BlockPosArgumentType.getLoadedBlockPos(context, "pos");
-						final BlockState state = context.getSource().getWorld().getBlockState(pos);
-						context.getSource().sendFeedback(new LiteralText(LayerRegistrar.BLOCK.serializeState(state).toString()), true);
-						return 1;
-					})
-				)
-			);
-			
-			SetStateCommand.register(commandDispatcher);
+			CommandRegistry.INSTANCE.register(false, commandDispatcher ->
+			{
+				GetStateCommand.register(layer, commandDispatcher);
+				SetStateCommand.register(layer, commandDispatcher);
+			});
+		});
+		
+		RegistryEntryAddedCallback.event(LayerRegistrar.LAYERS).register((rawId, id, object) ->
+		{
+			CommandRegistry.INSTANCE.register(false, commandDispatcher ->
+			{
+				GetStateCommand.register(object, commandDispatcher);
+				SetStateCommand.register(object, commandDispatcher);
+			});
 		});
 	}
 	

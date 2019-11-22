@@ -26,6 +26,11 @@ public class StateArgument<O, S extends PropertyContainer<S>> implements Predica
 		this.properties = properties;
 	}
 	
+	public LayerData<O, S> getLayer()
+	{
+		return this.layer;
+	}
+	
 	public S getState()
 	{
 		return this.state;

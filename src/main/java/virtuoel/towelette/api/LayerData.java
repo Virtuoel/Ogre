@@ -31,7 +31,8 @@ public class LayerData<O, S extends PropertyContainer<S>>
 	private final LightUpdatePredicate<S> lightUpdatePredicate;
 	private final HeightmapUpdateConsumer<S> heightmapCallback;
 	private final StateAdditionConsumer<S> stateAdditionCallback;
-	private final StateNeighborUpdateConsumer<O, S> stateNeighborUpdateCallback;
+	private final StateNeighborUpdateConsumer<S> stateNeighborUpdateCallback;
+	private final UpdateStateNeighborsConsumer<S> updateNeighborStatesCallback;
 	
 	private final Predicate<S> randomTickPredicate;
 	
@@ -56,7 +57,8 @@ public class LayerData<O, S extends PropertyContainer<S>>
 		final LightUpdatePredicate<S> lightUpdatePredicate,
 		final HeightmapUpdateConsumer<S> heightmapCallback,
 		final StateAdditionConsumer<S> stateAdditionCallback,
-		final StateNeighborUpdateConsumer<O, S> stateNeighborUpdateCallback,
+		final StateNeighborUpdateConsumer<S> stateNeighborUpdateCallback,
+		final UpdateStateNeighborsConsumer<S> updateNeighborStatesCallback,
 		
 		final Predicate<S> randomTickPredicate,
 		
@@ -82,6 +84,7 @@ public class LayerData<O, S extends PropertyContainer<S>>
 		this.heightmapCallback = heightmapCallback;
 		this.stateAdditionCallback = stateAdditionCallback;
 		this.stateNeighborUpdateCallback = stateNeighborUpdateCallback;
+		this.updateNeighborStatesCallback = updateNeighborStatesCallback;
 		
 		this.randomTickPredicate = randomTickPredicate;
 		
@@ -138,9 +141,14 @@ public class LayerData<O, S extends PropertyContainer<S>>
 		stateAdditionCallback.onStateAdded(state, world, pos, oldState, pushed);
 	}
 	
-	public void onNeighborUpdate(S state, World world, BlockPos pos, O other, BlockPos otherPos, boolean pushed)
+	public void onNeighborUpdate(S state, World world, BlockPos pos, S otherState, BlockPos otherPos, boolean pushed)
 	{
-		stateNeighborUpdateCallback.onNeighborUpdate(state, world, pos, other, otherPos, pushed);
+		stateNeighborUpdateCallback.onNeighborUpdate(state, world, pos, otherState, otherPos, pushed);
+	}
+	
+	public void updateNeighbors(World world, BlockPos pos, S state, S oldState, int flags)
+	{
+		updateNeighborStatesCallback.updateNeighbors(world, pos, state, oldState, flags);
 	}
 	
 	public boolean hasRandomTicks(S state)
@@ -233,7 +241,8 @@ public class LayerData<O, S extends PropertyContainer<S>>
 		private LightUpdatePredicate<S> lightUpdatePredicate;
 		private HeightmapUpdateConsumer<S> heightmapCallback = (c, x, y, z, s) -> {};
 		private StateAdditionConsumer<S> stateAdditionCallback = (s, w, p, o, b) -> {};
-		private StateNeighborUpdateConsumer<O, S> stateNeighborUpdateCallback = (s, w, p, e, o, u) -> {};
+		private StateNeighborUpdateConsumer<S> stateNeighborUpdateCallback = (s, w, p, e, o, u) -> {};
+		private UpdateStateNeighborsConsumer<S> updateNeighborStatesCallback = (w, p, s, o, f) -> {};
 		
 		private Predicate<S> randomTickPredicate = s -> false;
 		
@@ -296,9 +305,15 @@ public class LayerData<O, S extends PropertyContainer<S>>
 			return this;
 		}
 		
-		public Builder<O, S> stateNeighborUpdateCallback(StateNeighborUpdateConsumer<O, S> stateNeighborUpdateCallback)
+		public Builder<O, S> stateNeighborUpdateCallback(StateNeighborUpdateConsumer<S> stateNeighborUpdateCallback)
 		{
 			this.stateNeighborUpdateCallback = stateNeighborUpdateCallback;
+			return this;
+		}
+		
+		public Builder<O, S> updateNeighborStatesCallback(UpdateStateNeighborsConsumer<S> updateNeighborStatesCallback)
+		{
+			this.updateNeighborStatesCallback = updateNeighborStatesCallback;
 			return this;
 		}
 		
@@ -380,6 +395,7 @@ public class LayerData<O, S extends PropertyContainer<S>>
 				heightmapCallback,
 				stateAdditionCallback,
 				stateNeighborUpdateCallback,
+				updateNeighborStatesCallback,
 				
 				randomTickPredicate,
 				

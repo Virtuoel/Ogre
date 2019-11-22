@@ -2,14 +2,12 @@ package virtuoel.towelette.util;
 
 import java.util.Random;
 
-import net.minecraft.block.Block;
 import net.minecraft.block.BlockRenderLayer;
 import net.minecraft.block.BlockRenderType;
 import net.minecraft.block.BlockState;
 import net.minecraft.client.render.BufferBuilder;
 import net.minecraft.client.render.block.BlockRenderManager;
 import net.minecraft.client.render.chunk.ChunkOcclusionGraphBuilder;
-import net.minecraft.fluid.Fluid;
 import net.minecraft.fluid.FluidState;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.BlockView;
@@ -34,9 +32,16 @@ public class LayerUtils
 		state.onBlockAdded(world, pos, oldState, pushed);
 	}
 	
-	public static void onBlockStateNeighborUpdate(BlockState state, World world, BlockPos pos, Block other, BlockPos otherPos, boolean pushed)
+	public static void onBlockStateNeighborUpdate(BlockState state, World world, BlockPos pos, BlockState otherState, BlockPos otherPos, boolean pushed)
 	{
-		state.neighborUpdate(world, pos, other, otherPos, pushed);
+		state.neighborUpdate(world, pos, otherState.getBlock(), otherPos, pushed);
+	}
+	
+	public static void updateNeighborBlockStates(World world, BlockPos pos, BlockState state, BlockState oldState, int flags)
+	{
+		oldState.method_11637(world, pos, flags);
+		state.updateNeighborStates(world, pos, flags);
+		state.method_11637(world, pos, flags);
 	}
 	
 	public static void onFluidStateAdded(FluidState state, World world, BlockPos pos, FluidState oldState, boolean pushed)
@@ -44,9 +49,14 @@ public class LayerUtils
 		((UpdateableFluid) state.getFluid()).onFluidAdded(state, world, pos, oldState);
 	}
 	
-	public static void onFluidStateNeighborUpdate(FluidState state, World world, BlockPos pos, Fluid other, BlockPos otherPos, boolean pushed)
+	public static void onFluidStateNeighborUpdate(FluidState state, World world, BlockPos pos, FluidState otherState, BlockPos otherPos, boolean pushed)
 	{
 		((UpdateableFluid) state.getFluid()).neighborUpdate(state, world, pos, otherPos);
+	}
+	
+	public static void updateNeighborFluidStates(World world, BlockPos pos, FluidState state, FluidState oldState, int flags)
+	{
+		((UpdateableFluid) state.getFluid()).updateNeighborStates(world, pos, state, flags);
 	}
 	
 	public static boolean shouldUpdateBlockStateLight(BlockView world, BlockPos pos, BlockState newState, BlockState oldState)

@@ -137,6 +137,11 @@ public abstract class WorldMixin implements ModifiableWorldMixin
 						// TODO
 						updateNeighbors(layer, self, pos);
 					}
+					
+					if ((flags & 16) == 0)
+					{
+						layer.updateNeighbors(self, pos, state, oldState, flags & -2);
+					}
 				}
 				
 				return true;
@@ -206,7 +211,7 @@ public abstract class WorldMixin implements ModifiableWorldMixin
 		if (!world.isClient())
 		{
 			final BlockViewStateLayer w = ((BlockViewStateLayer) world);
-			layer.onNeighborUpdate(w.getState(layer, pos), world, pos, layer.getEntry(w.getState(layer, otherPos)), otherPos, false);
+			layer.onNeighborUpdate(w.getState(layer, pos), world, pos, w.getState(layer, otherPos), otherPos, false);
 		}
 	}
 }

@@ -10,10 +10,11 @@ import net.minecraft.fluid.Fluids;
 import net.minecraft.tag.FluidTags;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Direction;
+import net.minecraft.world.IWorld;
 import net.minecraft.world.World;
 import virtuoel.towelette.api.CollidableFluid;
-import virtuoel.towelette.api.ModifiableWorldStateLayer;
 import virtuoel.towelette.api.LayerRegistrar;
+import virtuoel.towelette.api.ModifiableWorldStateLayer;
 import virtuoel.towelette.api.UpdateableFluid;
 
 @Mixin(Fluid.class)
@@ -34,6 +35,38 @@ public class FluidMixin implements CollidableFluid, UpdateableFluid
 		if (!lavaTouchedWater(state, world, pos))
 		{
 			world.getFluidTickScheduler().schedule(pos, state.getFluid(), state.getFluid().getTickRate(world));
+		}
+	}
+	
+	@Override
+	public FluidState getStateForNeighborUpdate(FluidState state, Direction direction, FluidState otherState, IWorld world, BlockPos blockPos, BlockPos otherPos)
+	{
+		if (state.isStill() || otherState.isStill())
+		{
+			world.getFluidTickScheduler().schedule(blockPos, state.getFluid(), state.getFluid().getTickRate(world));
+		}
+		
+		return UpdateableFluid.super.getStateForNeighborUpdate(state, direction, otherState, world, blockPos, otherPos);
+	}
+	
+	@Unique private static final Direction[] UPDATE_ORDER = new Direction[] { Direction.WEST, Direction.EAST, Direction.NORTH, Direction.SOUTH, Direction.DOWN, Direction.UP };
+	
+	@Override
+	public void updateNeighborStates(World world, BlockPos pos, FluidState state, int flags)
+	{
+		try(final BlockPos.PooledMutable mutablePos = BlockPos.PooledMutable.get())
+		{
+			for (final Direction direction : UPDATE_ORDER)
+			{
+				mutablePos.method_10114(pos).method_10118(direction);
+				final FluidState fluidState = world.getFluidState(mutablePos);
+				final FluidState newState = getStateForNeighborUpdate(fluidState, direction.getOpposite(), state, world, mutablePos, pos);
+				if (newState != fluidState)
+				{
+					final ModifiableWorldStateLayer w = ((ModifiableWorldStateLayer) world);
+					w.setState(LayerRegistrar.FLUID, mutablePos, newState, flags & -33);
+				}
+			}
 		}
 	}
 	

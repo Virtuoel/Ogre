@@ -65,6 +65,7 @@ public class LayerRegistrar
 			.heightmapCallback(LayerUtils::blockStateHeightmapUpdate)
 			.stateAdditionCallback(LayerUtils::onBlockStateAdded)
 			.stateNeighborUpdateCallback(LayerUtils::onBlockStateNeighborUpdate)
+			.updateNeighborStatesCallback(LayerUtils::updateNeighborBlockStates)
 			
 			.randomTickPredicate(BlockState::hasRandomTicks)
 			.registry(Registry.BLOCK)
@@ -91,6 +92,7 @@ public class LayerRegistrar
 			.lightUpdatePredicate(LayerUtils::shouldUpdateFluidStateLight)
 			.stateAdditionCallback(LayerUtils::onFluidStateAdded)
 			.stateNeighborUpdateCallback(LayerUtils::onFluidStateNeighborUpdate)
+			.updateNeighborStatesCallback(LayerUtils::updateNeighborFluidStates)
 			
 			.randomTickPredicate(FluidState::hasRandomTicks)
 			.registry(Registry.FLUID)

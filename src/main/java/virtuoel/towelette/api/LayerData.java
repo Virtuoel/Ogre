@@ -33,6 +33,7 @@ public class LayerData<O, S extends PropertyContainer<S>>
 	private final StateAdditionConsumer<S> stateAdditionCallback;
 	private final StateNeighborUpdateConsumer<S> stateNeighborUpdateCallback;
 	private final UpdateStateNeighborsConsumer<S> updateNeighborStatesCallback;
+	private final UpdateAdjacentComparatorsConsumer<S> updateAdjacentComparatorsCallback;
 	
 	private final Predicate<S> randomTickPredicate;
 	
@@ -59,6 +60,7 @@ public class LayerData<O, S extends PropertyContainer<S>>
 		final StateAdditionConsumer<S> stateAdditionCallback,
 		final StateNeighborUpdateConsumer<S> stateNeighborUpdateCallback,
 		final UpdateStateNeighborsConsumer<S> updateNeighborStatesCallback,
+		final UpdateAdjacentComparatorsConsumer<S> updateAdjacentComparatorsCallback,
 		
 		final Predicate<S> randomTickPredicate,
 		
@@ -85,6 +87,7 @@ public class LayerData<O, S extends PropertyContainer<S>>
 		this.stateAdditionCallback = stateAdditionCallback;
 		this.stateNeighborUpdateCallback = stateNeighborUpdateCallback;
 		this.updateNeighborStatesCallback = updateNeighborStatesCallback;
+		this.updateAdjacentComparatorsCallback = updateAdjacentComparatorsCallback;
 		
 		this.randomTickPredicate = randomTickPredicate;
 		
@@ -149,6 +152,11 @@ public class LayerData<O, S extends PropertyContainer<S>>
 	public void updateNeighbors(World world, BlockPos pos, S state, S oldState, int flags)
 	{
 		updateNeighborStatesCallback.updateNeighbors(world, pos, state, oldState, flags);
+	}
+	
+	public void updateAdjacentComparators(World world, BlockPos pos, S state, S oldState)
+	{
+		updateAdjacentComparatorsCallback.updateAdjacentComparators(world, pos, state, oldState);
 	}
 	
 	public boolean hasRandomTicks(S state)
@@ -243,6 +251,7 @@ public class LayerData<O, S extends PropertyContainer<S>>
 		private StateAdditionConsumer<S> stateAdditionCallback = (s, w, p, o, b) -> {};
 		private StateNeighborUpdateConsumer<S> stateNeighborUpdateCallback = (s, w, p, e, o, u) -> {};
 		private UpdateStateNeighborsConsumer<S> updateNeighborStatesCallback = (w, p, s, o, f) -> {};
+		private UpdateAdjacentComparatorsConsumer<S> updateAdjacentComparatorsCallback = (w, p, s, o) -> {};
 		
 		private Predicate<S> randomTickPredicate = s -> false;
 		
@@ -314,6 +323,12 @@ public class LayerData<O, S extends PropertyContainer<S>>
 		public Builder<O, S> updateNeighborStatesCallback(UpdateStateNeighborsConsumer<S> updateNeighborStatesCallback)
 		{
 			this.updateNeighborStatesCallback = updateNeighborStatesCallback;
+			return this;
+		}
+		
+		public Builder<O, S> updateAdjacentComparatorsCallback(UpdateAdjacentComparatorsConsumer<S> updateAdjacentComparatorsCallback)
+		{
+			this.updateAdjacentComparatorsCallback = updateAdjacentComparatorsCallback;
 			return this;
 		}
 		
@@ -396,6 +411,7 @@ public class LayerData<O, S extends PropertyContainer<S>>
 				stateAdditionCallback,
 				stateNeighborUpdateCallback,
 				updateNeighborStatesCallback,
+				updateAdjacentComparatorsCallback,
 				
 				randomTickPredicate,
 				

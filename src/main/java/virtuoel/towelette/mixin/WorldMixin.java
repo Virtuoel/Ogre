@@ -28,8 +28,8 @@ import net.minecraft.world.level.LevelGeneratorType;
 import virtuoel.towelette.api.BlockViewStateLayer;
 import virtuoel.towelette.api.ChunkStateLayer;
 import virtuoel.towelette.api.LayerData;
+import virtuoel.towelette.api.LayerRegistrar;
 import virtuoel.towelette.api.StateUpdateableChunkManager;
-import virtuoel.towelette.api.UpdateableFluid;
 import virtuoel.towelette.mixin.layer.ModifiableWorldMixin;
 
 @Mixin(World.class)
@@ -40,9 +40,7 @@ public abstract class WorldMixin implements ModifiableWorldMixin
 	@Inject(method = "updateNeighbor", at = @At(value = "INVOKE", shift = Shift.AFTER, target = "Lnet/minecraft/world/World;getBlockState(Lnet/minecraft/util/math/BlockPos;)Lnet/minecraft/block/BlockState;"))
 	private void onUpdateNeighborAfterNeighborUpdate(BlockPos pos, Block block, BlockPos otherPos, CallbackInfo info)
 	{
-		final FluidState state = getFluidState(pos); // TODO FIXME layers
-		final UpdateableFluid f = (UpdateableFluid) state.getFluid();
-		f.neighborUpdate(state, (World) (Object) this, pos, otherPos);
+		updateNeighborExceptLayer(LayerRegistrar.BLOCK, (World) (Object) this, pos, otherPos);
 	}
 	
 	@Inject(method = "doesAreaContainFireSource", locals = LocalCapture.CAPTURE_FAILSOFT, cancellable = true, at = @At(value = "INVOKE", shift = Shift.AFTER, target = "Lnet/minecraft/world/World;getBlockState(Lnet/minecraft/util/math/BlockPos;)Lnet/minecraft/block/BlockState;"))
@@ -134,8 +132,8 @@ public abstract class WorldMixin implements ModifiableWorldMixin
 					
 					if (!self.isClient && (flags & 1) != 0)
 					{
-						// TODO
-						updateNeighbors(layer, self, pos);
+						updateNeighbors(layer, self, pos, oldState);
+						layer.updateAdjacentComparators(self, pos, state, oldState);
 					}
 					
 					if ((flags & 16) == 0)
@@ -150,67 +148,82 @@ public abstract class WorldMixin implements ModifiableWorldMixin
 	}
 	
 	@Unique
-	private static <O, S extends PropertyContainer<S>> void updateNeighbors(LayerData<O, S> layer, World world, BlockPos pos)
+	private static <O, S extends PropertyContainer<S>> void updateNeighbors(LayerData<O, S> layer, World world, BlockPos pos, S oldState)
 	{
 		if (world.getLevelProperties().getGeneratorType() != LevelGeneratorType.DEBUG_ALL_BLOCK_STATES)
 		{
-			updateNeighborsAlways(layer, world, pos);
+			updateNeighborsAlways(layer, world, pos, oldState);
 		}
-		
 	}
 	
 	@Unique
-	private static <O, S extends PropertyContainer<S>> void updateNeighborsAlways(LayerData<O, S> layer, World world, BlockPos pos)
+	private static <O, S extends PropertyContainer<S>> void updateNeighborsAlways(LayerData<O, S> layer, World world, BlockPos pos, S oldState)
 	{
-		updateNeighbor(layer, world, pos.west(), pos);
-		updateNeighbor(layer, world, pos.east(), pos);
-		updateNeighbor(layer, world, pos.down(), pos);
-		updateNeighbor(layer, world, pos.up(), pos);
-		updateNeighbor(layer, world, pos.north(), pos);
-		updateNeighbor(layer, world, pos.south(), pos);
+		updateNeighbor(layer, world, pos.west(), pos, oldState);
+		updateNeighbor(layer, world, pos.east(), pos, oldState);
+		updateNeighbor(layer, world, pos.down(), pos, oldState);
+		updateNeighbor(layer, world, pos.up(), pos, oldState);
+		updateNeighbor(layer, world, pos.north(), pos, oldState);
+		updateNeighbor(layer, world, pos.south(), pos, oldState);
 	}
 	
 	@Unique
-	private static <O, S extends PropertyContainer<S>> void updateNeighborsExcept(LayerData<O, S> layer, World world, BlockPos pos, Direction direction)
+	private static <O, S extends PropertyContainer<S>> void updateNeighborsExcept(LayerData<O, S> layer, World world, BlockPos pos, Direction direction, S oldState)
 	{
 		if (direction != Direction.WEST)
 		{
-			updateNeighbor(layer, world, pos.west(), pos);
+			updateNeighbor(layer, world, pos.west(), pos, oldState);
 		}
 		
 		if (direction != Direction.EAST)
 		{
-			updateNeighbor(layer, world, pos.east(), pos);
+			updateNeighbor(layer, world, pos.east(), pos, oldState);
 		}
 		
 		if (direction != Direction.DOWN)
 		{
-			updateNeighbor(layer, world, pos.down(), pos);
+			updateNeighbor(layer, world, pos.down(), pos, oldState);
 		}
 		
 		if (direction != Direction.UP)
 		{
-			updateNeighbor(layer, world, pos.up(), pos);
+			updateNeighbor(layer, world, pos.up(), pos, oldState);
 		}
 		
 		if (direction != Direction.NORTH)
 		{
-			updateNeighbor(layer, world, pos.north(), pos);
+			updateNeighbor(layer, world, pos.north(), pos, oldState);
 		}
 		
 		if (direction != Direction.SOUTH)
 		{
-			updateNeighbor(layer, world, pos.south(), pos);
+			updateNeighbor(layer, world, pos.south(), pos, oldState);
 		}
 		
 	}
 	
 	@Unique
-	private static <O, S extends PropertyContainer<S>> void updateNeighbor(LayerData<O, S> layer, World world, BlockPos pos, BlockPos otherPos)
+	private static <O, S extends PropertyContainer<S>> void updateNeighbor(LayerData<O, S> layer, World world, BlockPos pos, BlockPos otherPos, S oldState)
 	{
 		if (!world.isClient())
 		{
-			final BlockViewStateLayer w = ((BlockViewStateLayer) world);
+			layer.onNeighborUpdate(((BlockViewStateLayer) world).getState(layer, pos), world, pos, oldState, otherPos, false);
+			updateNeighborExceptLayer(layer, world, pos, otherPos);
+		}
+	}
+	
+	@SuppressWarnings("unchecked")
+	@Unique
+	private static <O, S extends PropertyContainer<S>> void updateNeighborExceptLayer(LayerData<O, S> exceptLayer, World world, BlockPos pos, BlockPos otherPos)
+	{
+		final BlockViewStateLayer w = ((BlockViewStateLayer) world);
+		for(@SuppressWarnings("rawtypes") final LayerData layer : LayerRegistrar.LAYERS)
+		{
+			if(layer == exceptLayer)
+			{
+				continue;
+			}
+			
 			layer.onNeighborUpdate(w.getState(layer, pos), world, pos, w.getState(layer, otherPos), otherPos, false);
 		}
 	}

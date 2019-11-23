@@ -44,6 +44,14 @@ public class LayerUtils
 		state.method_11637(world, pos, flags);
 	}
 	
+	public static void updateAdjacentBlockStateComparators(World world, BlockPos pos, BlockState state, BlockState oldState)
+	{
+		if (state.hasComparatorOutput())
+		{
+			world.updateHorizontalAdjacent(pos, oldState.getBlock());
+		}
+	}
+	
 	public static void onFluidStateAdded(FluidState state, World world, BlockPos pos, FluidState oldState, boolean pushed)
 	{
 		((UpdateableFluid) state.getFluid()).onFluidAdded(state, world, pos, oldState);

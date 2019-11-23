@@ -104,7 +104,7 @@ public abstract class WorldChunkMixin implements ChunkStateLayer
 		}
 		else
 		{
-			final O entry = layer.getEntry(state);
+			final O entry = layer.getOwner(state);
 			layer.trackHeightmapUpdate(self, x, y, z, state);
 			final boolean isEmpty = section.isEmpty();
 			if(wasEmpty != isEmpty)
@@ -112,7 +112,7 @@ public abstract class WorldChunkMixin implements ChunkStateLayer
 				world.getChunkManager().getLightingProvider().updateSectionStatus(pos, isEmpty);
 			}
 			
-			if(layer.getEntry(s.getState(layer, x, y & 15, z)) != entry)
+			if(layer.getOwner(s.getState(layer, x, y & 15, z)) != entry)
 			{
 				return null;
 			}

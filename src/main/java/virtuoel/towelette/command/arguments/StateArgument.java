@@ -41,8 +41,8 @@ public class StateArgument<O, S extends PropertyContainer<S>> implements Predica
 	{
 		final S state = ((CachedStatePosition) pos).getState(layer);
 		
-		final O entry = layer.getEntry(this.state);
-		final O otherEntry = layer.getEntry(state);
+		final O entry = layer.getOwner(this.state);
+		final O otherEntry = layer.getOwner(state);
 		
 		if(otherEntry != entry)
 		{

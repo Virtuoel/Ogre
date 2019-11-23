@@ -38,7 +38,7 @@ public class LayerData<O, S extends PropertyContainer<S>>
 	private final Predicate<S> randomTickPredicate;
 	
 	private final Registry<O> entryRegistry;
-	private final Function<S, O> entryFunction;
+	private final Function<S, O> ownerFunction;
 	private final Function<O, S> defaultStateFunction;
 	private final Function<O, StateFactory<O, S>> managerFunction;
 	private final Supplier<S> emptyStateSupplier;
@@ -65,7 +65,7 @@ public class LayerData<O, S extends PropertyContainer<S>>
 		final Predicate<S> randomTickPredicate,
 		
 		final Registry<O> entryRegistry,
-		final Function<S, O> entryFunction,
+		final Function<S, O> ownerFunction,
 		final Function<O, S> defaultStateFunction,
 		final Function<O, StateFactory<O, S>> managerFunction,
 		final Supplier<S> emptyStateSupplier,
@@ -92,7 +92,7 @@ public class LayerData<O, S extends PropertyContainer<S>>
 		this.randomTickPredicate = randomTickPredicate;
 		
 		this.entryRegistry = entryRegistry;
-		this.entryFunction = entryFunction;
+		this.ownerFunction = ownerFunction;
 		this.defaultStateFunction = defaultStateFunction;
 		this.managerFunction = managerFunction;
 		this.emptyStateSupplier = emptyStateSupplier;
@@ -169,9 +169,9 @@ public class LayerData<O, S extends PropertyContainer<S>>
 		return entryRegistry;
 	}
 	
-	public O getEntry(final S state)
+	public O getOwner(final S state)
 	{
-		return entryFunction.apply(state);
+		return ownerFunction.apply(state);
 	}
 	
 	public Optional<O> getEntryOrEmpty(final Identifier id)
@@ -191,7 +191,7 @@ public class LayerData<O, S extends PropertyContainer<S>>
 	
 	public StateFactory<O, S> getManager(final S state)
 	{
-		return getManager(getEntry(state));
+		return getManager(getOwner(state));
 	}
 	
 	public StateFactory<O, S> getManager(final O entry)
@@ -231,7 +231,7 @@ public class LayerData<O, S extends PropertyContainer<S>>
 	
 	public CompoundTag serializeState(S state)
 	{
-		return LayerRegistrar.serializeState(state, getRegistry(), entryFunction);
+		return LayerRegistrar.serializeState(state, getRegistry(), ownerFunction);
 	}
 	
 	public static <O, S extends PropertyContainer<S>> Builder<O, S>builder()
@@ -256,11 +256,11 @@ public class LayerData<O, S extends PropertyContainer<S>>
 		private Predicate<S> randomTickPredicate = s -> false;
 		
 		private Registry<O> entryRegistry;
-		private Function<S, O> entryFunction;
+		private Function<S, O> ownerFunction;
 		private Function<O, S> defaultStateFunction;
 		private Function<O, StateFactory<O, S>> managerFunction;
 		private Supplier<S> emptyStateSupplier;
-		private Supplier<Identifier> defaultIdSupplier = () -> entryRegistry.getId(entryFunction.apply(emptyStateSupplier.get()));
+		private Supplier<Identifier> defaultIdSupplier = () -> entryRegistry.getId(ownerFunction.apply(emptyStateSupplier.get()));
 		
 		private OcclusionGraphCallback<S> occlusionGraphCallback = (b, s, w, p) -> {};
 		private Optional<Predicate<S>> renderPredicate = Optional.empty();
@@ -344,9 +344,9 @@ public class LayerData<O, S extends PropertyContainer<S>>
 			return this;
 		}
 		
-		public Builder<O, S> entryFunction(Function<S, O> entryFunction)
+		public Builder<O, S> ownerFunction(Function<S, O> ownerFunction)
 		{
-			this.entryFunction = entryFunction;
+			this.ownerFunction = ownerFunction;
 			return this;
 		}
 		
@@ -416,7 +416,7 @@ public class LayerData<O, S extends PropertyContainer<S>>
 				randomTickPredicate,
 				
 				entryRegistry,
-				entryFunction,
+				ownerFunction,
 				defaultStateFunction,
 				managerFunction,
 				emptyStateSupplier,

@@ -69,7 +69,7 @@ public class LayerRegistrar
 			
 			.randomTickPredicate(BlockState::hasRandomTicks)
 			.registry(Registry.BLOCK)
-			.entryFunction(BlockState::getBlock)
+			.ownerFunction(BlockState::getBlock)
 			.defaultStateFunction(Block::getDefaultState)
 			.managerFunction(Block::getStateFactory)
 			.emptyStateSupplier(Blocks.AIR::getDefaultState)
@@ -96,7 +96,7 @@ public class LayerRegistrar
 			
 			.randomTickPredicate(FluidState::hasRandomTicks)
 			.registry(Registry.FLUID)
-			.entryFunction(FluidState::getFluid)
+			.ownerFunction(FluidState::getFluid)
 			.defaultStateFunction(Fluid::getDefaultState)
 			.managerFunction(Fluid::getStateFactory)
 			.emptyStateSupplier(Fluids.EMPTY::getDefaultState)

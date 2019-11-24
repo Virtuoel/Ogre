@@ -36,6 +36,7 @@ public class LayerData<O, S extends PropertyContainer<S>>
 	private final UpdateAdjacentComparatorsConsumer<S> updateAdjacentComparatorsCallback;
 	
 	private final Predicate<S> randomTickPredicate;
+	private final RandomTickConsumer<S> randomTickCallback;
 	
 	private final Registry<O> entryRegistry;
 	private final Function<S, O> ownerFunction;
@@ -63,6 +64,7 @@ public class LayerData<O, S extends PropertyContainer<S>>
 		final UpdateAdjacentComparatorsConsumer<S> updateAdjacentComparatorsCallback,
 		
 		final Predicate<S> randomTickPredicate,
+		final RandomTickConsumer<S> randomTickCallback,
 		
 		final Registry<O> entryRegistry,
 		final Function<S, O> ownerFunction,
@@ -90,6 +92,7 @@ public class LayerData<O, S extends PropertyContainer<S>>
 		this.updateAdjacentComparatorsCallback = updateAdjacentComparatorsCallback;
 		
 		this.randomTickPredicate = randomTickPredicate;
+		this.randomTickCallback = randomTickCallback;
 		
 		this.entryRegistry = entryRegistry;
 		this.ownerFunction = ownerFunction;
@@ -162,6 +165,11 @@ public class LayerData<O, S extends PropertyContainer<S>>
 	public boolean hasRandomTicks(S state)
 	{
 		return randomTickPredicate.test(state);
+	}
+	
+	public void onRandomTick(S state, World world, BlockPos pos, Random random)
+	{
+		randomTickCallback.onRandomTick(state, world, pos, random);
 	}
 	
 	public Registry<O> getRegistry()
@@ -254,6 +262,7 @@ public class LayerData<O, S extends PropertyContainer<S>>
 		private UpdateAdjacentComparatorsConsumer<S> updateAdjacentComparatorsCallback = (w, p, s, o) -> {};
 		
 		private Predicate<S> randomTickPredicate = s -> false;
+		private RandomTickConsumer<S> randomTickCallback = (s, w, p, r) -> {};
 		
 		private Registry<O> entryRegistry;
 		private Function<S, O> ownerFunction;
@@ -338,6 +347,12 @@ public class LayerData<O, S extends PropertyContainer<S>>
 			return this;
 		}
 		
+		public Builder<O, S> randomTickCallback(RandomTickConsumer<S> randomTickCallback)
+		{
+			this.randomTickCallback = randomTickCallback;
+			return this;
+		}
+		
 		public Builder<O, S> registry(Registry<O> entryRegistry)
 		{
 			this.entryRegistry = entryRegistry;
@@ -414,6 +429,7 @@ public class LayerData<O, S extends PropertyContainer<S>>
 				updateAdjacentComparatorsCallback,
 				
 				randomTickPredicate,
+				randomTickCallback,
 				
 				entryRegistry,
 				ownerFunction,

@@ -27,11 +27,6 @@ public class LayerUtils
 		chunk.getHeightmap(Heightmap.Type.WORLD_SURFACE).trackUpdate(x, y, z, state);
 	}
 	
-	public static void onBlockStateAdded(BlockState state, World world, BlockPos pos, BlockState oldState, boolean pushed)
-	{
-		state.onBlockAdded(world, pos, oldState, pushed);
-	}
-	
 	public static void onBlockStateNeighborUpdate(BlockState state, World world, BlockPos pos, BlockState otherState, BlockPos otherPos, boolean pushed)
 	{
 		state.neighborUpdate(world, pos, otherState.getBlock(), otherPos, pushed);
@@ -42,6 +37,11 @@ public class LayerUtils
 		oldState.method_11637(world, pos, flags);
 		state.updateNeighborStates(world, pos, flags);
 		state.method_11637(world, pos, flags);
+	}
+	
+	public static boolean shouldUpdateBlockStateLight(BlockView world, BlockPos pos, BlockState newState, BlockState oldState)
+	{
+		return newState != oldState && (newState.getLightSubtracted(world, pos) != oldState.getLightSubtracted(world, pos) || newState.getLuminance() != oldState.getLuminance() || newState.hasSidedTransparency() || oldState.hasSidedTransparency());
 	}
 	
 	public static void updateAdjacentBlockStateComparators(World world, BlockPos pos, BlockState state, BlockState oldState)
@@ -65,11 +65,6 @@ public class LayerUtils
 	public static void updateNeighborFluidStates(World world, BlockPos pos, FluidState state, FluidState oldState, int flags)
 	{
 		((UpdateableFluid) state.getFluid()).updateNeighborStates(world, pos, state, flags);
-	}
-	
-	public static boolean shouldUpdateBlockStateLight(BlockView world, BlockPos pos, BlockState newState, BlockState oldState)
-	{
-		return newState != oldState && (newState.getLightSubtracted(world, pos) != oldState.getLightSubtracted(world, pos) || newState.getLuminance() != oldState.getLuminance() || newState.hasSidedTransparency() || oldState.hasSidedTransparency());
 	}
 	
 	public static boolean shouldUpdateFluidStateLight(BlockView world, BlockPos pos, FluidState newState, FluidState oldState)

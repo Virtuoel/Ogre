@@ -26,6 +26,7 @@
 		"layer.EmptyChunkMixin",
 		"layer.ModifiableWorldMixin",
 		"layer.ServerChunkManagerMixin",
+		"layer.ServerWorldMixin",
 		"layer.WorldChunkMixin"
 	],
 	"client":

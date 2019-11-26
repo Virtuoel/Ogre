@@ -7,6 +7,7 @@ import java.util.function.Predicate;
 import java.util.function.Supplier;
 
 import net.minecraft.block.BlockRenderLayer;
+import net.minecraft.entity.Entity;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.state.PropertyContainer;
 import net.minecraft.state.StateFactory;
@@ -28,8 +29,10 @@ public class LayerData<O, S extends PropertyContainer<S>>
 	
 	private final Predicate<S> emptyPredicate;
 	private final Supplier<S> invalidPositionSupplier;
+	
 	private final LightUpdatePredicate<S> lightUpdatePredicate;
 	private final HeightmapUpdateConsumer<S> heightmapCallback;
+	
 	private final StateAdditionConsumer<S> stateAdditionCallback;
 	private final StateNeighborUpdateConsumer<S> stateNeighborUpdateCallback;
 	private final UpdateStateNeighborsConsumer<S> updateNeighborStatesCallback;
@@ -37,6 +40,8 @@ public class LayerData<O, S extends PropertyContainer<S>>
 	
 	private final Predicate<S> randomTickPredicate;
 	private final RandomTickConsumer<S> randomTickCallback;
+	
+	private final EntityCollisionConsumer<S> entityCollisionCallback;
 	
 	private final Registry<O> entryRegistry;
 	private final Function<S, O> ownerFunction;
@@ -56,8 +61,10 @@ public class LayerData<O, S extends PropertyContainer<S>>
 		
 		final Predicate<S> emptyPredicate,
 		final Supplier<S> invalidPositionSupplier,
+		
 		final LightUpdatePredicate<S> lightUpdatePredicate,
 		final HeightmapUpdateConsumer<S> heightmapCallback,
+		
 		final StateAdditionConsumer<S> stateAdditionCallback,
 		final StateNeighborUpdateConsumer<S> stateNeighborUpdateCallback,
 		final UpdateStateNeighborsConsumer<S> updateNeighborStatesCallback,
@@ -65,6 +72,8 @@ public class LayerData<O, S extends PropertyContainer<S>>
 		
 		final Predicate<S> randomTickPredicate,
 		final RandomTickConsumer<S> randomTickCallback,
+		
+		final EntityCollisionConsumer<S> entityCollisionCallback,
 		
 		final Registry<O> entryRegistry,
 		final Function<S, O> ownerFunction,
@@ -84,8 +93,10 @@ public class LayerData<O, S extends PropertyContainer<S>>
 		
 		this.emptyPredicate = emptyPredicate;
 		this.invalidPositionSupplier = invalidPositionSupplier;
+		
 		this.lightUpdatePredicate = lightUpdatePredicate;
 		this.heightmapCallback = heightmapCallback;
+		
 		this.stateAdditionCallback = stateAdditionCallback;
 		this.stateNeighborUpdateCallback = stateNeighborUpdateCallback;
 		this.updateNeighborStatesCallback = updateNeighborStatesCallback;
@@ -93,6 +104,8 @@ public class LayerData<O, S extends PropertyContainer<S>>
 		
 		this.randomTickPredicate = randomTickPredicate;
 		this.randomTickCallback = randomTickCallback;
+		
+		this.entityCollisionCallback = entityCollisionCallback;
 		
 		this.entryRegistry = entryRegistry;
 		this.ownerFunction = ownerFunction;
@@ -170,6 +183,11 @@ public class LayerData<O, S extends PropertyContainer<S>>
 	public void onRandomTick(S state, World world, BlockPos pos, Random random)
 	{
 		randomTickCallback.onRandomTick(state, world, pos, random);
+	}
+	
+	public void onEntityCollision(S state, World world, BlockPos pos, Entity entity)
+	{
+		entityCollisionCallback.onEntityCollision(state, world, pos, entity);
 	}
 	
 	public Registry<O> getRegistry()
@@ -254,8 +272,10 @@ public class LayerData<O, S extends PropertyContainer<S>>
 		
 		private Predicate<S> emptyPredicate;
 		private Optional<Supplier<S>> invalidPositionSupplier = Optional.empty();
+		
 		private LightUpdatePredicate<S> lightUpdatePredicate;
 		private HeightmapUpdateConsumer<S> heightmapCallback = (c, x, y, z, s) -> {};
+		
 		private StateAdditionConsumer<S> stateAdditionCallback = (s, w, p, o, b) -> {};
 		private StateNeighborUpdateConsumer<S> stateNeighborUpdateCallback = (s, w, p, e, o, u) -> {};
 		private UpdateStateNeighborsConsumer<S> updateNeighborStatesCallback = (w, p, s, o, f) -> {};
@@ -263,6 +283,8 @@ public class LayerData<O, S extends PropertyContainer<S>>
 		
 		private Predicate<S> randomTickPredicate = s -> false;
 		private RandomTickConsumer<S> randomTickCallback = (s, w, p, r) -> {};
+		
+		private EntityCollisionConsumer<S> entityCollisionCallback;
 		
 		private Registry<O> entryRegistry;
 		private Function<S, O> ownerFunction;
@@ -353,6 +375,12 @@ public class LayerData<O, S extends PropertyContainer<S>>
 			return this;
 		}
 		
+		public Builder<O, S> entityCollisionCallback(EntityCollisionConsumer<S> entityCollisionCallback)
+		{
+			this.entityCollisionCallback = entityCollisionCallback;
+			return this;
+		}
+		
 		public Builder<O, S> registry(Registry<O> entryRegistry)
 		{
 			this.entryRegistry = entryRegistry;
@@ -421,8 +449,10 @@ public class LayerData<O, S extends PropertyContainer<S>>
 				
 				emptyPredicate,
 				invalidPositionSupplier.orElse(emptyStateSupplier),
+				
 				lightUpdatePredicate,
 				heightmapCallback,
+				
 				stateAdditionCallback,
 				stateNeighborUpdateCallback,
 				updateNeighborStatesCallback,
@@ -430,6 +460,8 @@ public class LayerData<O, S extends PropertyContainer<S>>
 				
 				randomTickPredicate,
 				randomTickCallback,
+				
+				entityCollisionCallback,
 				
 				entryRegistry,
 				ownerFunction,

@@ -8,6 +8,7 @@ import net.minecraft.block.BlockState;
 import net.minecraft.client.render.BufferBuilder;
 import net.minecraft.client.render.block.BlockRenderManager;
 import net.minecraft.client.render.chunk.ChunkOcclusionGraphBuilder;
+import net.minecraft.entity.Entity;
 import net.minecraft.fluid.FluidState;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.BlockView;
@@ -15,6 +16,7 @@ import net.minecraft.world.ExtendedBlockView;
 import net.minecraft.world.Heightmap;
 import net.minecraft.world.World;
 import net.minecraft.world.chunk.Chunk;
+import virtuoel.towelette.api.CollidableFluid;
 import virtuoel.towelette.api.UpdateableFluid;
 
 public class LayerUtils
@@ -65,6 +67,11 @@ public class LayerUtils
 	public static void updateNeighborFluidStates(World world, BlockPos pos, FluidState state, FluidState oldState, int flags)
 	{
 		((UpdateableFluid) state.getFluid()).updateNeighborStates(world, pos, state, flags);
+	}
+	
+	public static void onEntityFluidStateCollision(FluidState state, World world, BlockPos pos, Entity entity)
+	{
+		((CollidableFluid) state.getFluid()).onEntityCollision(state, world, pos, entity);
 	}
 	
 	public static boolean shouldUpdateFluidStateLight(BlockView world, BlockPos pos, FluidState newState, FluidState oldState)

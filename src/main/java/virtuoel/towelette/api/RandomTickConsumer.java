@@ -6,6 +6,7 @@ import net.minecraft.state.PropertyContainer;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
 
+@FunctionalInterface
 public interface RandomTickConsumer<S extends PropertyContainer<S>>
 {
 	void onRandomTick(S state, World world, BlockPos pos, Random random);

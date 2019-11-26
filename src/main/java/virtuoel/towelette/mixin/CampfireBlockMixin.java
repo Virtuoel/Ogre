@@ -32,7 +32,7 @@ public class CampfireBlockMixin
 				if(world.isClient())
 				{
 					boolean signal = blockState.get(Properties.SIGNAL_FIRE);
-					for(int i = 0; i < 20; ++i)
+					for(int i = 0; i < 20; i++)
 					{
 						CampfireBlock.spawnSmokeParticle(world.getWorld(), blockPos, signal, true);
 					}

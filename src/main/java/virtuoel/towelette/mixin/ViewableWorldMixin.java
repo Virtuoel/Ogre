@@ -22,11 +22,11 @@ public interface ViewableWorldMixin extends BlockView
 		
 		try(BlockPos.PooledMutable pos = BlockPos.PooledMutable.get())
 		{
-			for (int x = minX; x < maxX; ++x)
+			for (int x = minX; x < maxX; x++)
 			{
-				for (int y = minY; y < maxY; ++y)
+				for (int y = minY; y < maxY; y++)
 				{
-					for (int z = minZ; z < maxZ; ++z)
+					for (int z = minZ; z < maxZ; z++)
 					{
 						if (!this.getFluidState(pos.method_10113(x, y, z)).isEmpty())
 						{

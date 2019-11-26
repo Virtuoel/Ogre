@@ -44,7 +44,7 @@ public class ServerWorldMixin
 				{
 					final int y = section.getYOffset();
 					
-					for (int j = 0; j < randomTickSpeed; ++j)
+					for (int j = 0; j < randomTickSpeed; j++)
 					{
 						final BlockPos pos = self.getRandomPosInChunk(x, y, z, 15);
 						profiler.push("randomTick");

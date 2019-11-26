@@ -46,7 +46,7 @@ public class PacketUtils
 		
 		final ChunkStateLayer c = ((ChunkStateLayer) chunk);
 		
-		for (int i = 0; i < records; ++i)
+		for (int i = 0; i < records; i++)
 		{
 			buffer.writeShort(positions[i]);
 			buffer.writeVarInt(layer.getIds().getId(c.getState(layer, toBlockPos(chunkPos, positions[i]))));

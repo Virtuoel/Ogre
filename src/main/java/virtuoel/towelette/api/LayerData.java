@@ -31,17 +31,17 @@ public class LayerData<O, S extends PropertyContainer<S>>
 	private final Supplier<S> invalidPositionSupplier;
 	
 	private final LightUpdatePredicate<S> lightUpdatePredicate;
-	private final HeightmapUpdateConsumer<S> heightmapCallback;
+	private final HeightmapUpdateCallback<S> heightmapCallback;
 	
-	private final StateAdditionConsumer<S> stateAdditionCallback;
-	private final StateNeighborUpdateConsumer<S> stateNeighborUpdateCallback;
-	private final UpdateStateNeighborsConsumer<S> updateNeighborStatesCallback;
-	private final UpdateAdjacentComparatorsConsumer<S> updateAdjacentComparatorsCallback;
+	private final StateAdditionCallback<S> stateAdditionCallback;
+	private final StateNeighborUpdateCallback<S> stateNeighborUpdateCallback;
+	private final UpdateStateNeighborsCallback<S> updateNeighborStatesCallback;
+	private final UpdateAdjacentComparatorsCallback<S> updateAdjacentComparatorsCallback;
 	
 	private final Predicate<S> randomTickPredicate;
-	private final RandomTickConsumer<S> randomTickCallback;
+	private final RandomTickCallback<S> randomTickCallback;
 	
-	private final EntityCollisionConsumer<S> entityCollisionCallback;
+	private final EntityCollisionCallback<S> entityCollisionCallback;
 	
 	private final Registry<O> entryRegistry;
 	private final Function<S, O> ownerFunction;
@@ -63,17 +63,17 @@ public class LayerData<O, S extends PropertyContainer<S>>
 		final Supplier<S> invalidPositionSupplier,
 		
 		final LightUpdatePredicate<S> lightUpdatePredicate,
-		final HeightmapUpdateConsumer<S> heightmapCallback,
+		final HeightmapUpdateCallback<S> heightmapCallback,
 		
-		final StateAdditionConsumer<S> stateAdditionCallback,
-		final StateNeighborUpdateConsumer<S> stateNeighborUpdateCallback,
-		final UpdateStateNeighborsConsumer<S> updateNeighborStatesCallback,
-		final UpdateAdjacentComparatorsConsumer<S> updateAdjacentComparatorsCallback,
+		final StateAdditionCallback<S> stateAdditionCallback,
+		final StateNeighborUpdateCallback<S> stateNeighborUpdateCallback,
+		final UpdateStateNeighborsCallback<S> updateNeighborStatesCallback,
+		final UpdateAdjacentComparatorsCallback<S> updateAdjacentComparatorsCallback,
 		
 		final Predicate<S> randomTickPredicate,
-		final RandomTickConsumer<S> randomTickCallback,
+		final RandomTickCallback<S> randomTickCallback,
 		
-		final EntityCollisionConsumer<S> entityCollisionCallback,
+		final EntityCollisionCallback<S> entityCollisionCallback,
 		
 		final Registry<O> entryRegistry,
 		final Function<S, O> ownerFunction,
@@ -274,17 +274,17 @@ public class LayerData<O, S extends PropertyContainer<S>>
 		private Optional<Supplier<S>> invalidPositionSupplier = Optional.empty();
 		
 		private LightUpdatePredicate<S> lightUpdatePredicate;
-		private HeightmapUpdateConsumer<S> heightmapCallback = (c, x, y, z, s) -> {};
+		private HeightmapUpdateCallback<S> heightmapCallback = (c, x, y, z, s) -> {};
 		
-		private StateAdditionConsumer<S> stateAdditionCallback = (s, w, p, o, b) -> {};
-		private StateNeighborUpdateConsumer<S> stateNeighborUpdateCallback = (s, w, p, e, o, u) -> {};
-		private UpdateStateNeighborsConsumer<S> updateNeighborStatesCallback = (w, p, s, o, f) -> {};
-		private UpdateAdjacentComparatorsConsumer<S> updateAdjacentComparatorsCallback = (w, p, s, o) -> {};
+		private StateAdditionCallback<S> stateAdditionCallback = (s, w, p, o, b) -> {};
+		private StateNeighborUpdateCallback<S> stateNeighborUpdateCallback = (s, w, p, e, o, u) -> {};
+		private UpdateStateNeighborsCallback<S> updateNeighborStatesCallback = (w, p, s, o, f) -> {};
+		private UpdateAdjacentComparatorsCallback<S> updateAdjacentComparatorsCallback = (w, p, s, o) -> {};
 		
 		private Predicate<S> randomTickPredicate = s -> false;
-		private RandomTickConsumer<S> randomTickCallback = (s, w, p, r) -> {};
+		private RandomTickCallback<S> randomTickCallback = (s, w, p, r) -> {};
 		
-		private EntityCollisionConsumer<S> entityCollisionCallback;
+		private EntityCollisionCallback<S> entityCollisionCallback;
 		
 		private Registry<O> entryRegistry;
 		private Function<S, O> ownerFunction;
@@ -333,31 +333,31 @@ public class LayerData<O, S extends PropertyContainer<S>>
 			return this;
 		}
 		
-		public Builder<O, S> heightmapCallback(HeightmapUpdateConsumer<S> heightmapCallback)
+		public Builder<O, S> heightmapCallback(HeightmapUpdateCallback<S> heightmapCallback)
 		{
 			this.heightmapCallback = heightmapCallback;
 			return this;
 		}
 		
-		public Builder<O, S> stateAdditionCallback(StateAdditionConsumer<S> stateAdditionCallback)
+		public Builder<O, S> stateAdditionCallback(StateAdditionCallback<S> stateAdditionCallback)
 		{
 			this.stateAdditionCallback = stateAdditionCallback;
 			return this;
 		}
 		
-		public Builder<O, S> stateNeighborUpdateCallback(StateNeighborUpdateConsumer<S> stateNeighborUpdateCallback)
+		public Builder<O, S> stateNeighborUpdateCallback(StateNeighborUpdateCallback<S> stateNeighborUpdateCallback)
 		{
 			this.stateNeighborUpdateCallback = stateNeighborUpdateCallback;
 			return this;
 		}
 		
-		public Builder<O, S> updateNeighborStatesCallback(UpdateStateNeighborsConsumer<S> updateNeighborStatesCallback)
+		public Builder<O, S> updateNeighborStatesCallback(UpdateStateNeighborsCallback<S> updateNeighborStatesCallback)
 		{
 			this.updateNeighborStatesCallback = updateNeighborStatesCallback;
 			return this;
 		}
 		
-		public Builder<O, S> updateAdjacentComparatorsCallback(UpdateAdjacentComparatorsConsumer<S> updateAdjacentComparatorsCallback)
+		public Builder<O, S> updateAdjacentComparatorsCallback(UpdateAdjacentComparatorsCallback<S> updateAdjacentComparatorsCallback)
 		{
 			this.updateAdjacentComparatorsCallback = updateAdjacentComparatorsCallback;
 			return this;
@@ -369,13 +369,13 @@ public class LayerData<O, S extends PropertyContainer<S>>
 			return this;
 		}
 		
-		public Builder<O, S> randomTickCallback(RandomTickConsumer<S> randomTickCallback)
+		public Builder<O, S> randomTickCallback(RandomTickCallback<S> randomTickCallback)
 		{
 			this.randomTickCallback = randomTickCallback;
 			return this;
 		}
 		
-		public Builder<O, S> entityCollisionCallback(EntityCollisionConsumer<S> entityCollisionCallback)
+		public Builder<O, S> entityCollisionCallback(EntityCollisionCallback<S> entityCollisionCallback)
 		{
 			this.entityCollisionCallback = entityCollisionCallback;
 			return this;

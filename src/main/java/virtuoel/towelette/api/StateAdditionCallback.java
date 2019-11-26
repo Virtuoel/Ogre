@@ -5,7 +5,7 @@ import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
 
 @FunctionalInterface
-public interface StateAdditionConsumer<S extends PropertyContainer<S>>
+public interface StateAdditionCallback<S extends PropertyContainer<S>>
 {
 	void onStateAdded(S state, World world, BlockPos pos, S oldState, boolean pushed);
 }

@@ -6,7 +6,7 @@ import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
 
 @FunctionalInterface
-public interface EntityCollisionConsumer<S extends PropertyContainer<S>>
+public interface EntityCollisionCallback<S extends PropertyContainer<S>>
 {
 	void onEntityCollision(S state, World world, BlockPos pos, Entity entity);
 }

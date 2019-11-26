@@ -5,7 +5,7 @@ import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
 
 @FunctionalInterface
-public interface UpdateStateNeighborsConsumer<S extends PropertyContainer<S>>
+public interface UpdateAdjacentComparatorsCallback<S extends PropertyContainer<S>>
 {
-	void updateNeighbors(World world, BlockPos pos, S state, S oldState, int flags);
+	void updateAdjacentComparators(World world, BlockPos pos, S state, S oldState);
 }

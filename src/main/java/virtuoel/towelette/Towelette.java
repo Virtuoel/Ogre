@@ -19,7 +19,9 @@ import virtuoel.towelette.api.LayerRegistrar;
 import virtuoel.towelette.api.ToweletteApi;
 import virtuoel.towelette.command.arguments.LayerArgumentType;
 import virtuoel.towelette.command.arguments.StateArgumentType;
+import virtuoel.towelette.server.command.FillStatesCommand;
 import virtuoel.towelette.server.command.GetStateCommand;
+import virtuoel.towelette.server.command.GetStatesCommand;
 import virtuoel.towelette.server.command.SetStateCommand;
 
 public class Towelette implements ModInitializer
@@ -45,12 +47,15 @@ public class Towelette implements ModInitializer
 		ArgumentTypes.register("state", StateArgumentType.class, new StateArgumentType.Serializer());
 		ArgumentTypes.register("layer", LayerArgumentType.class, new ConstantArgumentSerializer<LayerArgumentType>(LayerArgumentType::layer));
 		
+		CommandRegistry.INSTANCE.register(false, GetStatesCommand::register);
+		
 		LayerRegistrar.LAYERS.forEach(layer ->
 		{
 			CommandRegistry.INSTANCE.register(false, commandDispatcher ->
 			{
 				GetStateCommand.register(layer, commandDispatcher);
 				SetStateCommand.register(layer, commandDispatcher);
+				FillStatesCommand.register(layer, commandDispatcher);
 			});
 		});
 		
@@ -60,6 +65,7 @@ public class Towelette implements ModInitializer
 			{
 				GetStateCommand.register(object, commandDispatcher);
 				SetStateCommand.register(object, commandDispatcher);
+				FillStatesCommand.register(object, commandDispatcher);
 			});
 		});
 	}

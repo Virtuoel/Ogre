@@ -1,6 +1,7 @@
 package virtuoel.towelette.mixin.layer;
 
 import java.util.Map;
+import java.util.Optional;
 
 import org.apache.commons.lang3.tuple.MutableTriple;
 import org.apache.commons.lang3.tuple.Triple;
@@ -44,6 +45,18 @@ public class ChunkSectionMixin implements ChunkSectionStateLayer
 			final LayerData<?, ?> data = LayerRegistrar.LAYERS.get(id);
 			palettedContainers.put(id, new MutableTriple<>(data == LayerRegistrar.BLOCK ? this.container : data.createContainer(), (short) 0, (short) 0));
 		}
+	}
+	
+	@SuppressWarnings("unchecked")
+	@Override
+	public <O, S extends PropertyContainer<S>> Optional<PalettedContainer<S>> getContainer(Identifier id)
+	{
+		if(palettedContainers.containsKey(id))
+		{
+			return Optional.of((PalettedContainer<S>) palettedContainers.get(id).getLeft());
+		}
+		
+		return Optional.empty();
 	}
 	
 	@Inject(at = @At("HEAD"), method = "calculateCounts()V", cancellable = true)

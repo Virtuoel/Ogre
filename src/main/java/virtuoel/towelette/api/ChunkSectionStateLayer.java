@@ -1,6 +1,10 @@
 package virtuoel.towelette.api;
 
+import java.util.Optional;
+
 import net.minecraft.state.PropertyContainer;
+import net.minecraft.util.Identifier;
+import net.minecraft.world.chunk.PalettedContainer;
 
 public interface ChunkSectionStateLayer
 {
@@ -12,4 +16,31 @@ public interface ChunkSectionStateLayer
 	<O, S extends PropertyContainer<S>> S setState(LayerData<O, S> layer, int x, int y, int z, S state, boolean synchronous);
 	
 	<O, S extends PropertyContainer<S>> S getState(LayerData<O, S> layer, int x, int y, int z);
+	
+	default <O, S extends PropertyContainer<S>> Optional<PalettedContainer<S>> getContainer(LayerData<O, S> layer)
+	{
+		final Identifier defaultId = LayerRegistrar.LAYERS.getDefaultId();
+		final Identifier id;
+		
+		if(layer == LayerRegistrar.LAYERS.get(defaultId))
+		{
+			id = defaultId;
+		}
+		else
+		{
+			final Identifier layerId = LayerRegistrar.LAYERS.getId(layer);
+			if(defaultId.equals(layerId))
+			{
+				return Optional.empty();
+			}
+			else
+			{
+				id = layerId;
+			}
+		}
+		
+		return getContainer(id);
+	}
+	
+	<O, S extends PropertyContainer<S>> Optional<PalettedContainer<S>> getContainer(Identifier id);
 }

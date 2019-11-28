@@ -3,6 +3,9 @@ package virtuoel.towelette.api;
 import java.util.Map.Entry;
 import java.util.function.Function;
 import java.util.function.Supplier;
+import java.util.function.UnaryOperator;
+
+import javax.annotation.Nullable;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -10,9 +13,15 @@ import org.apache.logging.log4j.Logger;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.reflect.Reflection;
 
+import net.fabricmc.api.EnvType;
+import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.block.Block;
+import net.minecraft.block.BlockRenderType;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.Blocks;
+import net.minecraft.client.render.BufferBuilder;
+import net.minecraft.client.render.block.BlockRenderManager;
+import net.minecraft.client.render.chunk.ChunkOcclusionGraphBuilder;
 import net.minecraft.fluid.Fluid;
 import net.minecraft.fluid.FluidState;
 import net.minecraft.fluid.Fluids;
@@ -23,11 +32,11 @@ import net.minecraft.state.property.Property;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.registry.DefaultedRegistry;
 import net.minecraft.util.registry.Registry;
+import net.minecraft.world.Heightmap;
 import net.minecraft.world.chunk.ChunkSection;
 import net.minecraft.world.chunk.IdListPalette;
 import net.minecraft.world.chunk.Palette;
 import virtuoel.towelette.mixin.layer.ChunkSectionAccessor;
-import virtuoel.towelette.util.LayerUtils;
 
 public class LayerRegistrar
 {
@@ -55,18 +64,46 @@ public class LayerRegistrar
 	
 	public static LayerData<Block, BlockState> registerBlockLayer(final Identifier id)
 	{
-		return LayerRegistrar.LAYERS.add(id,
+		return registerBlockLayer(id, null);
+	}
+	
+	public static LayerData<Block, BlockState> registerBlockLayer(final Identifier id, @Nullable UnaryOperator<LayerData.Builder<Block, BlockState>> builderOperator)
+	{
+		final LayerData.Builder<Block, BlockState> builder =
 			LayerData.<Block, BlockState>builder()
 			.palette(LayerRegistrar.BLOCK_PALETTE)
 			.ids(Block.STATE_IDS)
 			.emptyPredicate(BlockState::isAir)
 			.invalidPositionSupplier(Blocks.VOID_AIR::getDefaultState)
-			.lightUpdatePredicate(LayerUtils::shouldUpdateBlockStateLight)
-			.heightmapCallback(LayerUtils::blockStateHeightmapUpdate)
+			.lightUpdatePredicate((world, pos, newState, oldState) ->
+			{
+				return newState != oldState && (newState.getLightSubtracted(world, pos) != oldState.getLightSubtracted(world, pos) || newState.getLuminance() != oldState.getLuminance() || newState.hasSidedTransparency() || oldState.hasSidedTransparency());
+			})
+			.heightmapCallback((chunk, x, y, z, state) ->
+			{
+				chunk.getHeightmap(Heightmap.Type.MOTION_BLOCKING).trackUpdate(x, y, z, state);
+				chunk.getHeightmap(Heightmap.Type.MOTION_BLOCKING_NO_LEAVES).trackUpdate(x, y, z, state);
+				chunk.getHeightmap(Heightmap.Type.OCEAN_FLOOR).trackUpdate(x, y, z, state);
+				chunk.getHeightmap(Heightmap.Type.WORLD_SURFACE).trackUpdate(x, y, z, state);
+			})
 			.stateAdditionCallback(BlockState::onBlockAdded)
-			.stateNeighborUpdateCallback(LayerUtils::onBlockStateNeighborUpdate)
-			.updateNeighborStatesCallback(LayerUtils::updateNeighborBlockStates)
-			.updateAdjacentComparatorsCallback(LayerUtils::updateAdjacentBlockStateComparators)
+			.stateNeighborUpdateCallback((state, world, pos, otherState, otherPos, pushed) ->
+			{
+				state.neighborUpdate(world, pos, otherState.getBlock(), otherPos, pushed);
+			})
+			.updateNeighborStatesCallback((world, pos, state, oldState, flags) ->
+			{
+				oldState.method_11637(world, pos, flags);
+				state.updateNeighborStates(world, pos, flags);
+				state.method_11637(world, pos, flags);
+			})
+			.updateAdjacentComparatorsCallback((world, pos, state, oldState) ->
+			{
+				if (state.hasComparatorOutput())
+				{
+					world.updateHorizontalAdjacent(pos, oldState.getBlock());
+				}
+			})
 			.randomTickPredicate(BlockState::hasRandomTicks)
 			.randomTickCallback(BlockState::onRandomTick)
 			.entityCollisionCallback(BlockState::onEntityCollision)
@@ -75,40 +112,81 @@ public class LayerRegistrar
 			.defaultStateFunction(Block::getDefaultState)
 			.managerFunction(Block::getStateFactory)
 			.emptyStateSupplier(Blocks.AIR::getDefaultState)
-			.defaultIdFunction(Registry.BLOCK::getDefaultId)
-			.occlusionGraphCallback(LayerUtils.Client::handleBlockStateOcclusionGraph)
-			.renderPredicate(LayerUtils.Client::shouldRenderBlockState)
-			.renderLayerFunction(LayerUtils.Client::getBlockStateRenderLayer)
-			.tesselationCallback(LayerUtils.Client::tesselateBlockState)
-			.build()
-		);
+			.defaultIdFunction(Registry.BLOCK::getDefaultId);
+		
+		if(FabricLoader.getInstance().getEnvironmentType() == EnvType.CLIENT)
+		{
+			builder.occlusionGraphCallback((chunkOcclusionGraphBuilder, state, world, pos) ->
+				{
+					if (state.isFullOpaque(world, pos))
+					{
+						((ChunkOcclusionGraphBuilder) chunkOcclusionGraphBuilder).markClosed(pos);
+					}
+				})
+				.renderPredicate(state -> state.getRenderType() != BlockRenderType.INVISIBLE)
+				.renderLayerFunction(state -> state.getBlock().getRenderLayer())
+				.tesselationCallback((blockRenderManager, state, pos, world, bufferBuilder, random) ->
+				{
+					return ((BlockRenderManager) blockRenderManager).tesselateBlock(state, pos, world, (BufferBuilder) bufferBuilder, random);
+				});
+		}
+		
+		return LayerRegistrar.LAYERS.add(id, (builderOperator == null ? builder : builderOperator.apply(builder)).build());
 	}
 	
 	public static LayerData<Fluid, FluidState> registerFluidLayer(final Identifier id)
 	{
-		return LayerRegistrar.LAYERS.add(id,
+		return registerFluidLayer(id, null);
+	}
+	
+	public static LayerData<Fluid, FluidState> registerFluidLayer(final Identifier id, @Nullable UnaryOperator<LayerData.Builder<Fluid, FluidState>> builderOperator)
+	{
+		final LayerData.Builder<Fluid, FluidState> builder =
 			LayerData.<Fluid, FluidState>builder()
 			.palette(LayerRegistrar.FLUID_PALETTE)
 			.ids(Fluid.STATE_IDS)
 			.emptyPredicate(FluidState::isEmpty)
-			.lightUpdatePredicate(LayerUtils::shouldUpdateFluidStateLight)
-			.stateAdditionCallback(LayerUtils::onFluidStateAdded)
-			.stateNeighborUpdateCallback(LayerUtils::onFluidStateNeighborUpdate)
-			.updateNeighborStatesCallback(LayerUtils::updateNeighborFluidStates)
+			.lightUpdatePredicate((world, pos, newState, oldState) ->
+			{
+				return newState != oldState && (newState.getBlockState().getLightSubtracted(world, pos) != oldState.getBlockState().getLightSubtracted(world, pos) || newState.getBlockState().getLuminance() != oldState.getBlockState().getLuminance() || newState.getBlockState().hasSidedTransparency() || oldState.getBlockState().hasSidedTransparency());
+			})
+			.stateAdditionCallback((state, world, pos, oldState, pushed) ->
+			{
+				((UpdateableFluid) state.getFluid()).onFluidAdded(state, world, pos, oldState);
+			})
+			.stateNeighborUpdateCallback((state, world, pos, otherState, otherPos, pushed) ->
+			{
+				((UpdateableFluid) state.getFluid()).neighborUpdate(state, world, pos, otherPos);
+			})
+			.updateNeighborStatesCallback((world, pos, state, oldState, flags) ->
+			{
+				((UpdateableFluid) state.getFluid()).updateNeighborStates(world, pos, state, flags);
+			})
 			.randomTickPredicate(FluidState::hasRandomTicks)
 			.randomTickCallback(FluidState::onRandomTick)
-			.entityCollisionCallback(LayerUtils::onEntityFluidStateCollision)
+			.entityCollisionCallback((state, world, pos, entity) ->
+			{
+				((CollidableFluid) state.getFluid()).onEntityCollision(state, world, pos, entity);
+			})
 			.registry(Registry.FLUID)
 			.ownerFunction(FluidState::getFluid)
 			.defaultStateFunction(Fluid::getDefaultState)
 			.managerFunction(Fluid::getStateFactory)
 			.emptyStateSupplier(Fluids.EMPTY::getDefaultState)
-			.defaultIdFunction(Registry.FLUID::getDefaultId)
-			.renderPredicate(LayerUtils.Client::shouldRenderFluidState)
-			.renderLayerFunction(LayerUtils.Client::getFluidStateRenderLayer)
-			.tesselationCallback(LayerUtils.Client::tesselateFluidState)
-			.build()
-		);
+			.defaultIdFunction(Registry.FLUID::getDefaultId);
+		
+		if(FabricLoader.getInstance().getEnvironmentType() == EnvType.CLIENT)
+		{
+			builder
+				.renderPredicate(state -> !state.isEmpty())
+				.renderLayerFunction(FluidState::getRenderLayer)
+				.tesselationCallback((blockRenderManager, state, pos, world, bufferBuilder, random) ->
+				{
+					return ((BlockRenderManager) blockRenderManager).tesselateFluid(pos, world, (BufferBuilder) bufferBuilder, state);
+				});
+		}
+		
+		return LayerRegistrar.LAYERS.add(id, (builderOperator == null ? builder : builderOperator.apply(builder)).build());
 	}
 	
 	@SuppressWarnings("unchecked")

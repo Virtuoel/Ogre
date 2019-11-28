@@ -2,6 +2,7 @@ package virtuoel.towelette.api;
 
 import java.util.Optional;
 import java.util.Random;
+import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
@@ -50,6 +51,8 @@ public class LayerData<O, S extends PropertyContainer<S>>
 	private final Supplier<S> emptyStateSupplier;
 	private final Supplier<Identifier> defaultIdSupplier;
 	
+	private final BiFunction<World, LayerData<O, S>, World> worldFunction;
+	
 	private final OcclusionGraphCallback<S> occlusionGraphCallback;
 	private final Predicate<S> renderPredicate;
 	private final Function<S, BlockRenderLayer> renderLayerFunction;
@@ -82,6 +85,8 @@ public class LayerData<O, S extends PropertyContainer<S>>
 		final Supplier<S> emptyStateSupplier,
 		final Supplier<Identifier> defaultIdSupplier,
 		
+		final BiFunction<World, LayerData<O, S>, World> worldFunction,
+		
 		final OcclusionGraphCallback<S> occlusionGraphCallback,
 		final Predicate<S> renderPredicate,
 		final Function<S, BlockRenderLayer> renderLayerFunction,
@@ -113,6 +118,8 @@ public class LayerData<O, S extends PropertyContainer<S>>
 		this.managerFunction = managerFunction;
 		this.emptyStateSupplier = emptyStateSupplier;
 		this.defaultIdSupplier = defaultIdSupplier;
+		
+		this.worldFunction = worldFunction;
 		
 		this.occlusionGraphCallback = occlusionGraphCallback;
 		this.renderPredicate = renderPredicate;
@@ -157,22 +164,22 @@ public class LayerData<O, S extends PropertyContainer<S>>
 	
 	public void onStateAdded(S state, World world, BlockPos pos, S oldState, boolean pushed)
 	{
-		stateAdditionCallback.onStateAdded(state, world, pos, oldState, pushed);
+		stateAdditionCallback.onStateAdded(state, worldFunction.apply(world, this), pos, oldState, pushed);
 	}
 	
 	public void onNeighborUpdate(S state, World world, BlockPos pos, S otherState, BlockPos otherPos, boolean pushed)
 	{
-		stateNeighborUpdateCallback.onNeighborUpdate(state, world, pos, otherState, otherPos, pushed);
+		stateNeighborUpdateCallback.onNeighborUpdate(state, worldFunction.apply(world, this), pos, otherState, otherPos, pushed);
 	}
 	
 	public void updateNeighbors(World world, BlockPos pos, S state, S oldState, int flags)
 	{
-		updateNeighborStatesCallback.updateNeighbors(world, pos, state, oldState, flags);
+		updateNeighborStatesCallback.updateNeighbors(worldFunction.apply(world, this), pos, state, oldState, flags);
 	}
 	
 	public void updateAdjacentComparators(World world, BlockPos pos, S state, S oldState)
 	{
-		updateAdjacentComparatorsCallback.updateAdjacentComparators(world, pos, state, oldState);
+		updateAdjacentComparatorsCallback.updateAdjacentComparators(worldFunction.apply(world, this), pos, state, oldState);
 	}
 	
 	public boolean hasRandomTicks(S state)
@@ -182,12 +189,12 @@ public class LayerData<O, S extends PropertyContainer<S>>
 	
 	public void onRandomTick(S state, World world, BlockPos pos, Random random)
 	{
-		randomTickCallback.onRandomTick(state, world, pos, random);
+		randomTickCallback.onRandomTick(state, worldFunction.apply(world, this), pos, random);
 	}
 	
 	public void onEntityCollision(S state, World world, BlockPos pos, Entity entity)
 	{
-		entityCollisionCallback.onEntityCollision(state, world, pos, entity);
+		entityCollisionCallback.onEntityCollision(state, worldFunction.apply(world, this), pos, entity);
 	}
 	
 	public Registry<O> getRegistry()
@@ -292,6 +299,8 @@ public class LayerData<O, S extends PropertyContainer<S>>
 		private Function<O, StateFactory<O, S>> managerFunction;
 		private Supplier<S> emptyStateSupplier;
 		private Supplier<Identifier> defaultIdSupplier = () -> entryRegistry.getId(ownerFunction.apply(emptyStateSupplier.get()));
+		
+		private BiFunction<World, LayerData<O, S>, World> worldFunction = (w, l) -> w;
 		
 		private OcclusionGraphCallback<S> occlusionGraphCallback = (b, s, w, p) -> {};
 		private Optional<Predicate<S>> renderPredicate = Optional.empty();
@@ -417,6 +426,12 @@ public class LayerData<O, S extends PropertyContainer<S>>
 			return this;
 		}
 		
+		public Builder<O, S> worldFunction(BiFunction<World, LayerData<O, S>, World> worldFunction)
+		{
+			this.worldFunction = worldFunction;
+			return this;
+		}
+		
 		public Builder<O, S> occlusionGraphCallback(OcclusionGraphCallback<S> occlusionGraphCallback)
 		{
 			this.occlusionGraphCallback = occlusionGraphCallback;
@@ -469,6 +484,8 @@ public class LayerData<O, S extends PropertyContainer<S>>
 				managerFunction,
 				emptyStateSupplier,
 				defaultIdSupplier,
+				
+				worldFunction,
 				
 				occlusionGraphCallback,
 				renderPredicate.orElse(emptyPredicate),

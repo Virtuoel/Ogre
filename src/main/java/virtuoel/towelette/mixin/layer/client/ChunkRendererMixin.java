@@ -119,9 +119,7 @@ public abstract class ChunkRendererMixin
 						BlockViewStateLayer world = ((BlockViewStateLayer) region);
 						final S state = world.getState(layer, pos);
 						
-					//	data.handleOcclusionGraph(builder, state, region, pos);
-						
-						// TODO occlusion and BE render callbacks
+						layer.handleOcclusionGraph(builder, state, region, pos);
 						
 						if (layer.shouldRender(state))
 						{

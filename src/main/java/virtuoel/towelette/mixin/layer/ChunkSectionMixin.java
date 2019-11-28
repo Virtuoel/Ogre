@@ -27,13 +27,20 @@ import net.minecraft.world.chunk.PalettedContainer;
 import virtuoel.towelette.api.ChunkSectionStateLayer;
 import virtuoel.towelette.api.LayerData;
 import virtuoel.towelette.api.LayerRegistrar;
+import virtuoel.towelette.util.LayeredPalettedContainerHolder;
 
 @Mixin(ChunkSection.class)
-public class ChunkSectionMixin implements ChunkSectionStateLayer
+public class ChunkSectionMixin implements ChunkSectionStateLayer, LayeredPalettedContainerHolder
 {
 	@Shadow @Final PalettedContainer<BlockState> container;
 	
 	@Unique private Object2ObjectLinkedOpenHashMap<Identifier, MutableTriple<PalettedContainer<?>, Short, Short>> palettedContainers;
+	
+	@Override
+	public Map<Identifier, MutableTriple<PalettedContainer<?>, Short, Short>> getPalettedContainerDataMap()
+	{
+		return palettedContainers;
+	}
 	
 	@Inject(at = @At("RETURN"), method = "<init>(ISSS)V")
 	private void onConstruct(int yOffset, short nonEmptyBlockCount, short randomTickableBlockCount, short nonEmptyFluidCount, CallbackInfo info)
@@ -161,16 +168,6 @@ public class ChunkSectionMixin implements ChunkSectionStateLayer
 	public void onGetFluidState(int x, int y, int z, CallbackInfoReturnable<FluidState> info)
 	{
 		info.setReturnValue(getState(LayerRegistrar.FLUID, x, y, z));
-	}
-	
-	@Inject(require = 0, at = @At("RETURN"), method = "fromPacket(Lnet/minecraft/util/PacketByteBuf;)V")
-	public void onFromPacket(PacketByteBuf buffer, CallbackInfo info)
-	{
-		palettedContainers.values().forEach(data ->
-		{
-			data.setMiddle(buffer.readShort());
-			data.getLeft().fromPacket(buffer);
-		});
 	}
 	
 	@Inject(at = @At("RETURN"), method = "toPacket(Lnet/minecraft/util/PacketByteBuf;)V")

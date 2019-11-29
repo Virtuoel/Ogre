@@ -100,7 +100,7 @@ public abstract class ChunkHolderMixin implements StateUpdateableChunkHolder
 			
 			if (updateCount != 0)
 			{
-				final LayerData<?, ?> layer = LayerRegistrar.getLayerData(id);
+				final LayerData<?, ?> layer = LayerRegistrar.LAYERS.get(id);
 				
 				if (updateCount == 1)
 				{

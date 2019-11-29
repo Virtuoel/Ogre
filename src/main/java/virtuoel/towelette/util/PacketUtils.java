@@ -23,19 +23,20 @@ public class PacketUtils
 	public static <O, S extends PropertyContainer<S>> CustomPayloadS2CPacket stateUpdate(LayerData<O, S> data, BlockView world, BlockPos pos)
 	{
 		final PacketByteBuf buffer = new PacketByteBuf(Unpooled.buffer()).writeBlockPos(pos);
+		
 		buffer.writeVarInt(LayerRegistrar.LAYERS.getRawId(data));
+		
 		final BlockViewStateLayer w = ((BlockViewStateLayer) world);
+		
 		buffer.writeVarInt(data.getIds().getId(w.getState(data, pos)));
+		
 		return new CustomPayloadS2CPacket(UPDATE, buffer);
 	}
 	
-	public static CustomPayloadS2CPacket deltaUpdate(LayerData<?, ?> data, int records, short[] positions, WorldChunk chunk)
+	public static <O, S extends PropertyContainer<S>> CustomPayloadS2CPacket deltaUpdate(LayerData<O, S> layer, int records, short[] positions, WorldChunk chunk)
 	{
-		return new CustomPayloadS2CPacket(DELTA, writeDelta(data, new PacketByteBuf(Unpooled.buffer()), records, positions, chunk));
-	}
-	
-	private static <O, S extends PropertyContainer<S>> PacketByteBuf writeDelta(LayerData<O, S> layer, PacketByteBuf buffer, int records, short[] positions, WorldChunk chunk)
-	{
+		final PacketByteBuf buffer = new PacketByteBuf(Unpooled.buffer());
+		
 		final ChunkPos chunkPos = chunk.getPos();
 		
 		buffer.writeVarInt(LayerRegistrar.LAYERS.getRawId(layer));
@@ -48,15 +49,14 @@ public class PacketUtils
 		
 		for (int i = 0; i < records; i++)
 		{
-			buffer.writeShort(positions[i]);
-			buffer.writeVarInt(layer.getIds().getId(c.getState(layer, toBlockPos(chunkPos, positions[i]))));
+			final short pos = positions[i];
+			buffer.writeShort(pos);
+			
+			final BlockPos blockPos = chunkPos.toBlockPos(pos >> 12 & 15, pos & 255, pos >> 8 & 15);
+			
+			buffer.writeVarInt(layer.getIds().getId(c.getState(layer, blockPos)));
 		}
 		
-		return buffer;
-	}
-	
-	private static BlockPos toBlockPos(ChunkPos chunkPos, short pos)
-	{
-		return new BlockPos(chunkPos.toBlockPos(pos >> 12 & 15, pos & 255, pos >> 8 & 15));
+		return new CustomPayloadS2CPacket(DELTA, buffer);
 	}
 }

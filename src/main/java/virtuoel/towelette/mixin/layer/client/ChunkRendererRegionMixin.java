@@ -35,7 +35,7 @@ public abstract class ChunkRendererRegionMixin implements BlockViewStateLayer
 	
 	@Unique private Object2ObjectLinkedOpenHashMap<Identifier, PropertyContainer<?>[]> states;
 	
-	@Inject(at = @At("RETURN"), method = "<init>(ISSS)V")
+	@Inject(at = @At("RETURN"), method = "<init>(Lnet/minecraft/world/World;II[[Lnet/minecraft/world/chunk/WorldChunk;Lnet/minecraft/util/math/BlockPos;Lnet/minecraft/util/math/BlockPos;)V")
 	private <O, S extends PropertyContainer<S>> void onConstruct(World world, int x, int z, WorldChunk[][] chunks, BlockPos from, BlockPos to, CallbackInfo info)
 	{
 		states = new Object2ObjectLinkedOpenHashMap<Identifier, PropertyContainer<?>[]>();

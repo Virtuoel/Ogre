@@ -22,7 +22,7 @@ public class ToweletteClient implements ClientModInitializer
 		ClientSidePacketRegistry.INSTANCE.register(PacketUtils.UPDATE, ToweletteClient::handleUpdatePacket);
 	}
 	
-	private static <O, S extends PropertyContainer<S>> void handleDeltaPacket(PacketContext packetContext, PacketByteBuf packetByteBuf)
+	public static <O, S extends PropertyContainer<S>> void handleDeltaPacket(PacketContext packetContext, PacketByteBuf packetByteBuf)
 	{
 		final World world = packetContext.getPlayer().world;
 		
@@ -36,7 +36,7 @@ public class ToweletteClient implements ClientModInitializer
 		
 		for (int i = 0; i < length; i++)
 		{
-			short pos = packetByteBuf.readShort();
+			final short pos = packetByteBuf.readShort();
 			positions[i] = chunkPos.toBlockPos(pos >> 12 & 15, pos & 255, pos >> 8 & 15);
 			states[i] = layer.getIds().get(packetByteBuf.readVarInt());
 		}
@@ -50,7 +50,7 @@ public class ToweletteClient implements ClientModInitializer
 		});
 	}
 	
-	private static <O, S extends PropertyContainer<S>> void handleUpdatePacket(PacketContext packetContext, PacketByteBuf packetByteBuf)
+	public static <O, S extends PropertyContainer<S>> void handleUpdatePacket(PacketContext packetContext, PacketByteBuf packetByteBuf)
 	{
 		final World world = packetContext.getPlayer().world;
 		

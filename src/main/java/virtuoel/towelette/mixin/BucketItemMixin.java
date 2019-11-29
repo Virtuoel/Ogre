@@ -105,7 +105,7 @@ public abstract class BucketItemMixin
 		w.setState(LayerRegistrar.FLUID, pos, Fluids.EMPTY.getDefaultState(), 11);
 	}
 	
-	@Inject(at = @At(value = "INVOKE", shift = Shift.AFTER, target = "playEmptyingSound"), method = "placeFluid")
+	@Inject(at = @At(value = "INVOKE", shift = Shift.AFTER, target = "Lnet/minecraft/item/BucketItem;playEmptyingSound(Lnet/minecraft/entity/player/PlayerEntity;Lnet/minecraft/world/IWorld;Lnet/minecraft/util/math/BlockPos;)V"), method = "placeFluid")
 	private void onPlaceFluid(@Nullable PlayerEntity player, World world, BlockPos pos, @Nullable BlockHitResult result, CallbackInfoReturnable<Boolean> info)
 	{
 		final ModifiableWorldStateLayer w = ((ModifiableWorldStateLayer) world);

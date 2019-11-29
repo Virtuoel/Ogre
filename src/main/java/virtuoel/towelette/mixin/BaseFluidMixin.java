@@ -233,8 +233,14 @@ public abstract class BaseFluidMixin
 		info.setReturnValue(state.getCollisionShape(blockView, pos) != VoxelShapes.fullCube());
 	}
 	
-	@Inject(method = { "method_15734", "method_15755" }, at = @At(value = "RETURN"), cancellable = true)
-	private static void onCompute(ViewableWorld world, BlockPos pos, int key, CallbackInfoReturnable<Pair<BlockState, FluidState>> info)
+	@Inject(method = "method_15734(Lnet/minecraft/world/ViewableWorld;Lnet/minecraft/util/math/BlockPos;I)Lcom/mojang/datafixers/util/Pair;", at = @At(value = "RETURN"), cancellable = true)
+	private static void onCompute1(ViewableWorld world, BlockPos pos, int key, CallbackInfoReturnable<Pair<BlockState, FluidState>> info)
+	{
+		info.setReturnValue(Pair.of(info.getReturnValue().getFirst(), world.getFluidState(pos)));
+	}
+	
+	@Inject(method = "method_15755(Lnet/minecraft/world/ViewableWorld;Lnet/minecraft/util/math/BlockPos;I)Lcom/mojang/datafixers/util/Pair;", at = @At(value = "RETURN"), cancellable = true)
+	private static void onCompute2(ViewableWorld world, BlockPos pos, int key, CallbackInfoReturnable<Pair<BlockState, FluidState>> info)
 	{
 		info.setReturnValue(Pair.of(info.getReturnValue().getFirst(), world.getFluidState(pos)));
 	}

@@ -90,24 +90,28 @@ public class StateArgumentType<O, S extends PropertyContainer<S>> implements Arg
 		return EXAMPLES;
 	}
 	
-	@SuppressWarnings("rawtypes")
-	public static class Serializer implements ArgumentSerializer<StateArgumentType>
+	public static class Serializer<O, S extends PropertyContainer<S>> implements ArgumentSerializer<StateArgumentType<O, S>>
 	{
+		@SuppressWarnings("rawtypes")
+		public static Serializer create()
+		{
+			return new Serializer();
+		}
+		
 		@Override
-		public void toPacket(StateArgumentType argType, PacketByteBuf buffer)
+		public void toPacket(StateArgumentType<O, S> argType, PacketByteBuf buffer)
 		{
 			buffer.writeIdentifier(LayerRegistrar.LAYERS.getId(argType.getLayer()));
 		}
 		
-		@SuppressWarnings("unchecked")
 		@Override
-		public StateArgumentType fromPacket(PacketByteBuf buffer)
+		public StateArgumentType<O, S> fromPacket(PacketByteBuf buffer)
 		{
-			return new StateArgumentType(LayerRegistrar.LAYERS.get(buffer.readIdentifier()));
+			return new StateArgumentType<O, S>(LayerRegistrar.getLayerData(buffer.readIdentifier()));
 		}
 		
 		@Override
-		public void toJson(StateArgumentType argType, JsonObject json)
+		public void toJson(StateArgumentType<O, S> argType, JsonObject json)
 		{
 			json.addProperty("id", LayerRegistrar.LAYERS.getId(argType.getLayer()).toString());
 		}

@@ -1,6 +1,7 @@
 package virtuoel.towelette.mixin;
 
 import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.Overwrite;
 
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Box;
@@ -11,6 +12,7 @@ import net.minecraft.world.ViewableWorld;
 @Mixin(ViewableWorld.class)
 public interface ViewableWorldMixin extends BlockView
 {
+	@Overwrite
 	default boolean intersectsFluid(Box box)
 	{
 		final int minX = MathHelper.floor(box.minX);

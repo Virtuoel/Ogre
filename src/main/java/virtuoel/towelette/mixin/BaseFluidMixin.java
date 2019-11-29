@@ -117,10 +117,8 @@ public abstract class BaseFluidMixin
 		int maxLevel = 0;
 		int sources = 0;
 		
-		final Iterator<Direction> iter = Direction.Type.HORIZONTAL.iterator();
-		while (iter.hasNext())
+		for (final Direction dir : Direction.Type.HORIZONTAL)
 		{
-			final Direction dir = iter.next();
 			final BlockPos blockPos = pos.offset(dir);
 			final BlockState blockState = world.getBlockState(blockPos);
 			final FluidState fluidState = world.getFluidState(blockPos);

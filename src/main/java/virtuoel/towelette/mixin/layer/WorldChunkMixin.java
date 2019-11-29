@@ -62,7 +62,7 @@ public abstract class WorldChunkMixin implements ChunkStateLayer
 	public void setBlockState(BlockPos pos, BlockState state, boolean flag, CallbackInfoReturnable<BlockState> info)
 	{
 		final Block block = state.getBlock();
-		if(block instanceof FluidBlock)
+		if (block instanceof FluidBlock)
 		{
 			setState(LayerRegistrar.FLUID, pos, block.getFluidState(state), flag);
 			info.setReturnValue(null);
@@ -83,9 +83,9 @@ public abstract class WorldChunkMixin implements ChunkStateLayer
 		final ChunkSection[] sections = self.getSectionArray();
 		
 		ChunkSection section = sections[y >> 4];
-		if(section == WorldChunk.EMPTY_SECTION)
+		if (section == WorldChunk.EMPTY_SECTION)
 		{
-			if(layer.isEmpty(state))
+			if (layer.isEmpty(state))
 			{
 				return null;
 			}
@@ -98,7 +98,7 @@ public abstract class WorldChunkMixin implements ChunkStateLayer
 		
 		final boolean wasEmpty = section.isEmpty();
 		final S oldState = s.setState(layer, x, y & 15, z, state);
-		if(oldState == state)
+		if (oldState == state)
 		{
 			return null;
 		}
@@ -107,12 +107,12 @@ public abstract class WorldChunkMixin implements ChunkStateLayer
 			final O entry = layer.getOwner(state);
 			layer.trackHeightmapUpdate(self, x, y, z, state);
 			final boolean isEmpty = section.isEmpty();
-			if(wasEmpty != isEmpty)
+			if (wasEmpty != isEmpty)
 			{
 				world.getChunkManager().getLightingProvider().updateSectionStatus(pos, isEmpty);
 			}
 			
-			if(layer.getOwner(s.getState(layer, x, y & 15, z)) != entry)
+			if (layer.getOwner(s.getState(layer, x, y & 15, z)) != entry)
 			{
 				return null;
 			}

@@ -25,7 +25,7 @@ public class LavaFluidMixin
 	{
 		// TODO Make more flexible. Use tags?
 		final boolean replaceable = obj.isAir() || obj.getBlock().getMaterial(obj).isReplaceable() || obj.getBlock() instanceof FluidBlock;
-		if(replaceable)
+		if (replaceable)
 		{
 			final ModifiableWorldStateLayer w = ((ModifiableWorldStateLayer) world);
 			w.setState(LayerRegistrar.FLUID, pos, Fluids.EMPTY.getDefaultState());

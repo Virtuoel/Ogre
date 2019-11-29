@@ -42,17 +42,17 @@ public abstract class ChunkRendererRegionMixin implements BlockViewStateLayer
 		
 		boolean blockState = false;
 		boolean fluidState = false;
-		for(final Identifier id : LayerRegistrar.LAYERS.getIds())
+		for (final Identifier id : LayerRegistrar.LAYERS.getIds())
 		{
 			final LayerData<O, S> layer = LayerRegistrar.getLayerData(id);
 			
 			final PropertyContainer<?>[] array;
-			if(!blockState && layer == LayerRegistrar.BLOCK)
+			if (!blockState && layer == LayerRegistrar.BLOCK)
 			{
 				blockState = true;
 				array = blockStates;
 			}
-			else if(!fluidState && layer == LayerRegistrar.FLUID)
+			else if (!fluidState && layer == LayerRegistrar.FLUID)
 			{
 				fluidState = true;
 				array = fluidStates;
@@ -61,7 +61,7 @@ public abstract class ChunkRendererRegionMixin implements BlockViewStateLayer
 			{
 				array = new PropertyContainer[xSize * ySize * zSize];
 				
-				for(final BlockPos pos : BlockPos.iterate(from, to))
+				for (final BlockPos pos : BlockPos.iterate(from, to))
 				{
 					final int chunkX = (pos.getX() >> 4) - x;
 					final int chunkZ = (pos.getZ() >> 4) - z;

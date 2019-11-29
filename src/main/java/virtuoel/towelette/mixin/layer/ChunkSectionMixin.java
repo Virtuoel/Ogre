@@ -47,7 +47,7 @@ public class ChunkSectionMixin implements ChunkSectionStateLayer, LayeredPalette
 	{
 		palettedContainers = new Object2ObjectLinkedOpenHashMap<>();
 		
-		for(final Identifier id : LayerRegistrar.LAYERS.getIds())
+		for (final Identifier id : LayerRegistrar.LAYERS.getIds())
 		{
 			final LayerData<?, ?> data = LayerRegistrar.LAYERS.get(id);
 			palettedContainers.put(id, new MutableTriple<>(data == LayerRegistrar.BLOCK ? this.container : data.createContainer(), (short) 0, (short) 0));
@@ -58,7 +58,7 @@ public class ChunkSectionMixin implements ChunkSectionStateLayer, LayeredPalette
 	@Override
 	public <O, S extends PropertyContainer<S>> Optional<PalettedContainer<S>> getContainer(Identifier id)
 	{
-		if(palettedContainers.containsKey(id))
+		if (palettedContainers.containsKey(id))
 		{
 			return Optional.of((PalettedContainer<S>) palettedContainers.get(id).getLeft());
 		}
@@ -82,10 +82,10 @@ public class ChunkSectionMixin implements ChunkSectionStateLayer, LayeredPalette
 			
 			container.method_21732((state, value) ->
 			{
-				if(!layer.isEmpty(state))
+				if (!layer.isEmpty(state))
 				{
 					data.setMiddle((short) (data.getMiddle() + value));
-					if(layer.hasRandomTicks(state))
+					if (layer.hasRandomTicks(state))
 					{
 						data.setRight((short) (data.getRight() + value));
 					}
@@ -123,7 +123,7 @@ public class ChunkSectionMixin implements ChunkSectionStateLayer, LayeredPalette
 	{
 		palettedContainers.values().forEach(data ->
 		{
-			if(data.getMiddle() != 0)
+			if (data.getMiddle() != 0)
 			{
 				info.setReturnValue(false);
 				return;
@@ -153,7 +153,7 @@ public class ChunkSectionMixin implements ChunkSectionStateLayer, LayeredPalette
 	public void setBlockState(int x, int y, int z, BlockState state, boolean flag, CallbackInfoReturnable<BlockState> info)
 	{
 		final Block block = state.getBlock();
-		if(block instanceof FluidBlock)
+		if (block instanceof FluidBlock)
 		{
 			setState(LayerRegistrar.FLUID, x, y, z, block.getFluidState(state), flag);
 			info.setReturnValue(state);
@@ -195,19 +195,19 @@ public class ChunkSectionMixin implements ChunkSectionStateLayer, LayeredPalette
 		final PalettedContainer<S> container = ((PalettedContainer<S>) data.getLeft());
 		final S old_state = synchronous ? container.setSync(x, y, z, state) : container.set(x, y, z, state);
 		
-		if(!layer.isEmpty(old_state))
+		if (!layer.isEmpty(old_state))
 		{
 			data.setMiddle((short) (data.getMiddle() - 1));
-			if(layer.hasRandomTicks(old_state))
+			if (layer.hasRandomTicks(old_state))
 			{
 				data.setRight((short) (data.getRight() - 1));
 			}
 		}
 		
-		if(!layer.isEmpty(state))
+		if (!layer.isEmpty(state))
 		{
 			data.setMiddle((short) (data.getMiddle() + 1));
-			if(layer.hasRandomTicks(state))
+			if (layer.hasRandomTicks(state))
 			{
 				data.setRight((short) (data.getRight() + 1));
 			}

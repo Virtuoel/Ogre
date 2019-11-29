@@ -33,7 +33,7 @@ public class CachedBlockPositionMixin implements CachedStatePosition
 	{
 		return (S) states.computeIfAbsent(LayerRegistrar.LAYERS.getId(layer), key ->
 		{
-			if(this.forceLoad || this.world.isBlockLoaded(this.pos))
+			if (this.forceLoad || this.world.isBlockLoaded(this.pos))
 			{
 				return ((BlockViewStateLayer) this.world).getState(layer, this.pos);
 			}

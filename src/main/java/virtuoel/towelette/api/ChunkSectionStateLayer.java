@@ -22,14 +22,14 @@ public interface ChunkSectionStateLayer
 		final Identifier defaultId = LayerRegistrar.LAYERS.getDefaultId();
 		final Identifier id;
 		
-		if(layer == LayerRegistrar.LAYERS.get(defaultId))
+		if (layer == LayerRegistrar.LAYERS.get(defaultId))
 		{
 			id = defaultId;
 		}
 		else
 		{
 			final Identifier layerId = LayerRegistrar.LAYERS.getId(layer);
-			if(defaultId.equals(layerId))
+			if (defaultId.equals(layerId))
 			{
 				return Optional.empty();
 			}

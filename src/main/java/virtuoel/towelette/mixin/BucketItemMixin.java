@@ -52,7 +52,7 @@ public abstract class BucketItemMixin
 	@Redirect(method = "use", at = @At(value = "INVOKE", target = "Lnet/minecraft/util/math/BlockPos;offset(Lnet/minecraft/util/math/Direction;)Lnet/minecraft/util/math/BlockPos;"))
 	private BlockPos onUseOffsetProxy(BlockPos obj, Direction side, World world, PlayerEntity playerEntity, Hand hand)
 	{
-		if(world.getFluidState(obj).getFluid() != fluid)
+		if (world.getFluidState(obj).getFluid() != fluid)
 		{
 			final BlockState state = world.getBlockState(obj);
 			final Block block = state.getBlock();
@@ -67,7 +67,7 @@ public abstract class BucketItemMixin
 		final boolean solid = obj.isSolid();
 		final BlockState state = world.getBlockState(blockPos);
 		final Block block = state.getBlock();
-		if(block instanceof FluidFillable)
+		if (block instanceof FluidFillable)
 		{
 			return ((FluidFillable) block).canFillWithFluid(world, blockPos, state, fluid) ? solid : true;
 		}
@@ -80,7 +80,7 @@ public abstract class BucketItemMixin
 		final boolean replaceable = obj.isReplaceable();
 		final BlockState state = world.getBlockState(blockPos);
 		final Block block = state.getBlock();
-		if(block instanceof FluidFillable)
+		if (block instanceof FluidFillable)
 		{
 			return ((FluidFillable) block).canFillWithFluid(world, blockPos, state, fluid) || (world.getFluidState(blockPos).isEmpty() && replaceable);
 		}
@@ -90,7 +90,7 @@ public abstract class BucketItemMixin
 	@Redirect(method = "placeFluid", at = @At(value = "FIELD", ordinal = 3, target = "Lnet/minecraft/item/BucketItem;fluid:Lnet/minecraft/fluid/Fluid;"))
 	private Fluid onPlaceFluidFluidProxy(BucketItem this$0, @Nullable PlayerEntity playerEntity, World world, BlockPos blockPos, @Nullable BlockHitResult blockHitResult)
 	{
-		if(fluid != Fluids.WATER)
+		if (fluid != Fluids.WATER)
 		{
 			final BlockState state = world.getBlockState(blockPos);
 			return ((FluidFillable) state.getBlock()).canFillWithFluid(world, blockPos, state, fluid) ? Fluids.WATER : fluid;

@@ -12,7 +12,7 @@ import virtuoel.towelette.util.LayeredPalettedContainerHolder;
 @Mixin(ChunkSection.class)
 public abstract class ChunkSectionMixin implements LayeredPalettedContainerHolder
 {
-	@Inject(require = 0, at = @At("RETURN"), method = "fromPacket(Lnet/minecraft/util/PacketByteBuf;)V")
+	@Inject(at = @At("RETURN"), method = "fromPacket(Lnet/minecraft/util/PacketByteBuf;)V")
 	public void onFromPacket(PacketByteBuf buffer, CallbackInfo info)
 	{
 		getPalettedContainerDataMap().values().forEach(data ->

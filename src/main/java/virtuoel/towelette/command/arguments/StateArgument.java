@@ -44,15 +44,15 @@ public class StateArgument<O, S extends PropertyContainer<S>> implements Predica
 		final O entry = layer.getOwner(this.state);
 		final O otherEntry = layer.getOwner(state);
 		
-		if(otherEntry != entry)
+		if (otherEntry != entry)
 		{
 			return false;
 		}
 		else
 		{
-			for(Property<?> property : this.properties)
+			for (Property<?> property : this.properties)
 			{
-				if(state.get(property) != this.state.get(property))
+				if (state.get(property) != this.state.get(property))
 				{
 					return false;
 				}

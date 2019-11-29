@@ -46,7 +46,7 @@ public abstract class WorldMixin implements ModifiableWorldMixin
 	@Inject(method = "doesAreaContainFireSource", locals = LocalCapture.CAPTURE_FAILSOFT, cancellable = true, at = @At(value = "INVOKE", shift = Shift.AFTER, target = "Lnet/minecraft/world/World;getBlockState(Lnet/minecraft/util/math/BlockPos;)Lnet/minecraft/block/BlockState;"))
 	private void doesAreaContainFireSourceGetFluidState(Box box, CallbackInfoReturnable<Boolean> info, int noop1, int noop2, int noop3, int noop4, int noop5, int noop6, BlockPos.PooledMutable pos, int noop7, int noop8, int noop9)
 	{
-		if(getFluidState(pos).matches(FluidTags.LAVA))
+		if (getFluidState(pos).matches(FluidTags.LAVA))
 		{
 			info.setReturnValue(true);
 		}
@@ -70,7 +70,7 @@ public abstract class WorldMixin implements ModifiableWorldMixin
 	public <O, S extends PropertyContainer<S>> S getState(LayerData<O, S> layer, BlockPos pos)
 	{
 		final World self = World.class.cast(this);
-		if(World.isHeightInvalid(pos))
+		if (World.isHeightInvalid(pos))
 		{
 			return layer.getInvalidPositionState();
 		}
@@ -85,11 +85,11 @@ public abstract class WorldMixin implements ModifiableWorldMixin
 	public <O, S extends PropertyContainer<S>> boolean setState(LayerData<O, S> layer, BlockPos pos, S state, int flags)
 	{
 		final World self = World.class.cast(this);
-		if(World.isHeightInvalid(pos))
+		if (World.isHeightInvalid(pos))
 		{
 			return false;
 		}
-		else if(!self.isClient && self.getLevelProperties().getGeneratorType() == LevelGeneratorType.DEBUG_ALL_BLOCK_STATES)
+		else if (!self.isClient && self.getLevelProperties().getGeneratorType() == LevelGeneratorType.DEBUG_ALL_BLOCK_STATES)
 		{
 			return false;
 		}
@@ -98,7 +98,7 @@ public abstract class WorldMixin implements ModifiableWorldMixin
 			final WorldChunk chunk = self.getWorldChunk(pos);
 			final ChunkStateLayer c = ((ChunkStateLayer) chunk);
 			final S oldState = c.setState(layer, pos, state, (flags & 64) != 0);
-			if(oldState == null)
+			if (oldState == null)
 			{
 				return false;
 			}
@@ -106,21 +106,21 @@ public abstract class WorldMixin implements ModifiableWorldMixin
 			{
 				final S newState = c.getState(layer, pos);
 				
-				if(layer.shouldEnqueueLightUpdate(self, pos, newState, oldState))
+				if (layer.shouldEnqueueLightUpdate(self, pos, newState, oldState))
 				{
 					self.getChunkManager().getLightingProvider().enqueueLightUpdate(pos);
 				}
 				
-				if(newState == state)
+				if (newState == state)
 				{
-					if(oldState != newState)
+					if (oldState != newState)
 					{
 						self.scheduleBlockRender(pos, Blocks.AIR.getDefaultState(), Blocks.VOID_AIR.getDefaultState());
 					}
 					
 					if ((flags & 2) != 0 && (!self.isClient || (flags & 4) == 0) && (self.isClient || chunk.getLevelType() != null && chunk.getLevelType().isAfter(ChunkHolder.LevelType.TICKING)))
 					{
-						if(self instanceof ServerWorld)
+						if (self instanceof ServerWorld)
 						{
 							((StateUpdateableChunkManager) ((ServerWorld) self).method_14178()).onStateUpdate(layer, pos);
 						}
@@ -217,9 +217,9 @@ public abstract class WorldMixin implements ModifiableWorldMixin
 	private static <O, S extends PropertyContainer<S>> void updateNeighborExceptLayer(LayerData<O, S> exceptLayer, World world, BlockPos pos, BlockPos otherPos)
 	{
 		final BlockViewStateLayer w = ((BlockViewStateLayer) world);
-		for(@SuppressWarnings("rawtypes") final LayerData layer : LayerRegistrar.LAYERS)
+		for (@SuppressWarnings("rawtypes") final LayerData layer : LayerRegistrar.LAYERS)
 		{
-			if(layer == exceptLayer)
+			if (layer == exceptLayer)
 			{
 				continue;
 			}

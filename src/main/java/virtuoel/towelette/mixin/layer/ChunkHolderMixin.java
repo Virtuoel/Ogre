@@ -40,7 +40,7 @@ public abstract class ChunkHolderMixin implements StateUpdateableChunkHolder
 	@Inject(at = @At("RETURN"), method = "<init>(Lnet/minecraft/util/math/ChunkPos;ILnet/minecraft/world/chunk/light/LightingProvider;Lnet/minecraft/server/world/ChunkHolder$LevelUpdateListener;Lnet/minecraft/server/world/ChunkHolder$PlayersWatchingChunkProvider;)V")
 	private void onConstruct(ChunkPos pos, int level, LightingProvider lightingProvider, ChunkHolder.LevelUpdateListener listener, ChunkHolder.PlayersWatchingChunkProvider provider, CallbackInfo info)
 	{
-		for(final Identifier id : LayerRegistrar.LAYERS.getIds())
+		for (final Identifier id : LayerRegistrar.LAYERS.getIds())
 		{
 			updateMap.put(id, new MutablePair<short[], Integer>(new short[64], 0));
 		}
@@ -73,7 +73,7 @@ public abstract class ChunkHolderMixin implements StateUpdateableChunkHolder
 					}
 				}
 				
-				if(!exists)
+				if (!exists)
 				{
 					positions[updateCount++] = pos;
 					data.setRight(updateCount);
@@ -85,11 +85,11 @@ public abstract class ChunkHolderMixin implements StateUpdateableChunkHolder
 	@Inject(at = @At("HEAD"), method = "flushUpdates(Lnet/minecraft/world/chunk/WorldChunk;)V")
 	private void onPreFlushUpdates(WorldChunk chunk, CallbackInfo info)
 	{
-		for(final Identifier id : LayerRegistrar.LAYERS.getIds())
+		for (final Identifier id : LayerRegistrar.LAYERS.getIds())
 		{
 			final MutablePair<short[], Integer> data = updateMap.get(id);
 			
-			if(this.blockUpdateCount == 64)
+			if (this.blockUpdateCount == 64)
 			{
 				data.setRight(0);
 				continue;

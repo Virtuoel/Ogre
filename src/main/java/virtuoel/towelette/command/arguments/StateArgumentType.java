@@ -76,7 +76,7 @@ public class StateArgumentType<O, S extends PropertyContainer<S>> implements Arg
 		{
 			parser.parse(layer);
 		}
-		catch(CommandSyntaxException e)
+		catch (CommandSyntaxException e)
 		{
 			
 		}

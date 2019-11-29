@@ -54,7 +54,7 @@ public class FluidMixin implements CollidableFluid, UpdateableFluid
 	@Override
 	public void updateNeighborStates(World world, BlockPos pos, FluidState state, int flags)
 	{
-		try(final BlockPos.PooledMutable mutablePos = BlockPos.PooledMutable.get())
+		try (final BlockPos.PooledMutable mutablePos = BlockPos.PooledMutable.get())
 		{
 			for (final Direction direction : UPDATE_ORDER)
 			{

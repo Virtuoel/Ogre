@@ -39,13 +39,13 @@ public class FluidUtils
 	
 	public static boolean isFluidFlowBlocked(Direction direction, BlockView world, VoxelShape shape, BlockState blockState, BlockPos blockPos, VoxelShape otherShape, BlockState otherState, BlockPos otherPos)
 	{
-		if(direction.getAxis() != Direction.Axis.Y)
+		if (direction.getAxis() != Direction.Axis.Y)
 		{
 			final boolean accurateFlowBlocking = Optional.ofNullable(ToweletteConfig.DATA.get("accurateFlowBlocking"))
 				.filter(JsonElement::isJsonPrimitive)
 				.map(JsonElement::getAsBoolean).orElse(true);
 			
-			if(accurateFlowBlocking)
+			if (accurateFlowBlocking)
 			{
 				if (shape != VoxelShapes.fullCube() && otherShape != VoxelShapes.fullCube())
 				{
@@ -86,7 +86,7 @@ public class FluidUtils
 	
 	public static boolean scheduleFluidTick(FluidState state, IWorld world, BlockPos pos)
 	{
-		if(!state.isEmpty())
+		if (!state.isEmpty())
 		{
 			scheduleFluidTickImpl(state.getFluid(), world, pos);
 			return true;
@@ -96,7 +96,7 @@ public class FluidUtils
 	
 	public static boolean scheduleFluidTick(Fluid fluid, IWorld world, BlockPos pos)
 	{
-		if(!fluid.getDefaultState().isEmpty())
+		if (!fluid.getDefaultState().isEmpty())
 		{
 			scheduleFluidTickImpl(fluid, world, pos);
 			return true;

@@ -79,25 +79,25 @@ public abstract class BaseFluidMixin
 		final boolean displaceable = info.getReturnValueZ();
 		final boolean fillable = block instanceof FluidFillable;
 		final boolean canFill = fillable && ((FluidFillable) block).canFillWithFluid(blockView, pos, state, fluid);
-		if(!displaceable)
+		if (!displaceable)
 		{
-			if(canFill)
+			if (canFill)
 			{
 				info.setReturnValue(true);
 				return;
 			}
 			
 			final boolean empty = blockView.getFluidState(pos).isEmpty();
-			if(empty && block.matches(Towelette.DISPLACEABLE) && !block.matches(Towelette.UNDISPLACEABLE))
+			if (empty && block.matches(Towelette.DISPLACEABLE) && !block.matches(Towelette.UNDISPLACEABLE))
 			{
 				info.setReturnValue(true);
 				return;
 			}
 		}
-		else if(fillable && !canFill)
+		else if (fillable && !canFill)
 		{
 			final boolean empty = blockView.getFluidState(pos).isEmpty();
-			if(!empty || block.matches(Towelette.UNDISPLACEABLE))
+			if (!empty || block.matches(Towelette.UNDISPLACEABLE))
 			{
 				info.setReturnValue(false);
 				return;
@@ -212,7 +212,7 @@ public abstract class BaseFluidMixin
 		final ModifiableWorldStateLayer w = ((ModifiableWorldStateLayer) world);
 		w.setState(LayerRegistrar.FLUID, pos, fluidState, fluidState.isEmpty() ? 3 : 2);
 		
-		if(blockState.matches(Towelette.DISPLACEABLE) && !blockState.matches(Towelette.UNDISPLACEABLE))
+		if (blockState.matches(Towelette.DISPLACEABLE) && !blockState.matches(Towelette.UNDISPLACEABLE))
 		{
 			if (!blockState.isAir())
 			{
@@ -243,7 +243,7 @@ public abstract class BaseFluidMixin
 	private void onMethod_15736(BlockView world, Fluid fluid, BlockPos pos, BlockState state, BlockPos otherPos, BlockState otherState, CallbackInfoReturnable<Boolean> info)
 	{
 		final BaseFluid self = (BaseFluid) (Object) this;
-		if(info.getReturnValueZ() && otherState.getFluidState().getFluid().matchesType(self))
+		if (info.getReturnValueZ() && otherState.getFluidState().getFluid().matchesType(self))
 		{
 			info.setReturnValue(world.getFluidState(otherPos).getFluid().matchesType(self));
 		}
@@ -252,7 +252,7 @@ public abstract class BaseFluidMixin
 	@Inject(method = "flow", at = @At(value = "RETURN"))
 	private void onFlow(IWorld world, BlockPos pos, BlockState blockState, Direction direction, FluidState fluidState, CallbackInfo info)
 	{
-		if(!(blockState.getBlock() instanceof FluidFillable))
+		if (!(blockState.getBlock() instanceof FluidFillable))
 		{
 			final ModifiableWorldStateLayer w = ((ModifiableWorldStateLayer) world);
 			w.setState(LayerRegistrar.FLUID, pos, fluidState, fluidState.isEmpty() ? 3 : 2);

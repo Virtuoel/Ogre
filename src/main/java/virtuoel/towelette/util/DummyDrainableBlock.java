@@ -26,7 +26,7 @@ public class DummyDrainableBlock extends Block implements FluidDrainable
 	{
 		final Fluid fluid;
 		final FluidState fluidState = world.getFluidState(pos);
-		if(fluidState.isStill())
+		if (fluidState.isStill())
 		{
 			fluid = fluidState.getFluid();
 		}
@@ -35,7 +35,7 @@ public class DummyDrainableBlock extends Block implements FluidDrainable
 			fluid = Fluids.EMPTY;
 		}
 		
-		if(fluid != Fluids.EMPTY)
+		if (fluid != Fluids.EMPTY)
 		{
 			final BlockState blockState = world.getBlockState(pos);
 			final Block block = blockState.getBlock();

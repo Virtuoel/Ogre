@@ -20,7 +20,7 @@ public interface ViewableWorldMixin extends BlockView
 		final int minZ = MathHelper.floor(box.minZ);
 		final int maxZ = MathHelper.ceil(box.maxZ);
 		
-		try(BlockPos.PooledMutable pos = BlockPos.PooledMutable.get())
+		try (BlockPos.PooledMutable pos = BlockPos.PooledMutable.get())
 		{
 			for (int x = minX; x < maxX; x++)
 			{

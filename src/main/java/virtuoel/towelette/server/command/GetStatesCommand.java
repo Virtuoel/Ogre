@@ -31,7 +31,7 @@ public class GetStatesCommand
 					
 					final Text response = new LiteralText("");
 					response.append(new LiteralText(String.format("%d, %d, %d", pos.getX(), pos.getY(), pos.getZ())).setStyle(new Style().setColor(Formatting.YELLOW)));
-					for(@SuppressWarnings("rawtypes") LayerData layer : LayerRegistrar.LAYERS)
+					for (@SuppressWarnings("rawtypes") LayerData layer : LayerRegistrar.LAYERS)
 					{
 						final PropertyContainer<?> state = ((BlockViewStateLayer) context.getSource().getWorld()).getState(layer, pos);
 						

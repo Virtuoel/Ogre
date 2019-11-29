@@ -38,18 +38,18 @@ public class ChunkSerializerMixin
 	@Inject(method = "deserialize", locals = LocalCapture.CAPTURE_FAILSOFT, at = @At(value = "INVOKE", shift = Shift.AFTER, target = "Lnet/minecraft/world/chunk/PalettedContainer;read(Lnet/minecraft/nbt/ListTag;[J)V"))
 	private static void onDeserialize(ServerWorld world, StructureManager structureManager, PointOfInterestStorage poiStorage, ChunkPos pos, CompoundTag tag, CallbackInfoReturnable<ProtoChunk> info, ChunkGenerator<?> chunkGenerator, BiomeSource biomeSource, CompoundTag levelTag, Biome biomes[], UpgradeData upgradeData, ChunkTickScheduler<Block> blockTickScheduler, ChunkTickScheduler<Fluid> fluidTickScheduler, boolean isLightOn, ListTag sectionList, int noop, ChunkSection sections[], boolean hasSkyLight, ChunkManager chunkManager, LightingProvider lightingProvider, int i, CompoundTag sectionTag, int y, ChunkSection chunkSection)
 	{
-		if(sectionTag.containsKey("StateLayerData"))
+		if (sectionTag.containsKey("StateLayerData"))
 		{
 			final CompoundTag layerTag = sectionTag.getCompound("StateLayerData");
-			for(final LayerData<?, ?> layer : LayerRegistrar.LAYERS)
+			for (final LayerData<?, ?> layer : LayerRegistrar.LAYERS)
 			{
-				if(layer == LayerRegistrar.BLOCK)
+				if (layer == LayerRegistrar.BLOCK)
 				{
 					continue;
 				}
 				
 				final Identifier id = LayerRegistrar.LAYERS.getId(layer);
-				if(layerTag.containsKey(id.toString()))
+				if (layerTag.containsKey(id.toString()))
 				{
 					final CompoundTag layerDataTag = layerTag.getCompound(id.toString());
 					
@@ -66,9 +66,9 @@ public class ChunkSerializerMixin
 	private static void onSerialize(ServerWorld world, Chunk chunk, CallbackInfoReturnable<CompoundTag> info, ChunkPos pos, CompoundTag tag, CompoundTag levelTag, ChunkSection sections[], ListTag sectionList, LightingProvider lightingProvider, boolean isLightOn, int i, int j, ChunkSection chunkSection, ChunkNibbleArray blockLight, ChunkNibbleArray skyLight, CompoundTag sectionTag)
 	{
 		final CompoundTag layerTag = new CompoundTag();
-		for(final LayerData<?, ?> layer : LayerRegistrar.LAYERS)
+		for (final LayerData<?, ?> layer : LayerRegistrar.LAYERS)
 		{
-			if(layer == LayerRegistrar.BLOCK)
+			if (layer == LayerRegistrar.BLOCK)
 			{
 				continue;
 			}

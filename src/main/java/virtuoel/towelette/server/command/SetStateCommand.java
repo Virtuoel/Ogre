@@ -73,11 +73,11 @@ public class SetStateCommand
 	{
 		final ServerWorld world = source.getWorld();
 		
-		if(predicate != null && !predicate.test(new CachedBlockPosition(world, pos, true)))
+		if (predicate != null && !predicate.test(new CachedBlockPosition(world, pos, true)))
 		{
 			throw FAILED_EXCEPTION.create();
 		}
-		else if(!stateArg.setState(world, pos, 2))
+		else if (!stateArg.setState(world, pos, 2))
 		{
 			throw FAILED_EXCEPTION.create();
 		}

@@ -49,10 +49,10 @@ public class ServerWorldMixin
 						final BlockPos pos = self.getRandomPosInChunk(x, y, z, 15);
 						profiler.push("randomTick");
 						
-						for(@SuppressWarnings("rawtypes") final LayerData layer : LayerRegistrar.LAYERS)
+						for (@SuppressWarnings("rawtypes") final LayerData layer : LayerRegistrar.LAYERS)
 						{
 							final PropertyContainer<?> state = sectionLayer.getState(layer, pos.getX() - x, pos.getY() - y, pos.getZ() - z);
-							if(layer.hasRandomTicks(state))
+							if (layer.hasRandomTicks(state))
 							{
 								layer.onRandomTick(state, self, pos, self.random);
 							}

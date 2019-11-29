@@ -211,9 +211,7 @@ public class FillStatesCommand
 			}
 			while (predicate != null && !predicate.test(new CachedBlockPosition(world, pos, true)));
 			
-			final StateArgument<?, ?> arg = mode.filter.filter(
-				box, pos, state, world
-			);
+			final StateArgument<?, ?> arg = mode.filter.filter(box, pos, state, world);
 			if (arg != null)
 			{
 				// TODO handle BE somehow

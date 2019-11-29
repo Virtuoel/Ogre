@@ -114,7 +114,7 @@ public class LayerRegistrar
 			.emptyStateSupplier(Blocks.AIR::getDefaultState)
 			.defaultIdFunction(Registry.BLOCK::getDefaultId);
 		
-		if(FabricLoader.getInstance().getEnvironmentType() == EnvType.CLIENT)
+		if (FabricLoader.getInstance().getEnvironmentType() == EnvType.CLIENT)
 		{
 			builder.occlusionGraphCallback((chunkOcclusionGraphBuilder, state, world, pos) ->
 				{
@@ -175,10 +175,9 @@ public class LayerRegistrar
 			.emptyStateSupplier(Fluids.EMPTY::getDefaultState)
 			.defaultIdFunction(Registry.FLUID::getDefaultId);
 		
-		if(FabricLoader.getInstance().getEnvironmentType() == EnvType.CLIENT)
+		if (FabricLoader.getInstance().getEnvironmentType() == EnvType.CLIENT)
 		{
-			builder
-				.renderPredicate(state -> !state.isEmpty())
+			builder.renderPredicate(state -> !state.isEmpty())
 				.renderLayerFunction(FluidState::getRenderLayer)
 				.tesselationCallback((blockRenderManager, state, pos, world, bufferBuilder, random) ->
 				{
@@ -206,15 +205,15 @@ public class LayerRegistrar
 		final O entry = registry.get(compound.containsKey("Name", 8) ? new Identifier(compound.getString("Name")) : defaultIdSupplier.get());
 		S container = defaultStateFunc.apply(entry);
 		
-		if(compound.containsKey("Properties", 10))
+		if (compound.containsKey("Properties", 10))
 		{
 			final CompoundTag properties = compound.getCompound("Properties");
 			final StateFactory<O, S> stateFactory = stateManagerFunc.apply(entry);
 			
-			for(final String key : properties.getKeys())
+			for (final String key : properties.getKeys())
 			{
 				final Property<?> property = stateFactory.getProperty(key);
-				if(property != null)
+				if (property != null)
 				{
 					container = withProperty(container, property, key, properties, compound);
 				}
@@ -240,11 +239,11 @@ public class LayerRegistrar
 		final CompoundTag stateCompound = new CompoundTag();
 		stateCompound.putString("Name", registry.getId(entryFunc.apply(state)).toString());
 		final ImmutableMap<Property<?>, Comparable<?>> entries = state.getEntries();
-		if(!entries.isEmpty())
+		if (!entries.isEmpty())
 		{
 			final CompoundTag propertyCompound = new CompoundTag();
 			
-			for(final Entry<Property<?>, Comparable<?>> entry : entries.entrySet())
+			for (final Entry<Property<?>, Comparable<?>> entry : entries.entrySet())
 			{
 				@SuppressWarnings("rawtypes")
 				final Property property = entry.getKey();

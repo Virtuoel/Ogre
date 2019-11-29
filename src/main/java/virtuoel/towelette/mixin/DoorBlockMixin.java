@@ -26,7 +26,7 @@ public abstract class DoorBlockMixin
 	@Inject(at = @At("HEAD"), method = "activate")
 	private void onActivate(BlockState state, World world, BlockPos blockPos, PlayerEntity playerEntity, Hand hand, BlockHitResult blockHitResult, CallbackInfoReturnable<Boolean> info)
 	{
-		if(state.getMaterial() != Material.METAL)
+		if (state.getMaterial() != Material.METAL)
 		{
 			FluidUtils.scheduleFluidTick(world, blockPos);
 		}
@@ -36,7 +36,7 @@ public abstract class DoorBlockMixin
 	private void onNeighborUpdate(BlockState blockState, World world, BlockPos blockPos, Block block, BlockPos otherPos, boolean unknown, CallbackInfo info)
 	{
 		boolean powered = world.isReceivingRedstonePower(blockPos) || world.isReceivingRedstonePower(blockPos.offset(blockState.get(Properties.DOUBLE_BLOCK_HALF) == DoubleBlockHalf.LOWER ? Direction.UP : Direction.DOWN));
-		if(!world.isClient && powered != blockState.get(Properties.POWERED))
+		if (!world.isClient && powered != blockState.get(Properties.POWERED))
 		{
 			FluidUtils.scheduleFluidTick(world, blockPos);
 		}

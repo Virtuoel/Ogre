@@ -10,7 +10,6 @@ import net.fabricmc.fabric.api.event.registry.RegistryEntryAddedCallback;
 import net.fabricmc.fabric.api.registry.CommandRegistry;
 import net.fabricmc.fabric.api.tag.TagRegistry;
 import net.minecraft.block.Block;
-import net.minecraft.block.BlockState;
 import net.minecraft.command.arguments.ArgumentTypes;
 import net.minecraft.command.arguments.serialize.ConstantArgumentSerializer;
 import net.minecraft.tag.Tag;
@@ -34,11 +33,6 @@ public class Towelette implements ModInitializer
 	static
 	{
 		Reflection.initialize(LayerRegistrar.class);
-	}
-	
-	public static boolean ignoreBlockStateFluids(BlockState state)
-	{
-		return false;
 	}
 	
 	@Override

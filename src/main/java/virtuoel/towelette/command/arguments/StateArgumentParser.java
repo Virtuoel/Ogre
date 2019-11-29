@@ -27,7 +27,7 @@ import net.minecraft.text.TranslatableText;
 import net.minecraft.util.Identifier;
 import virtuoel.towelette.api.LayerData;
 
-public class StateArgumentParser
+public class StateArgumentParser<O, S extends PropertyContainer<S>>
 {
 	public static final DynamicCommandExceptionType INVALID_BLOCK_ID_EXCEPTION = new DynamicCommandExceptionType(arg ->
 	{
@@ -57,13 +57,14 @@ public class StateArgumentParser
 	private final Map<Property<?>, Comparable<?>> properties = Maps.newHashMap();
 	private Identifier id = new Identifier("");
 	private StateFactory<?, ?> stateFactory;
-	private PropertyContainer<?> state;
+	private S state;
 	private Function<SuggestionsBuilder, CompletableFuture<Suggestions>> suggestions;
 	
-	public StateArgumentParser(StringReader reader)
+	public StateArgumentParser(StringReader reader, LayerData<O, S> layer)
 	{
 		this.suggestions = SUGGEST_DEFAULT;
 		this.reader = reader;
+		this.layer = layer;
 	}
 	
 	public Map<Property<?>, Comparable<?>> getStateProperties()
@@ -72,18 +73,15 @@ public class StateArgumentParser
 	}
 	
 	@Nullable
-	public PropertyContainer<?> getState()
+	public S getState()
 	{
 		return this.state;
 	}
 	
-	@SuppressWarnings("rawtypes")
-	private LayerData layer;
+	private LayerData<O, S> layer;
 	
-	public <O, S extends PropertyContainer<S>> StateArgumentParser parse(LayerData<O, S> layer) throws CommandSyntaxException
+	public StateArgumentParser<O, S> parse() throws CommandSyntaxException
 	{
-		this.layer = layer;
-		
 		this.suggestions = this::suggestId;
 		this.parseId();
 		this.suggestions = this::suggestSnbtOrBlockProperties;
@@ -168,7 +166,6 @@ public class StateArgumentParser
 		return builder;
 	}
 	
-	@SuppressWarnings("unchecked")
 	private CompletableFuture<Suggestions> suggestSnbtOrBlockProperties(SuggestionsBuilder builder)
 	{
 		if (builder.getRemaining().isEmpty())
@@ -187,20 +184,18 @@ public class StateArgumentParser
 		return builder.buildFuture();
 	}
 	
-	@SuppressWarnings("unchecked")
 	private CompletableFuture<Suggestions> suggestId(SuggestionsBuilder builder)
 	{
 		return CommandSource.suggestIdentifiers(layer.getRegistry().getIds(), builder);
 	}
 	
-	@SuppressWarnings("unchecked")
 	public void parseId() throws CommandSyntaxException
 	{
 		int pos = this.reader.getCursor();
 		this.id = Identifier.fromCommandInput(this.reader);
-		Optional<?> data = layer.getRegistry().getOrEmpty(this.id);
+		Optional<O> data = layer.getRegistry().getOrEmpty(this.id);
 		
-		Object entry = data.orElseThrow(() ->
+		final O entry = data.orElseThrow(() ->
 		{
 			this.reader.setCursor(pos);
 			return INVALID_BLOCK_ID_EXCEPTION.createWithContext(this.reader, this.id.toString());
@@ -285,7 +280,7 @@ public class StateArgumentParser
 		Optional<T> value = property.getValue(valueName);
 		if (value.isPresent())
 		{
-			this.state = (PropertyContainer<?>) this.state.with(property, value.get());
+			this.state = this.state.with(property, value.get());
 			this.properties.put(property, value.get());
 		}
 		else

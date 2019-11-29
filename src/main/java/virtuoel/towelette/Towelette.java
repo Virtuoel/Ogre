@@ -35,12 +35,17 @@ public class Towelette implements ModInitializer
 		Reflection.initialize(LayerRegistrar.class);
 	}
 	
-	@SuppressWarnings("unchecked")
+	@SuppressWarnings({ "unchecked", "rawtypes" })
+	private static void registerArgumentTypes()
+	{
+		ArgumentTypes.register("state", StateArgumentType.class, new StateArgumentType.Serializer());
+		ArgumentTypes.register("layer", LayerArgumentType.class, new ConstantArgumentSerializer<LayerArgumentType>(LayerArgumentType::layer));
+	}
+	
 	@Override
 	public void onInitialize()
 	{
-		ArgumentTypes.register("state", StateArgumentType.class, StateArgumentType.Serializer.create());
-		ArgumentTypes.register("layer", LayerArgumentType.class, new ConstantArgumentSerializer<LayerArgumentType>(LayerArgumentType::layer));
+		registerArgumentTypes();
 		
 		CommandRegistry.INSTANCE.register(false, GetStatesCommand::register);
 		

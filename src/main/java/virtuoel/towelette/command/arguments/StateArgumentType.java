@@ -15,7 +15,6 @@ import com.mojang.brigadier.suggestion.SuggestionsBuilder;
 import net.minecraft.command.arguments.serialize.ArgumentSerializer;
 import net.minecraft.server.command.ServerCommandSource;
 import net.minecraft.state.PropertyContainer;
-import net.minecraft.util.Identifier;
 import net.minecraft.util.PacketByteBuf;
 import virtuoel.towelette.api.LayerData;
 import virtuoel.towelette.api.LayerRegistrar;
@@ -23,16 +22,6 @@ import virtuoel.towelette.api.LayerRegistrar;
 public class StateArgumentType<O, S extends PropertyContainer<S>> implements ArgumentType<StateArgument<O, S>>
 {
 	private static final Collection<String> EXAMPLES = Arrays.asList("stone", "minecraft:stone", "stone[foo=bar]");
-	
-	public static <O, S extends PropertyContainer<S>> StateArgumentType<O, S> create(String id)
-	{
-		return create(new Identifier(id));
-	}
-	
-	public static <O, S extends PropertyContainer<S>> StateArgumentType<O, S> create(Identifier id)
-	{
-		return create(LayerRegistrar.<O, S>getLayerData(id));
-	}
 	
 	public static <O, S extends PropertyContainer<S>> StateArgumentType<O, S> create(LayerData<O, S> layer)
 	{
@@ -51,12 +40,11 @@ public class StateArgumentType<O, S extends PropertyContainer<S>> implements Arg
 		return layer;
 	}
 	
-	@SuppressWarnings({ "unchecked", "rawtypes" })
 	@Override
 	public StateArgument<O, S> parse(StringReader reader) throws CommandSyntaxException
 	{
-		final StateArgumentParser parser = new StateArgumentParser(reader).parse(layer);
-		return new StateArgument(layer, parser.getState(), parser.getStateProperties().keySet());
+		final StateArgumentParser<O, S> parser = new StateArgumentParser<O, S>(reader, layer).parse();
+		return new StateArgument<O, S>(layer, parser.getState(), parser.getStateProperties().keySet());
 	}
 	
 	@SuppressWarnings("unchecked")
@@ -70,11 +58,11 @@ public class StateArgumentType<O, S extends PropertyContainer<S>> implements Arg
 	{
 		final StringReader reader = new StringReader(builder.getInput());
 		reader.setCursor(builder.getStart());
-		final StateArgumentParser parser = new StateArgumentParser(reader);
+		final StateArgumentParser<O, S> parser = new StateArgumentParser<O, S>(reader, layer);
 		
 		try
 		{
-			parser.parse(layer);
+			parser.parse();
 		}
 		catch (CommandSyntaxException e)
 		{
@@ -92,12 +80,6 @@ public class StateArgumentType<O, S extends PropertyContainer<S>> implements Arg
 	
 	public static class Serializer<O, S extends PropertyContainer<S>> implements ArgumentSerializer<StateArgumentType<O, S>>
 	{
-		@SuppressWarnings("rawtypes")
-		public static Serializer create()
-		{
-			return new Serializer();
-		}
-		
 		@Override
 		public void toPacket(StateArgumentType<O, S> argType, PacketByteBuf buffer)
 		{

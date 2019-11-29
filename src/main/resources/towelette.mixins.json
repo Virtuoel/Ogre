@@ -11,6 +11,7 @@
 		"DoorBlockMixin",
 		"EntityMixin",
 		"FireBlockMixin",
+		"FluidBlockMixin",
 		"FluidMixin",
 		"IceBlockMixin",
 		"LavaFluidMixin",

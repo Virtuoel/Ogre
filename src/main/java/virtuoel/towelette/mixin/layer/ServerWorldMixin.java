@@ -21,7 +21,7 @@ import virtuoel.towelette.api.LayerRegistrar;
 public class ServerWorldMixin
 {
 	@SuppressWarnings("unchecked")
-	@Inject(method = "tickChunk", cancellable = true, at = @At(value = "INVOKE", shift = Shift.BEFORE, target = "Lnet/minecraft/util/profiler/Profiler;swap(Ljava/lang/String;)V", ordinal = 1))
+	@Inject(method = "tickChunk", cancellable = true, at = @At(value = "INVOKE", shift = Shift.AFTER, target = "Lnet/minecraft/util/profiler/Profiler;swap(Ljava/lang/String;)V", ordinal = 1))
 	private void tickChunkTickBlocks(WorldChunk chunk, int randomTickSpeed, CallbackInfo info)
 	{
 		final ServerWorld self = (ServerWorld) (Object) this;
@@ -64,6 +64,7 @@ public class ServerWorldMixin
 			}
 		}
 		
+		profiler.pop();
 		info.cancel();
 	}
 }

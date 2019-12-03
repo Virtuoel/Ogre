@@ -24,6 +24,7 @@ import net.minecraft.item.BucketItem;
 import net.minecraft.item.ItemStack;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.stat.Stats;
+import net.minecraft.state.property.Properties;
 import net.minecraft.util.Hand;
 import net.minecraft.util.TypedActionResult;
 import net.minecraft.util.hit.BlockHitResult;
@@ -53,8 +54,12 @@ public abstract class BucketItemMixin
 	private void onUse(World world, PlayerEntity playerEntity, Hand hand, CallbackInfoReturnable<TypedActionResult<ItemStack>> info, ItemStack itemStack, BlockHitResult blockHitResult, BlockPos blockPos, BlockPos offsetPos)
 	{
 		final Vec3d hitPos = blockHitResult.getPos();
-		final boolean insideCube = 0.0D < hitPos.x && hitPos.x < 1.0D && 0.0D < hitPos.y && hitPos.y < 1.0D && 0.0D < hitPos.z && hitPos.z < 1.0D;
-		final BlockPos placedPos = !insideCube ? blockPos : offsetPos;
+		final BlockPos hitBlockPos = blockHitResult.getBlockPos();
+		final double x = hitPos.x - (double) hitBlockPos.getX();
+		final double y = hitPos.y - (double) hitBlockPos.getY();
+		final double z = hitPos.z - (double) hitBlockPos.getZ();
+		final boolean insideCube = 0.0D < x && x < 1.0D && 0.0D < y && y < 1.0D && 0.0D < z && z < 1.0D;
+		final BlockPos placedPos = insideCube ? blockPos : offsetPos;
 		if (placeFluid(playerEntity, world, placedPos, blockHitResult))
 		{
 			onEmptied(world, itemStack, placedPos);
@@ -96,6 +101,15 @@ public abstract class BucketItemMixin
 	{
 		final ModifiableWorldStateLayer w = ((ModifiableWorldStateLayer) world);
 		final FluidState fluidState = this.fluid instanceof BaseFluid ? ((BaseFluid) this.fluid).getStill(false) : this.fluid.getDefaultState();
+		if(fluid != Fluids.WATER)
+		{
+			final BlockState state = world.getBlockState(pos);
+			if(state.contains(Properties.WATERLOGGED) && state.get(Properties.WATERLOGGED))
+			{
+				world.setBlockState(pos, state.with(Properties.WATERLOGGED, false));
+			}
+		}
+		
 		w.setState(LayerRegistrar.FLUID, pos, fluidState, 11);
 	}
 }

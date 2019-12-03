@@ -1,8 +1,8 @@
 package virtuoel.towelette.api;
 
-import net.minecraft.state.PropertyContainer;
+import net.minecraft.state.State;
 
 public interface CachedStatePosition
 {
-	<O, S extends PropertyContainer<S>> S getState(LayerData<O, S> layer);
+	<O, S extends State<S>> S getState(LayerData<O, S> layer);
 }

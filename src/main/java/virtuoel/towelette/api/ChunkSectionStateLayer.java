@@ -2,22 +2,22 @@ package virtuoel.towelette.api;
 
 import java.util.Optional;
 
-import net.minecraft.state.PropertyContainer;
+import net.minecraft.state.State;
 import net.minecraft.util.Identifier;
 import net.minecraft.world.chunk.PalettedContainer;
 
 public interface ChunkSectionStateLayer
 {
-	default <O, S extends PropertyContainer<S>> S setState(LayerData<O, S> layer, int x, int y, int z, S state)
+	default <O, S extends State<S>> S setState(LayerData<O, S> layer, int x, int y, int z, S state)
 	{
 		return setState(layer, x, y, z, state, true);
 	}
 	
-	<O, S extends PropertyContainer<S>> S setState(LayerData<O, S> layer, int x, int y, int z, S state, boolean synchronous);
+	<O, S extends State<S>> S setState(LayerData<O, S> layer, int x, int y, int z, S state, boolean synchronous);
 	
-	<O, S extends PropertyContainer<S>> S getState(LayerData<O, S> layer, int x, int y, int z);
+	<O, S extends State<S>> S getState(LayerData<O, S> layer, int x, int y, int z);
 	
-	default <O, S extends PropertyContainer<S>> Optional<PalettedContainer<S>> getContainer(LayerData<O, S> layer)
+	default <O, S extends State<S>> Optional<PalettedContainer<S>> getContainer(LayerData<O, S> layer)
 	{
 		final Identifier defaultId = LayerRegistrar.LAYERS.getDefaultId();
 		final Identifier id;
@@ -42,5 +42,5 @@ public interface ChunkSectionStateLayer
 		return getContainer(id);
 	}
 	
-	<O, S extends PropertyContainer<S>> Optional<PalettedContainer<S>> getContainer(Identifier id);
+	<O, S extends State<S>> Optional<PalettedContainer<S>> getContainer(Identifier id);
 }

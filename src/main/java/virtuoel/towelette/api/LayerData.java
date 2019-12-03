@@ -7,23 +7,24 @@ import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
 
-import net.minecraft.block.BlockRenderLayer;
+import net.minecraft.client.render.RenderLayer;
 import net.minecraft.entity.Entity;
 import net.minecraft.nbt.CompoundTag;
-import net.minecraft.state.PropertyContainer;
-import net.minecraft.state.StateFactory;
+import net.minecraft.server.world.ServerWorld;
+import net.minecraft.state.State;
+import net.minecraft.state.StateManager;
 import net.minecraft.util.IdList;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.registry.Registry;
+import net.minecraft.world.BlockRenderView;
 import net.minecraft.world.BlockView;
-import net.minecraft.world.ExtendedBlockView;
 import net.minecraft.world.World;
 import net.minecraft.world.chunk.Chunk;
 import net.minecraft.world.chunk.Palette;
 import net.minecraft.world.chunk.PalettedContainer;
 
-public class LayerData<O, S extends PropertyContainer<S>>
+public class LayerData<O, S extends State<S>>
 {
 	private final Palette<S> palette;
 	private final IdList<S> ids;
@@ -47,15 +48,16 @@ public class LayerData<O, S extends PropertyContainer<S>>
 	private final Registry<O> entryRegistry;
 	private final Function<S, O> ownerFunction;
 	private final Function<O, S> defaultStateFunction;
-	private final Function<O, StateFactory<O, S>> managerFunction;
+	private final Function<O, StateManager<O, S>> managerFunction;
 	private final Supplier<S> emptyStateSupplier;
 	private final Supplier<Identifier> defaultIdSupplier;
-	
+
 	private final BiFunction<World, LayerData<O, S>, World> worldFunction;
+	private final BiFunction<ServerWorld, LayerData<O, S>, ServerWorld> serverWorldFunction;
 	
 	private final OcclusionGraphCallback<S> occlusionGraphCallback;
 	private final Predicate<S> renderPredicate;
-	private final Function<S, BlockRenderLayer> renderLayerFunction;
+	private final Function<S, RenderLayer> renderLayerFunction;
 	private final StateTesselationCallback<S> tesselationCallback;
 	
 	private LayerData(
@@ -81,15 +83,16 @@ public class LayerData<O, S extends PropertyContainer<S>>
 		final Registry<O> entryRegistry,
 		final Function<S, O> ownerFunction,
 		final Function<O, S> defaultStateFunction,
-		final Function<O, StateFactory<O, S>> managerFunction,
+		final Function<O, StateManager<O, S>> managerFunction,
 		final Supplier<S> emptyStateSupplier,
 		final Supplier<Identifier> defaultIdSupplier,
-		
+
 		final BiFunction<World, LayerData<O, S>, World> worldFunction,
+		final BiFunction<ServerWorld, LayerData<O, S>, ServerWorld> serverWorldFunction,
 		
 		final OcclusionGraphCallback<S> occlusionGraphCallback,
 		final Predicate<S> renderPredicate,
-		final Function<S, BlockRenderLayer> renderLayerFunction,
+		final Function<S, RenderLayer> renderLayerFunction,
 		final StateTesselationCallback<S> tesselationCallback
 	)
 	{
@@ -120,6 +123,7 @@ public class LayerData<O, S extends PropertyContainer<S>>
 		this.defaultIdSupplier = defaultIdSupplier;
 		
 		this.worldFunction = worldFunction;
+		this.serverWorldFunction = serverWorldFunction;
 		
 		this.occlusionGraphCallback = occlusionGraphCallback;
 		this.renderPredicate = renderPredicate;
@@ -187,9 +191,9 @@ public class LayerData<O, S extends PropertyContainer<S>>
 		return randomTickPredicate.test(state);
 	}
 	
-	public void onRandomTick(S state, World world, BlockPos pos, Random random)
+	public void onRandomTick(S state, ServerWorld world, BlockPos pos, Random random)
 	{
-		randomTickCallback.onRandomTick(state, worldFunction.apply(world, this), pos, random);
+		randomTickCallback.randomTick(state, serverWorldFunction.apply(world, this), pos, random);
 	}
 	
 	public void onEntityCollision(S state, World world, BlockPos pos, Entity entity)
@@ -222,12 +226,12 @@ public class LayerData<O, S extends PropertyContainer<S>>
 		return getEntryOrEmpty(id).map(this::getDefaultState).orElseGet(emptyStateSupplier);
 	}
 	
-	public StateFactory<O, S> getManager(final S state)
+	public StateManager<O, S> getManager(final S state)
 	{
 		return getManager(getOwner(state));
 	}
 	
-	public StateFactory<O, S> getManager(final O entry)
+	public StateManager<O, S> getManager(final O entry)
 	{
 		return managerFunction.apply(entry);
 	}
@@ -247,14 +251,14 @@ public class LayerData<O, S extends PropertyContainer<S>>
 		return renderPredicate.test(state);
 	}
 	
-	public BlockRenderLayer getRenderLayer(final S state)
+	public RenderLayer getRenderLayer(final S state)
 	{
 		return renderLayerFunction.apply(state);
 	}
 	
-	public boolean tesselate(Object blockRenderManager, S state, BlockPos pos, ExtendedBlockView world, Object bufferBuilder, Random random)
+	public boolean tesselate(Object blockRenderManager, S state, BlockPos pos, BlockRenderView world, Object matrixStack, Object vertexConsumer, boolean checkSides, Random random)
 	{
-		return tesselationCallback.tesselateState(blockRenderManager, state, pos, world, bufferBuilder, random);
+		return tesselationCallback.tesselateState(blockRenderManager, state, pos, world, matrixStack, vertexConsumer, checkSides, random);
 	}
 	
 	public S deserializeState(CompoundTag compound)
@@ -267,12 +271,12 @@ public class LayerData<O, S extends PropertyContainer<S>>
 		return LayerRegistrar.serializeState(state, getRegistry(), ownerFunction);
 	}
 	
-	public static <O, S extends PropertyContainer<S>> Builder<O, S>builder()
+	public static <O, S extends State<S>> Builder<O, S>builder()
 	{
 		return new Builder<>();
 	}
 	
-	public static class Builder<O, S extends PropertyContainer<S>>
+	public static class Builder<O, S extends State<S>>
 	{
 		private Palette<S> palette;
 		private IdList<S> ids;
@@ -296,15 +300,16 @@ public class LayerData<O, S extends PropertyContainer<S>>
 		private Registry<O> entryRegistry;
 		private Function<S, O> ownerFunction;
 		private Function<O, S> defaultStateFunction;
-		private Function<O, StateFactory<O, S>> managerFunction;
+		private Function<O, StateManager<O, S>> managerFunction;
 		private Supplier<S> emptyStateSupplier;
 		private Supplier<Identifier> defaultIdSupplier = () -> entryRegistry.getId(ownerFunction.apply(emptyStateSupplier.get()));
-		
+
 		private BiFunction<World, LayerData<O, S>, World> worldFunction = (w, l) -> w;
+		private BiFunction<ServerWorld, LayerData<O, S>, ServerWorld> serverWorldFunction = (w, l) -> w;
 		
 		private OcclusionGraphCallback<S> occlusionGraphCallback = (b, s, w, p) -> {};
 		private Optional<Predicate<S>> renderPredicate = Optional.empty();
-		private Function<S, BlockRenderLayer> renderLayerFunction;
+		private Function<S, RenderLayer> renderLayerFunction;
 		private StateTesselationCallback<S> tesselationCallback;
 		
 		private Builder()
@@ -408,7 +413,7 @@ public class LayerData<O, S extends PropertyContainer<S>>
 			return this;
 		}
 		
-		public Builder<O, S> managerFunction(Function<O, StateFactory<O, S>> managerFunction)
+		public Builder<O, S> managerFunction(Function<O, StateManager<O, S>> managerFunction)
 		{
 			this.managerFunction = managerFunction;
 			return this;
@@ -432,6 +437,12 @@ public class LayerData<O, S extends PropertyContainer<S>>
 			return this;
 		}
 		
+		public Builder<O, S> serverWorldFunction(BiFunction<ServerWorld, LayerData<O, S>, ServerWorld> serverWorldFunction)
+		{
+			this.serverWorldFunction = serverWorldFunction;
+			return this;
+		}
+		
 		public Builder<O, S> occlusionGraphCallback(OcclusionGraphCallback<S> occlusionGraphCallback)
 		{
 			this.occlusionGraphCallback = occlusionGraphCallback;
@@ -444,7 +455,7 @@ public class LayerData<O, S extends PropertyContainer<S>>
 			return this;
 		}
 		
-		public Builder<O, S> renderLayerFunction(Function<S, BlockRenderLayer> renderLayerFunction)
+		public Builder<O, S> renderLayerFunction(Function<S, RenderLayer> renderLayerFunction)
 		{
 			this.renderLayerFunction = renderLayerFunction;
 			return this;
@@ -486,6 +497,7 @@ public class LayerData<O, S extends PropertyContainer<S>>
 				defaultIdSupplier,
 				
 				worldFunction,
+				serverWorldFunction,
 				
 				occlusionGraphCallback,
 				renderPredicate.orElse(emptyPredicate),

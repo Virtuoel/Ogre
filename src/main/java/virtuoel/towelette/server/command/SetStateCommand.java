@@ -14,7 +14,7 @@ import net.minecraft.command.arguments.BlockPosArgumentType;
 import net.minecraft.server.command.CommandManager;
 import net.minecraft.server.command.ServerCommandSource;
 import net.minecraft.server.world.ServerWorld;
-import net.minecraft.state.PropertyContainer;
+import net.minecraft.state.State;
 import net.minecraft.text.TranslatableText;
 import net.minecraft.util.math.BlockPos;
 import virtuoel.towelette.api.LayerData;
@@ -53,12 +53,12 @@ public class SetStateCommand
 		);
 	}
 	
-	private static <O, S extends PropertyContainer<S>> int run(CommandContext<ServerCommandSource> context) throws CommandSyntaxException
+	private static <O, S extends State<S>> int run(CommandContext<ServerCommandSource> context) throws CommandSyntaxException
 	{
 		return run(context.getSource(), BlockPosArgumentType.getLoadedBlockPos(context, "pos"), StateArgumentType.<O, S>getArgument(context, "state"), null);
 	}
 	
-	private static <O, S extends PropertyContainer<S>> int runKeep(CommandContext<ServerCommandSource> context) throws CommandSyntaxException
+	private static <O, S extends State<S>> int runKeep(CommandContext<ServerCommandSource> context) throws CommandSyntaxException
 	{
 		final StateArgument<O, S> state = StateArgumentType.getArgument(context, "state");
 		final LayerData<O, S> layer = state.getLayer();
@@ -69,7 +69,7 @@ public class SetStateCommand
 		});
 	}
 	
-	private static <O, S extends PropertyContainer<S>> int run(ServerCommandSource source, BlockPos pos, StateArgument<O, S> stateArg, @Nullable Predicate<CachedBlockPosition> predicate) throws CommandSyntaxException
+	private static <O, S extends State<S>> int run(ServerCommandSource source, BlockPos pos, StateArgument<O, S> stateArg, @Nullable Predicate<CachedBlockPosition> predicate) throws CommandSyntaxException
 	{
 		final ServerWorld world = source.getWorld();
 		

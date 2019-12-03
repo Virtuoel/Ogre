@@ -44,6 +44,7 @@ import net.minecraft.util.math.Direction;
 import net.minecraft.util.math.Vec3d;
 import net.minecraft.util.profiler.Profiler;
 import net.minecraft.util.shape.VoxelShape;
+import net.minecraft.world.BlockView;
 import net.minecraft.world.Difficulty;
 import net.minecraft.world.GameRules;
 import net.minecraft.world.Heightmap.Type;
@@ -53,18 +54,21 @@ import net.minecraft.world.RayTraceContext;
 import net.minecraft.world.TickScheduler;
 import net.minecraft.world.World;
 import net.minecraft.world.biome.Biome;
+import net.minecraft.world.biome.source.BiomeAccess;
 import net.minecraft.world.border.WorldBorder;
 import net.minecraft.world.chunk.Chunk;
 import net.minecraft.world.chunk.ChunkManager;
 import net.minecraft.world.chunk.ChunkStatus;
 import net.minecraft.world.chunk.WorldChunk;
+import net.minecraft.world.chunk.light.LightingProvider;
 import net.minecraft.world.dimension.Dimension;
 import net.minecraft.world.explosion.Explosion;
 import net.minecraft.world.explosion.Explosion.DestructionType;
+import net.minecraft.world.level.ColorResolver;
 import net.minecraft.world.level.LevelGeneratorType;
 import net.minecraft.world.level.LevelProperties;
 
-public class WrappedWorld extends World
+public abstract class WrappedWorld extends World
 {
 	protected final World delegate;
 	
@@ -75,27 +79,39 @@ public class WrappedWorld extends World
 	}
 	
 	@Override
-	public boolean isSkyVisible(BlockPos blockPos_1)
+	public boolean breakBlock(BlockPos blockPos, boolean bl)
 	{
-		return delegate.isSkyVisible(blockPos_1);
+		return delegate.breakBlock(blockPos, bl);
 	}
 	
 	@Override
-	public boolean spawnEntity(Entity entity_1)
+	public int getLightLevel(LightType lightType, BlockPos blockPos)
 	{
-		return delegate.spawnEntity(entity_1);
+		return delegate.getLightLevel(lightType, blockPos);
 	}
 	
 	@Override
-	public int getLightmapIndex(BlockPos blockPos_1, int int_1)
+	public boolean spawnEntity(Entity entity)
 	{
-		return delegate.getLightmapIndex(blockPos_1, int_1);
+		return delegate.spawnEntity(entity);
 	}
 	
 	@Override
-	public int getLuminance(BlockPos blockPos_1)
+	public int getBaseLightLevel(BlockPos blockPos, int i)
 	{
-		return delegate.getLuminance(blockPos_1);
+		return delegate.getBaseLightLevel(blockPos, i);
+	}
+	
+	@Override
+	public int getLuminance(BlockPos blockPos)
+	{
+		return delegate.getLuminance(blockPos);
+	}
+	
+	@Override
+	public boolean isSkyVisible(BlockPos blockPos)
+	{
+		return delegate.isSkyVisible(blockPos);
 	}
 	
 	@Override
@@ -117,27 +133,33 @@ public class WrappedWorld extends World
 	}
 	
 	@Override
-	public BlockHitResult rayTrace(RayTraceContext rayTraceContext_1)
+	public BlockHitResult rayTrace(RayTraceContext rayTraceContext)
 	{
-		return delegate.rayTrace(rayTraceContext_1);
+		return delegate.rayTrace(rayTraceContext);
 	}
 	
 	@Override
-	public float getSkyAngle(float float_1)
+	public Biome getBiome(BlockPos blockPos)
 	{
-		return delegate.getSkyAngle(float_1);
+		return delegate.getBiome(blockPos);
 	}
 	
 	@Override
-	public boolean isAir(BlockPos blockPos_1)
+	public float getSkyAngle(float f)
 	{
-		return delegate.isAir(blockPos_1);
+		return delegate.getSkyAngle(f);
 	}
 	
 	@Override
-	public List<? extends PlayerEntity> getPlayers()
+	public boolean canPlace(BlockState blockState, BlockPos blockPos, EntityContext entityContext)
 	{
-		return delegate.getPlayers();
+		return delegate.canPlace(blockState, blockPos, entityContext);
+	}
+	
+	@Override
+	public int getColor(BlockPos blockPos, ColorResolver colorResolver)
+	{
+		return delegate.getColor(blockPos, colorResolver);
 	}
 	
 	@Override
@@ -147,15 +169,15 @@ public class WrappedWorld extends World
 	}
 	
 	@Override
-	public List<Entity> getEntities(Entity entity_1, Box box_1)
+	public List<? extends PlayerEntity> getPlayers()
 	{
-		return delegate.getEntities(entity_1, box_1);
+		return delegate.getPlayers();
 	}
 	
 	@Override
-	public boolean method_8626(BlockPos blockPos_1)
+	public List<Entity> getEntities(Entity entity, Box box)
 	{
-		return delegate.method_8626(blockPos_1);
+		return delegate.getEntities(entity, box);
 	}
 	
 	@Override
@@ -165,9 +187,21 @@ public class WrappedWorld extends World
 	}
 	
 	@Override
+	public Biome getBiomeForNoiseGen(int i, int j, int k)
+	{
+		return delegate.getBiomeForNoiseGen(i, j, k);
+	}
+	
+	@Override
 	public TickScheduler<Fluid> getFluidTickScheduler()
 	{
 		return delegate.getFluidTickScheduler();
+	}
+	
+	@Override
+	public boolean intersectsEntities(Entity entity)
+	{
+		return delegate.intersectsEntities(entity);
 	}
 	
 	@Override
@@ -177,39 +211,93 @@ public class WrappedWorld extends World
 	}
 	
 	@Override
-	public boolean isChunkLoaded(int int_1, int int_2)
+	public boolean doesNotCollide(Box box)
 	{
-		return delegate.isChunkLoaded(int_1, int_2);
+		return delegate.doesNotCollide(box);
 	}
 	
 	@Override
-	public <T extends Entity> List<T> getEntities(Class<? extends T> class_1, Box box_1)
+	public Biome getGeneratorStoredBiome(int i, int j, int k)
 	{
-		return delegate.getEntities(class_1, box_1);
+		return delegate.getGeneratorStoredBiome(i, j, k);
 	}
 	
 	@Override
-	public <T extends Entity> List<T> method_21728(Class<? extends T> class_1, Box box_1)
+	public boolean isChunkLoaded(int i, int j)
 	{
-		return delegate.method_21728(class_1, box_1);
+		return delegate.isChunkLoaded(i, j);
 	}
 	
 	@Override
-	public void playLevelEvent(PlayerEntity var1, int var2, BlockPos var3, int var4)
+	public boolean doesNotCollide(Entity entity)
 	{
-		delegate.playLevelEvent(var1, var2, var3, var4);
+		return delegate.doesNotCollide(entity);
 	}
 	
 	@Override
-	public void playLevelEvent(int int_1, BlockPos blockPos_1, int int_2)
+	public boolean doesNotCollide(Entity entity, Box box)
 	{
-		delegate.playLevelEvent(int_1, blockPos_1, int_2);
+		return delegate.doesNotCollide(entity, box);
 	}
 	
 	@Override
-	public float getBrightness(BlockPos blockPos_1)
+	public <T extends Entity> List<T> getNonSpectatingEntities(Class<? extends T> var1, Box box)
 	{
-		return delegate.getBrightness(blockPos_1);
+		return delegate.getNonSpectatingEntities(var1, box);
+	}
+	
+	@Override
+	public boolean isAir(BlockPos blockPos)
+	{
+		return delegate.isAir(blockPos);
+	}
+	
+	@Override
+	public boolean doesNotCollide(Entity entity, Box box, Set<Entity> set)
+	{
+		return delegate.doesNotCollide(entity, box, set);
+	}
+	
+	@Override
+	public boolean isSkyVisibleAllowingSea(BlockPos blockPos)
+	{
+		return delegate.isSkyVisibleAllowingSea(blockPos);
+	}
+	
+	@Override
+	public <T extends Entity> List<T> getEntitiesIncludingUngeneratedChunks(Class<? extends T> var1, Box box)
+	{
+		return delegate.getEntitiesIncludingUngeneratedChunks(var1, box);
+	}
+	
+	@Override
+	public void playLevelEvent(PlayerEntity playerEntity, int i, BlockPos blockPos, int j)
+	{
+		delegate.playLevelEvent(playerEntity, i, blockPos, j);
+	}
+	
+	@Override
+	public void playLevelEvent(int i, BlockPos blockPos, int j)
+	{
+		delegate.playLevelEvent(i, blockPos, j);
+	}
+	
+	@Override
+	public Stream<VoxelShape> getCollisions(Entity entity, Box box, Set<Entity> set)
+	{
+		return delegate.getCollisions(entity, box, set);
+	}
+	
+	@Override
+	public BlockHitResult rayTraceBlock(Vec3d vec3d, Vec3d vec3d2, BlockPos blockPos, VoxelShape voxelShape, BlockState blockState)
+	{
+		return delegate.rayTraceBlock(vec3d, vec3d2, blockPos, voxelShape, blockState);
+	}
+	
+	@Override
+	public Stream<VoxelShape> getEntityCollisions(Entity entity, Box box, Set<Entity> set)
+	{
+		return delegate.getEntityCollisions(entity, box, set);
 	}
 	
 	@Override
@@ -219,129 +307,87 @@ public class WrappedWorld extends World
 	}
 	
 	@Override
-	public Stream<VoxelShape> method_20743(Entity entity_1, Box box_1, Set<Entity> set_1)
+	public Stream<VoxelShape> getBlockCollisions(Entity entity, Box box)
 	{
-		return delegate.method_20743(entity_1, box_1, set_1);
+		return delegate.getBlockCollisions(entity, box);
 	}
 	
 	@Override
-	public BlockHitResult rayTraceBlock(Vec3d vec3d_1, Vec3d vec3d_2, BlockPos blockPos_1, VoxelShape voxelShape_1, BlockState blockState_1)
+	public boolean intersectsEntities(Entity entity, VoxelShape voxelShape)
 	{
-		return delegate.rayTraceBlock(vec3d_1, vec3d_2, blockPos_1, voxelShape_1, blockState_1);
+		return delegate.intersectsEntities(entity, voxelShape);
 	}
 	
 	@Override
-	public int getEmittedStrongRedstonePower(BlockPos blockPos_1, Direction direction_1)
+	public BlockPos getTopPosition(Type type, BlockPos blockPos)
 	{
-		return delegate.getEmittedStrongRedstonePower(blockPos_1, direction_1);
+		return delegate.getTopPosition(type, blockPos);
 	}
 	
 	@Override
-	public boolean intersectsEntities(Entity entity_1, VoxelShape voxelShape_1)
+	public float getBrightness(BlockPos blockPos)
 	{
-		return delegate.intersectsEntities(entity_1, voxelShape_1);
+		return delegate.getBrightness(blockPos);
 	}
 	
 	@Override
-	public Chunk getChunk(BlockPos blockPos_1)
+	public int getStrongRedstonePower(BlockPos blockPos, Direction direction)
 	{
-		return delegate.getChunk(blockPos_1);
+		return delegate.getStrongRedstonePower(blockPos, direction);
 	}
 	
 	@Override
-	public Chunk getChunk(int int_1, int int_2)
+	public PlayerEntity getClosestPlayer(double d, double e, double f, double g, Predicate<Entity> predicate)
 	{
-		return delegate.getChunk(int_1, int_2);
+		return delegate.getClosestPlayer(d, e, f, g, predicate);
 	}
 	
 	@Override
-	public PlayerEntity getClosestPlayer(double double_1, double double_2, double double_3, double double_4, Predicate<Entity> predicate_1)
+	public Chunk getChunk(BlockPos blockPos)
 	{
-		return delegate.getClosestPlayer(double_1, double_2, double_3, double_4, predicate_1);
+		return delegate.getChunk(blockPos);
 	}
 	
 	@Override
-	public Chunk getChunk(int int_1, int int_2, ChunkStatus chunkStatus_1)
+	public Chunk getChunk(int i, int j, ChunkStatus chunkStatus)
 	{
-		return delegate.getChunk(int_1, int_2, chunkStatus_1);
+		return delegate.getChunk(i, j, chunkStatus);
 	}
 	
 	@Override
-	public boolean canPlace(BlockState blockState_1, BlockPos blockPos_1, EntityContext entityContext_1)
+	public boolean isWater(BlockPos blockPos)
 	{
-		return delegate.canPlace(blockState_1, blockPos_1, entityContext_1);
+		return delegate.isWater(blockPos);
 	}
 	
 	@Override
-	public boolean intersectsEntities(Entity entity_1)
+	public boolean containsFluid(Box box)
 	{
-		return delegate.intersectsEntities(entity_1);
+		return delegate.containsFluid(box);
 	}
 	
 	@Override
-	public boolean doesNotCollide(Box box_1)
+	public PlayerEntity getClosestPlayer(Entity entity, double d)
 	{
-		return delegate.doesNotCollide(box_1);
+		return delegate.getClosestPlayer(entity, d);
 	}
 	
 	@Override
-	public boolean doesNotCollide(Entity entity_1)
+	public PlayerEntity getClosestPlayer(double d, double e, double f, double g, boolean bl)
 	{
-		return delegate.doesNotCollide(entity_1);
+		return delegate.getClosestPlayer(d, e, f, g, bl);
 	}
 	
 	@Override
-	public PlayerEntity getClosestPlayer(Entity entity_1, double double_1)
+	public PlayerEntity getClosestPlayer(double d, double e, double f)
 	{
-		return delegate.getClosestPlayer(entity_1, double_1);
-	}
-	
-	@Override
-	public boolean doesNotCollide(Entity entity_1, Box box_1)
-	{
-		return delegate.doesNotCollide(entity_1, box_1);
-	}
-	
-	@Override
-	public PlayerEntity getClosestPlayer(double double_1, double double_2, double double_3, double double_4, boolean boolean_1)
-	{
-		return delegate.getClosestPlayer(double_1, double_2, double_3, double_4, boolean_1);
-	}
-	
-	@Override
-	public boolean doesNotCollide(Entity entity_1, Box box_1, Set<Entity> set_1)
-	{
-		return delegate.doesNotCollide(entity_1, box_1, set_1);
+		return delegate.getClosestPlayer(d, e, f);
 	}
 	
 	@Override
 	public boolean equals(Object obj)
 	{
 		return delegate.equals(obj);
-	}
-	
-	@Override
-	public Biome getBiome(BlockPos blockPos_1)
-	{
-		return delegate.getBiome(blockPos_1);
-	}
-	
-	@Override
-	public PlayerEntity getClosestPlayer(double double_1, double double_2, double double_3)
-	{
-		return delegate.getClosestPlayer(double_1, double_2, double_3);
-	}
-	
-	@Override
-	public Stream<VoxelShape> getCollisionShapes(Entity entity_1, Box box_1, Set<Entity> set_1)
-	{
-		return delegate.getCollisionShapes(entity_1, box_1, set_1);
-	}
-	
-	@Override
-	public Stream<VoxelShape> method_20812(Entity entity_1, Box box_1)
-	{
-		return delegate.method_20812(entity_1, box_1);
 	}
 	
 	@Override
@@ -364,129 +410,165 @@ public class WrappedWorld extends World
 	}
 	
 	@Override
-	public BlockState getTopNonAirState(BlockPos blockPos_1)
+	public BlockState getTopNonAirState(BlockPos blockPos)
 	{
-		return delegate.getTopNonAirState(blockPos_1);
+		return delegate.getTopNonAirState(blockPos);
 	}
 	
 	@Override
-	public boolean isPlayerInRange(double double_1, double double_2, double double_3, double double_4)
+	public int getLightLevel(BlockPos blockPos)
 	{
-		return delegate.isPlayerInRange(double_1, double_2, double_3, double_4);
+		return delegate.getLightLevel(blockPos);
 	}
 	
 	@Override
-	public WorldChunk getWorldChunk(BlockPos blockPos_1)
+	public int getLightLevel(BlockPos blockPos, int i)
 	{
-		return delegate.getWorldChunk(blockPos_1);
+		return delegate.getLightLevel(blockPos, i);
 	}
 	
 	@Override
-	public WorldChunk method_8497(int int_1, int int_2)
+	public boolean isPlayerInRange(double d, double e, double f, double g)
 	{
-		return delegate.method_8497(int_1, int_2);
+		return delegate.isPlayerInRange(d, e, f, g);
 	}
 	
 	@Override
-	public Chunk getChunk(int int_1, int int_2, ChunkStatus chunkStatus_1, boolean boolean_1)
+	public boolean isChunkLoaded(BlockPos blockPos)
 	{
-		return delegate.getChunk(int_1, int_2, chunkStatus_1, boolean_1);
+		return delegate.isChunkLoaded(blockPos);
 	}
 	
 	@Override
-	public PlayerEntity getClosestPlayer(TargetPredicate targetPredicate_1, LivingEntity livingEntity_1)
+	public WorldChunk getWorldChunk(BlockPos blockPos)
 	{
-		return delegate.getClosestPlayer(targetPredicate_1, livingEntity_1);
+		return delegate.getWorldChunk(blockPos);
 	}
 	
 	@Override
-	public PlayerEntity getClosestPlayer(TargetPredicate targetPredicate_1, LivingEntity livingEntity_1, double double_1, double double_2, double double_3)
+	public boolean isRegionLoaded(BlockPos blockPos, BlockPos blockPos2)
 	{
-		return delegate.getClosestPlayer(targetPredicate_1, livingEntity_1, double_1, double_2, double_3);
+		return delegate.isRegionLoaded(blockPos, blockPos2);
 	}
 	
 	@Override
-	public boolean setBlockState(BlockPos blockPos_1, BlockState blockState_1, int int_1)
+	public Chunk getChunk(int i, int j, ChunkStatus chunkStatus, boolean bl)
 	{
-		return delegate.setBlockState(blockPos_1, blockState_1, int_1);
+		return delegate.getChunk(i, j, chunkStatus, bl);
 	}
 	
 	@Override
-	public PlayerEntity getClosestPlayer(TargetPredicate targetPredicate_1, double double_1, double double_2, double double_3)
+	public boolean isRegionLoaded(int i, int j, int k, int l, int m, int n)
 	{
-		return delegate.getClosestPlayer(targetPredicate_1, double_1, double_2, double_3);
+		return delegate.isRegionLoaded(i, j, k, l, m, n);
 	}
 	
 	@Override
-	public <T extends LivingEntity> T method_21726(Class<? extends T> class_1, TargetPredicate targetPredicate_1, LivingEntity livingEntity_1, double double_1, double double_2, double double_3, Box box_1)
+	public PlayerEntity getClosestPlayer(TargetPredicate targetPredicate, LivingEntity livingEntity)
 	{
-		return delegate.method_21726(class_1, targetPredicate_1, livingEntity_1, double_1, double_2, double_3, box_1);
+		return delegate.getClosestPlayer(targetPredicate, livingEntity);
 	}
 	
 	@Override
-	public <T extends LivingEntity> T method_21727(Class<? extends T> class_1, TargetPredicate targetPredicate_1, LivingEntity livingEntity_1, double double_1, double double_2, double double_3, Box box_1)
+	public boolean setBlockState(BlockPos blockPos, BlockState blockState, int i)
 	{
-		return delegate.method_21727(class_1, targetPredicate_1, livingEntity_1, double_1, double_2, double_3, box_1);
+		return delegate.setBlockState(blockPos, blockState, i);
 	}
 	
 	@Override
-	public <T extends LivingEntity> T getClosestEntity(List<? extends T> list_1, TargetPredicate targetPredicate_1, LivingEntity livingEntity_1, double double_1, double double_2, double double_3)
+	public PlayerEntity getClosestPlayer(TargetPredicate targetPredicate, LivingEntity livingEntity, double d, double e, double f)
 	{
-		return delegate.getClosestEntity(list_1, targetPredicate_1, livingEntity_1, double_1, double_2, double_3);
+		return delegate.getClosestPlayer(targetPredicate, livingEntity, d, e, f);
 	}
 	
 	@Override
-	public boolean isWaterAt(BlockPos blockPos_1)
+	public PlayerEntity getClosestPlayer(TargetPredicate targetPredicate, double d, double e, double f)
 	{
-		return delegate.isWaterAt(blockPos_1);
+		return delegate.getClosestPlayer(targetPredicate, d, e, f);
 	}
 	
 	@Override
-	public boolean intersectsFluid(Box box_1)
+	public <T extends LivingEntity> T getClosestEntity(Class<? extends T> var1, TargetPredicate targetPredicate, LivingEntity livingEntity, double d, double e, double f, Box box)
 	{
-		return delegate.intersectsFluid(box_1);
+		return delegate.getClosestEntity(var1, targetPredicate, livingEntity, d, e, f, box);
 	}
 	
 	@Override
-	public List<PlayerEntity> getPlayersInBox(TargetPredicate targetPredicate_1, LivingEntity livingEntity_1, Box box_1)
+	public <T extends LivingEntity> T getClosestEntityIncludingUngeneratedChunks(Class<? extends T> var1, TargetPredicate targetPredicate, LivingEntity livingEntity, double d, double e, double f, Box box)
 	{
-		return delegate.getPlayersInBox(targetPredicate_1, livingEntity_1, box_1);
+		return delegate.getClosestEntityIncludingUngeneratedChunks(var1, targetPredicate, livingEntity, d, e, f, box);
 	}
 	
 	@Override
-	public void onBlockChanged(BlockPos blockPos_1, BlockState blockState_1, BlockState blockState_2)
+	public <T extends LivingEntity> T getClosestEntity(List<? extends T> list, TargetPredicate targetPredicate, LivingEntity livingEntity, double d, double e, double f)
 	{
-		delegate.onBlockChanged(blockPos_1, blockState_1, blockState_2);
+		return delegate.getClosestEntity(list, targetPredicate, livingEntity, d, e, f);
 	}
 	
 	@Override
-	public boolean clearBlockState(BlockPos blockPos_1, boolean boolean_1)
+	public List<PlayerEntity> getPlayers(TargetPredicate targetPredicate, LivingEntity livingEntity, Box box)
 	{
-		return delegate.clearBlockState(blockPos_1, boolean_1);
+		return delegate.getPlayers(targetPredicate, livingEntity, box);
 	}
 	
 	@Override
-	public <T extends LivingEntity> List<T> getTargets(Class<? extends T> class_1, TargetPredicate targetPredicate_1, LivingEntity livingEntity_1, Box box_1)
+	public void onBlockChanged(BlockPos blockPos, BlockState blockState, BlockState blockState2)
 	{
-		return delegate.getTargets(class_1, targetPredicate_1, livingEntity_1, box_1);
+		delegate.onBlockChanged(blockPos, blockState, blockState2);
 	}
 	
 	@Override
-	public boolean breakBlock(BlockPos blockPos_1, boolean boolean_1)
+	public boolean removeBlock(BlockPos blockPos, boolean bl)
 	{
-		return delegate.breakBlock(blockPos_1, boolean_1);
+		return delegate.removeBlock(blockPos, bl);
 	}
 	
 	@Override
-	public int getLightLevel(BlockPos blockPos_1)
+	public <T extends LivingEntity> List<T> getTargets(Class<? extends T> var1, TargetPredicate targetPredicate, LivingEntity livingEntity, Box box)
 	{
-		return delegate.getLightLevel(blockPos_1);
+		return delegate.getTargets(var1, targetPredicate, livingEntity, box);
 	}
 	
 	@Override
-	public PlayerEntity getPlayerByUuid(UUID uUID_1)
+	public boolean breakBlock(BlockPos blockPos, boolean bl, Entity entity)
 	{
-		return delegate.getPlayerByUuid(uUID_1);
+		return delegate.breakBlock(blockPos, bl, entity);
+	}
+	
+	@Override
+	public PlayerEntity getPlayerByUuid(UUID uUID)
+	{
+		return delegate.getPlayerByUuid(uUID);
+	}
+	
+	@Override
+	public boolean setBlockState(BlockPos blockPos, BlockState blockState)
+	{
+		return delegate.setBlockState(blockPos, blockState);
+	}
+	
+	@Override
+	public void updateListeners(BlockPos blockPos, BlockState blockState, BlockState blockState2, int i)
+	{
+		delegate.updateListeners(blockPos, blockState, blockState2, i);
+	}
+	
+	@Override
+	public void updateNeighbors(BlockPos blockPos, Block block)
+	{
+		delegate.updateNeighbors(blockPos, block);
+	}
+	
+	@Override
+	public void checkBlockRerender(BlockPos blockPos, BlockState blockState, BlockState blockState2)
+	{
+		delegate.checkBlockRerender(blockPos, blockState, blockState2);
+	}
+	
+	@Override
+	public void updateNeighborsAlways(BlockPos blockPos, Block block)
+	{
+		delegate.updateNeighborsAlways(blockPos, block);
 	}
 	
 	@Override
@@ -496,207 +578,118 @@ public class WrappedWorld extends World
 	}
 	
 	@Override
-	public int method_8603(BlockPos blockPos_1, int int_1)
+	public void updateNeighborsExcept(BlockPos blockPos, Block block, Direction direction)
 	{
-		return delegate.method_8603(blockPos_1, int_1);
+		delegate.updateNeighborsExcept(blockPos, block, direction);
 	}
 	
 	@Override
-	public boolean setBlockState(BlockPos blockPos_1, BlockState blockState_1)
+	public void updateNeighbor(BlockPos blockPos, Block block, BlockPos blockPos2)
 	{
-		return delegate.setBlockState(blockPos_1, blockState_1);
+		delegate.updateNeighbor(blockPos, block, blockPos2);
 	}
 	
 	@Override
-	public void updateListeners(BlockPos var1, BlockState var2, BlockState var3, int var4)
+	public int getTopY(Type type, int i, int j)
 	{
-		delegate.updateListeners(var1, var2, var3, var4);
+		return delegate.getTopY(type, i, j);
 	}
 	
 	@Override
-	public boolean isBlockLoaded(BlockPos blockPos_1)
+	public LightingProvider getLightingProvider()
 	{
-		return delegate.isBlockLoaded(blockPos_1);
+		return delegate.getLightingProvider();
 	}
 	
 	@Override
-	public void updateNeighbors(BlockPos blockPos_1, Block block_1)
+	public BlockState getBlockState(BlockPos blockPos)
 	{
-		delegate.updateNeighbors(blockPos_1, block_1);
+		return delegate.getBlockState(blockPos);
 	}
 	
 	@Override
-	public boolean isAreaLoaded(BlockPos blockPos_1, BlockPos blockPos_2)
+	public FluidState getFluidState(BlockPos blockPos)
 	{
-		return delegate.isAreaLoaded(blockPos_1, blockPos_2);
+		return delegate.getFluidState(blockPos);
 	}
 	
 	@Override
-	public void scheduleBlockRender(BlockPos blockPos_1, BlockState blockState_1, BlockState blockState_2)
+	public boolean isDay()
 	{
-		delegate.scheduleBlockRender(blockPos_1, blockState_1, blockState_2);
+		return delegate.isDay();
 	}
 	
 	@Override
-	public void updateNeighborsAlways(BlockPos blockPos_1, Block block_1)
+	public boolean isNight()
 	{
-		delegate.updateNeighborsAlways(blockPos_1, block_1);
+		return delegate.isNight();
 	}
 	
 	@Override
-	public boolean isAreaLoaded(int int_1, int int_2, int int_3, int int_4, int int_5, int int_6)
+	public void playSound(PlayerEntity playerEntity, BlockPos blockPos, SoundEvent soundEvent, SoundCategory soundCategory, float f, float g)
 	{
-		return delegate.isAreaLoaded(int_1, int_2, int_3, int_4, int_5, int_6);
+		delegate.playSound(playerEntity, blockPos, soundEvent, soundCategory, f, g);
 	}
 	
 	@Override
-	public void updateNeighborsExcept(BlockPos blockPos_1, Block block_1, Direction direction_1)
+	public void playSound(PlayerEntity playerEntity, double d, double e, double f, SoundEvent soundEvent, SoundCategory soundCategory, float g, float h)
 	{
-		delegate.updateNeighborsExcept(blockPos_1, block_1, direction_1);
+		delegate.playSound(playerEntity, d, e, f, soundEvent, soundCategory, g, h);
 	}
 	
 	@Override
-	public void updateNeighbor(BlockPos blockPos_1, Block block_1, BlockPos blockPos_2)
+	public void playSoundFromEntity(PlayerEntity playerEntity, Entity entity, SoundEvent soundEvent, SoundCategory soundCategory, float f, float g)
 	{
-		delegate.updateNeighbor(blockPos_1, block_1, blockPos_2);
+		delegate.playSoundFromEntity(playerEntity, entity, soundEvent, soundCategory, f, g);
 	}
 	
 	@Override
-	public int getLightLevel(BlockPos blockPos_1, int int_1)
+	public void playSound(double d, double e, double f, SoundEvent soundEvent, SoundCategory soundCategory, float g, float h, boolean bl)
 	{
-		return delegate.getLightLevel(blockPos_1, int_1);
+		delegate.playSound(d, e, f, soundEvent, soundCategory, g, h, bl);
 	}
 	
 	@Override
-	public int getTop(Type heightmap$Type_1, int int_1, int int_2)
+	public void addParticle(ParticleEffect particleEffect, double d, double e, double f, double g, double h, double i)
 	{
-		return delegate.getTop(heightmap$Type_1, int_1, int_2);
-	}
-	
-	@Override
-	public int getLightLevel(LightType lightType_1, BlockPos blockPos_1)
-	{
-		return delegate.getLightLevel(lightType_1, blockPos_1);
-	}
-	
-	@Override
-	public BlockState getBlockState(BlockPos blockPos_1)
-	{
-		return delegate.getBlockState(blockPos_1);
-	}
-	
-	@Override
-	public FluidState getFluidState(BlockPos blockPos_1)
-	{
-		return delegate.getFluidState(blockPos_1);
-	}
-	
-	@Override
-	public boolean isDaylight()
-	{
-		return delegate.isDaylight();
-	}
-	
-	@Override
-	public void playSound(PlayerEntity playerEntity_1, BlockPos blockPos_1, SoundEvent soundEvent_1, SoundCategory soundCategory_1, float float_1, float float_2)
-	{
-		delegate.playSound(playerEntity_1, blockPos_1, soundEvent_1, soundCategory_1, float_1, float_2);
-	}
-	
-	@Override
-	public void playSound(PlayerEntity var1, double var2, double var4, double var6, SoundEvent var8, SoundCategory var9, float var10, float var11)
-	{
-		delegate.playSound(var1, var2, var4, var6, var8, var9, var10, var11);
-	}
-	
-	@Override
-	public void playSoundFromEntity(PlayerEntity var1, Entity var2, SoundEvent var3, SoundCategory var4, float var5, float var6)
-	{
-		delegate.playSoundFromEntity(var1, var2, var3, var4, var5, var6);
-	}
-	
-	@Override
-	public void playSound(double double_1, double double_2, double double_3, SoundEvent soundEvent_1, SoundCategory soundCategory_1, float float_1, float float_2, boolean boolean_1)
-	{
-		delegate.playSound(double_1, double_2, double_3, soundEvent_1, soundCategory_1, float_1, float_2, boolean_1);
+		delegate.addParticle(particleEffect, d, e, f, g, h, i);
 	}
 	
 	@Environment(EnvType.CLIENT)
 	@Override
-	public void addParticle(ParticleEffect particleEffect_1, double double_1, double double_2, double double_3, double double_4, double double_5, double double_6)
+	public void addParticle(ParticleEffect particleEffect, boolean bl, double d, double e, double f, double g, double h, double i)
 	{
-		delegate.addParticle(particleEffect_1, double_1, double_2, double_3, double_4, double_5, double_6);
+		delegate.addParticle(particleEffect, bl, d, e, f, g, h, i);
 	}
 	
 	@Override
-	public void addParticle(ParticleEffect particleEffect_1, boolean boolean_1, double double_1, double double_2, double double_3, double double_4, double double_5, double double_6)
+	public void addImportantParticle(ParticleEffect particleEffect, double d, double e, double f, double g, double h, double i)
 	{
-		delegate.addParticle(particleEffect_1, boolean_1, double_1, double_2, double_3, double_4, double_5, double_6);
+		delegate.addImportantParticle(particleEffect, d, e, f, g, h, i);
 	}
 	
 	@Override
-	public void addImportantParticle(ParticleEffect particleEffect_1, double double_1, double double_2, double double_3, double double_4, double double_5, double double_6)
+	public void addImportantParticle(ParticleEffect particleEffect, boolean bl, double d, double e, double f, double g, double h, double i)
 	{
-		delegate.addImportantParticle(particleEffect_1, double_1, double_2, double_3, double_4, double_5, double_6);
+		delegate.addImportantParticle(particleEffect, bl, d, e, f, g, h, i);
 	}
 	
 	@Override
-	public void addImportantParticle(ParticleEffect particleEffect_1, boolean boolean_1, double double_1, double double_2, double double_3, double double_4, double double_5, double double_6)
+	public float getSkyAngleRadians(float f)
 	{
-		delegate.addImportantParticle(particleEffect_1, boolean_1, double_1, double_2, double_3, double_4, double_5, double_6);
-	}
-	
-	@Environment(EnvType.CLIENT)
-	@Override
-	public float getAmbientLight(float float_1)
-	{
-		return delegate.getAmbientLight(float_1);
-	}
-	
-	@Environment(EnvType.CLIENT)
-	@Override
-	public Vec3d getSkyColor(BlockPos blockPos_1, float float_1)
-	{
-		return delegate.getSkyColor(blockPos_1, float_1);
+		return delegate.getSkyAngleRadians(f);
 	}
 	
 	@Override
-	public float getSkyAngleRadians(float float_1)
+	public boolean addBlockEntity(BlockEntity blockEntity)
 	{
-		return delegate.getSkyAngleRadians(float_1);
-	}
-	
-	@Environment(EnvType.CLIENT)
-	@Override
-	public Vec3d getCloudColor(float float_1)
-	{
-		return delegate.getCloudColor(float_1);
-	}
-	
-	@Environment(EnvType.CLIENT)
-	@Override
-	public Vec3d getFogColor(float float_1)
-	{
-		return delegate.getFogColor(float_1);
-	}
-	
-	@Environment(EnvType.CLIENT)
-	@Override
-	public float getStarsBrightness(float float_1)
-	{
-		return delegate.getStarsBrightness(float_1);
+		return delegate.addBlockEntity(blockEntity);
 	}
 	
 	@Override
-	public boolean addBlockEntity(BlockEntity blockEntity_1)
+	public void addBlockEntities(Collection<BlockEntity> collection)
 	{
-		return delegate.addBlockEntity(blockEntity_1);
-	}
-	
-	@Override
-	public void addBlockEntities(Collection<BlockEntity> collection_1)
-	{
-		delegate.addBlockEntities(collection_1);
+		delegate.addBlockEntities(collection);
 	}
 	
 	@Override
@@ -706,95 +699,95 @@ public class WrappedWorld extends World
 	}
 	
 	@Override
-	public void tickEntity(Consumer<Entity> consumer_1, Entity entity_1)
+	public void tickEntity(Consumer<Entity> consumer, Entity entity)
 	{
-		delegate.tickEntity(consumer_1, entity_1);
+		delegate.tickEntity(consumer, entity);
 	}
 	
 	@Override
-	public boolean isAreaNotEmpty(Box box_1)
+	public boolean isAreaNotEmpty(Box box)
 	{
-		return delegate.isAreaNotEmpty(box_1);
+		return delegate.isAreaNotEmpty(box);
 	}
 	
 	@Override
-	public boolean doesAreaContainFireSource(Box box_1)
+	public boolean doesAreaContainFireSource(Box box)
 	{
-		return delegate.doesAreaContainFireSource(box_1);
-	}
-	
-	@Environment(EnvType.CLIENT)
-	@Override
-	public BlockState getBlockState(Box box_1, Block block_1)
-	{
-		return delegate.getBlockState(box_1, block_1);
-	}
-	
-	@Override
-	public boolean containsBlockWithMaterial(Box box_1, Material material_1)
-	{
-		return delegate.containsBlockWithMaterial(box_1, material_1);
-	}
-	
-	@Override
-	public Explosion createExplosion(Entity entity_1, double double_1, double double_2, double double_3, float float_1, DestructionType explosion$DestructionType_1)
-	{
-		return delegate.createExplosion(entity_1, double_1, double_2, double_3, float_1, explosion$DestructionType_1);
-	}
-	
-	@Override
-	public Explosion createExplosion(Entity entity_1, double double_1, double double_2, double double_3, float float_1, boolean boolean_1, DestructionType explosion$DestructionType_1)
-	{
-		return delegate.createExplosion(entity_1, double_1, double_2, double_3, float_1, boolean_1, explosion$DestructionType_1);
-	}
-	
-	@Override
-	public Explosion createExplosion(Entity entity_1, DamageSource damageSource_1, double double_1, double double_2, double double_3, float float_1, boolean boolean_1, DestructionType explosion$DestructionType_1)
-	{
-		return delegate.createExplosion(entity_1, damageSource_1, double_1, double_2, double_3, float_1, boolean_1, explosion$DestructionType_1);
-	}
-	
-	@Override
-	public boolean method_8506(PlayerEntity playerEntity_1, BlockPos blockPos_1, Direction direction_1)
-	{
-		return delegate.method_8506(playerEntity_1, blockPos_1, direction_1);
+		return delegate.doesAreaContainFireSource(box);
 	}
 	
 	@Environment(EnvType.CLIENT)
 	@Override
-	public String getChunkProviderStatus()
+	public BlockState getBlockState(Box box, Block block)
 	{
-		return delegate.getChunkProviderStatus();
+		return delegate.getBlockState(box, block);
 	}
 	
 	@Override
-	public BlockEntity getBlockEntity(BlockPos blockPos_1)
+	public boolean containsBlockWithMaterial(Box box, Material material)
 	{
-		return delegate.getBlockEntity(blockPos_1);
+		return delegate.containsBlockWithMaterial(box, material);
 	}
 	
 	@Override
-	public void setBlockEntity(BlockPos blockPos_1, BlockEntity blockEntity_1)
+	public Explosion createExplosion(Entity entity, double d, double e, double f, float g, DestructionType destructionType)
 	{
-		delegate.setBlockEntity(blockPos_1, blockEntity_1);
+		return delegate.createExplosion(entity, d, e, f, g, destructionType);
 	}
 	
 	@Override
-	public void removeBlockEntity(BlockPos blockPos_1)
+	public Explosion createExplosion(Entity entity, double d, double e, double f, float g, boolean bl, DestructionType destructionType)
 	{
-		delegate.removeBlockEntity(blockPos_1);
+		return delegate.createExplosion(entity, d, e, f, g, bl, destructionType);
 	}
 	
 	@Override
-	public boolean isHeightValidAndBlockLoaded(BlockPos blockPos_1)
+	public Explosion createExplosion(Entity entity, DamageSource damageSource, double d, double e, double f, float g, boolean bl, DestructionType destructionType)
 	{
-		return delegate.isHeightValidAndBlockLoaded(blockPos_1);
+		return delegate.createExplosion(entity, damageSource, d, e, f, g, bl, destructionType);
 	}
 	
 	@Override
-	public boolean doesBlockHaveSolidTopSurface(BlockPos blockPos_1, Entity entity_1)
+	public boolean extinguishFire(PlayerEntity playerEntity, BlockPos blockPos, Direction direction)
 	{
-		return delegate.doesBlockHaveSolidTopSurface(blockPos_1, entity_1);
+		return delegate.extinguishFire(playerEntity, blockPos, direction);
+	}
+	
+	@Environment(EnvType.CLIENT)
+	@Override
+	public String getDebugString()
+	{
+		return delegate.getDebugString();
+	}
+	
+	@Override
+	public BlockEntity getBlockEntity(BlockPos blockPos)
+	{
+		return delegate.getBlockEntity(blockPos);
+	}
+	
+	@Override
+	public void setBlockEntity(BlockPos blockPos, BlockEntity blockEntity)
+	{
+		delegate.setBlockEntity(blockPos, blockEntity);
+	}
+	
+	@Override
+	public void removeBlockEntity(BlockPos blockPos)
+	{
+		delegate.removeBlockEntity(blockPos);
+	}
+	
+	@Override
+	public boolean canSetBlock(BlockPos blockPos)
+	{
+		return delegate.canSetBlock(blockPos);
+	}
+	
+	@Override
+	public boolean isTopSolid(BlockPos blockPos, Entity entity)
+	{
+		return delegate.isTopSolid(blockPos, entity);
 	}
 	
 	@Override
@@ -804,9 +797,9 @@ public class WrappedWorld extends World
 	}
 	
 	@Override
-	public void setMobSpawnOptions(boolean boolean_1, boolean boolean_2)
+	public void setMobSpawnOptions(boolean bl, boolean bl2)
 	{
-		delegate.setMobSpawnOptions(boolean_1, boolean_2);
+		delegate.setMobSpawnOptions(bl, bl2);
 	}
 	
 	@Override
@@ -816,45 +809,45 @@ public class WrappedWorld extends World
 	}
 	
 	@Override
-	public ChunkStatus getLeastChunkStatusForCollisionCalculation()
+	public BlockView getExistingChunk(int i, int j)
 	{
-		return delegate.getLeastChunkStatusForCollisionCalculation();
+		return delegate.getExistingChunk(i, j);
 	}
 	
 	@Override
-	public List<Entity> getEntities(Entity entity_1, Box box_1, Predicate<? super Entity> predicate_1)
+	public List<Entity> getEntities(Entity entity, Box box, Predicate<? super Entity> predicate)
 	{
-		return delegate.getEntities(entity_1, box_1, predicate_1);
+		return delegate.getEntities(entity, box, predicate);
 	}
 	
 	@Override
-	public List<Entity> getEntities(EntityType<?> entityType_1, Box box_1, Predicate<? super Entity> predicate_1)
+	public <T extends Entity> List<T> getEntities(EntityType<T> entityType, Box box, Predicate<? super T> predicate)
 	{
-		return delegate.getEntities(entityType_1, box_1, predicate_1);
+		return delegate.getEntities(entityType, box, predicate);
 	}
 	
 	@Override
-	public <T extends Entity> List<T> getEntities(Class<? extends T> class_1, Box box_1, Predicate<? super T> predicate_1)
+	public <T extends Entity> List<T> getEntities(Class<? extends T> var1, Box box, Predicate<? super T> predicate)
 	{
-		return delegate.getEntities(class_1, box_1, predicate_1);
+		return delegate.getEntities(var1, box, predicate);
 	}
 	
 	@Override
-	public <T extends Entity> List<T> method_21729(Class<? extends T> class_1, Box box_1, Predicate<? super T> predicate_1)
+	public <T extends Entity> List<T> getEntitiesIncludingUngeneratedChunks(Class<? extends T> var1, Box box, Predicate<? super T> predicate)
 	{
-		return delegate.method_21729(class_1, box_1, predicate_1);
+		return delegate.getEntitiesIncludingUngeneratedChunks(var1, box, predicate);
 	}
 	
 	@Override
-	public Entity getEntityById(int var1)
+	public Entity getEntityById(int i)
 	{
-		return delegate.getEntityById(var1);
+		return delegate.getEntityById(i);
 	}
 	
 	@Override
-	public void markDirty(BlockPos blockPos_1, BlockEntity blockEntity_1)
+	public void markDirty(BlockPos blockPos, BlockEntity blockEntity)
 	{
-		delegate.markDirty(blockPos_1, blockEntity_1);
+		delegate.markDirty(blockPos, blockEntity);
 	}
 	
 	@Override
@@ -876,33 +869,33 @@ public class WrappedWorld extends World
 	}
 	
 	@Override
-	public int getReceivedStrongRedstonePower(BlockPos blockPos_1)
+	public int getReceivedStrongRedstonePower(BlockPos blockPos)
 	{
-		return delegate.getReceivedStrongRedstonePower(blockPos_1);
+		return delegate.getReceivedStrongRedstonePower(blockPos);
 	}
 	
 	@Override
-	public boolean isEmittingRedstonePower(BlockPos blockPos_1, Direction direction_1)
+	public boolean isEmittingRedstonePower(BlockPos blockPos, Direction direction)
 	{
-		return delegate.isEmittingRedstonePower(blockPos_1, direction_1);
+		return delegate.isEmittingRedstonePower(blockPos, direction);
 	}
 	
 	@Override
-	public int getEmittedRedstonePower(BlockPos blockPos_1, Direction direction_1)
+	public int getEmittedRedstonePower(BlockPos blockPos, Direction direction)
 	{
-		return delegate.getEmittedRedstonePower(blockPos_1, direction_1);
+		return delegate.getEmittedRedstonePower(blockPos, direction);
 	}
 	
 	@Override
-	public boolean isReceivingRedstonePower(BlockPos blockPos_1)
+	public boolean isReceivingRedstonePower(BlockPos blockPos)
 	{
-		return delegate.isReceivingRedstonePower(blockPos_1);
+		return delegate.isReceivingRedstonePower(blockPos);
 	}
 	
 	@Override
-	public int getReceivedRedstonePower(BlockPos blockPos_1)
+	public int getReceivedRedstonePower(BlockPos blockPos)
 	{
-		return delegate.getReceivedRedstonePower(blockPos_1);
+		return delegate.getReceivedRedstonePower(blockPos);
 	}
 	
 	@Environment(EnvType.CLIENT)
@@ -913,9 +906,9 @@ public class WrappedWorld extends World
 	}
 	
 	@Override
-	public void setTime(long long_1)
+	public void setTime(long l)
 	{
-		delegate.setTime(long_1);
+		delegate.setTime(l);
 	}
 	
 	@Override
@@ -937,9 +930,9 @@ public class WrappedWorld extends World
 	}
 	
 	@Override
-	public void setTimeOfDay(long long_1)
+	public void setTimeOfDay(long l)
 	{
-		delegate.setTimeOfDay(long_1);
+		delegate.setTimeOfDay(l);
 	}
 	
 	@Override
@@ -949,21 +942,21 @@ public class WrappedWorld extends World
 	}
 	
 	@Override
-	public void setSpawnPos(BlockPos blockPos_1)
+	public void setSpawnPos(BlockPos blockPos)
 	{
-		delegate.setSpawnPos(blockPos_1);
+		delegate.setSpawnPos(blockPos);
 	}
 	
 	@Override
-	public boolean canPlayerModifyAt(PlayerEntity playerEntity_1, BlockPos blockPos_1)
+	public boolean canPlayerModifyAt(PlayerEntity playerEntity, BlockPos blockPos)
 	{
-		return delegate.canPlayerModifyAt(playerEntity_1, blockPos_1);
+		return delegate.canPlayerModifyAt(playerEntity, blockPos);
 	}
 	
 	@Override
-	public void sendEntityStatus(Entity entity_1, byte byte_1)
+	public void sendEntityStatus(Entity entity, byte b)
 	{
-		delegate.sendEntityStatus(entity_1, byte_1);
+		delegate.sendEntityStatus(entity, b);
 	}
 	
 	@Override
@@ -973,9 +966,9 @@ public class WrappedWorld extends World
 	}
 	
 	@Override
-	public void addBlockAction(BlockPos blockPos_1, Block block_1, int int_1, int int_2)
+	public void addBlockAction(BlockPos blockPos, Block block, int i, int j)
 	{
-		delegate.addBlockAction(blockPos_1, block_1, int_1, int_2);
+		delegate.addBlockAction(blockPos, block, i, j);
 	}
 	
 	@Override
@@ -991,29 +984,29 @@ public class WrappedWorld extends World
 	}
 	
 	@Override
-	public float getThunderGradient(float float_1)
+	public float getThunderGradient(float f)
 	{
-		return delegate.getThunderGradient(float_1);
+		return delegate.getThunderGradient(f);
 	}
 	
 	@Environment(EnvType.CLIENT)
 	@Override
-	public void setThunderGradient(float float_1)
+	public void setThunderGradient(float f)
 	{
-		delegate.setThunderGradient(float_1);
+		delegate.setThunderGradient(f);
 	}
 	
 	@Override
-	public float getRainGradient(float float_1)
+	public float getRainGradient(float f)
 	{
-		return delegate.getRainGradient(float_1);
+		return delegate.getRainGradient(f);
 	}
 	
 	@Environment(EnvType.CLIENT)
 	@Override
-	public void setRainGradient(float float_1)
+	public void setRainGradient(float f)
 	{
-		delegate.setRainGradient(float_1);
+		delegate.setRainGradient(f);
 	}
 	
 	@Override
@@ -1029,27 +1022,27 @@ public class WrappedWorld extends World
 	}
 	
 	@Override
-	public boolean hasRain(BlockPos blockPos_1)
+	public boolean hasRain(BlockPos blockPos)
 	{
-		return delegate.hasRain(blockPos_1);
+		return delegate.hasRain(blockPos);
 	}
 	
 	@Override
-	public boolean hasHighHumidity(BlockPos blockPos_1)
+	public boolean hasHighHumidity(BlockPos blockPos)
 	{
-		return delegate.hasHighHumidity(blockPos_1);
+		return delegate.hasHighHumidity(blockPos);
 	}
 	
 	@Override
-	public MapState getMapState(String var1)
+	public MapState getMapState(String string)
 	{
-		return delegate.getMapState(var1);
+		return delegate.getMapState(string);
 	}
 	
 	@Override
-	public void putMapState(MapState var1)
+	public void putMapState(MapState mapState)
 	{
-		delegate.putMapState(var1);
+		delegate.putMapState(mapState);
 	}
 	
 	@Override
@@ -1059,9 +1052,9 @@ public class WrappedWorld extends World
 	}
 	
 	@Override
-	public void playGlobalEvent(int int_1, BlockPos blockPos_1, int int_2)
+	public void playGlobalEvent(int i, BlockPos blockPos, int j)
 	{
-		delegate.playGlobalEvent(int_1, blockPos_1, int_2);
+		delegate.playGlobalEvent(i, blockPos, j);
 	}
 	
 	@Override
@@ -1070,30 +1063,23 @@ public class WrappedWorld extends World
 		return delegate.getEffectiveHeight();
 	}
 	
-	@Environment(EnvType.CLIENT)
 	@Override
-	public double getHorizonHeight()
+	public CrashReportSection addDetailsToCrashReport(CrashReport crashReport)
 	{
-		return delegate.getHorizonHeight();
+		return delegate.addDetailsToCrashReport(crashReport);
 	}
 	
 	@Override
-	public CrashReportSection addDetailsToCrashReport(CrashReport crashReport_1)
+	public void setBlockBreakingInfo(int i, BlockPos blockPos, int j)
 	{
-		return delegate.addDetailsToCrashReport(crashReport_1);
-	}
-	
-	@Override
-	public void setBlockBreakingProgress(int var1, BlockPos var2, int var3)
-	{
-		delegate.setBlockBreakingProgress(var1, var2, var3);
+		delegate.setBlockBreakingInfo(i, blockPos, j);
 	}
 	
 	@Environment(EnvType.CLIENT)
 	@Override
-	public void addFireworkParticle(double double_1, double double_2, double double_3, double double_4, double double_5, double double_6, CompoundTag compoundTag_1)
+	public void addFireworkParticle(double d, double e, double f, double g, double h, double i, CompoundTag compoundTag)
 	{
-		delegate.addFireworkParticle(double_1, double_2, double_3, double_4, double_5, double_6, compoundTag_1);
+		delegate.addFireworkParticle(d, e, f, g, h, i, compoundTag);
 	}
 	
 	@Override
@@ -1103,15 +1089,15 @@ public class WrappedWorld extends World
 	}
 	
 	@Override
-	public void updateHorizontalAdjacent(BlockPos blockPos_1, Block block_1)
+	public void updateHorizontalAdjacent(BlockPos blockPos, Block block)
 	{
-		delegate.updateHorizontalAdjacent(blockPos_1, block_1);
+		delegate.updateHorizontalAdjacent(blockPos, block);
 	}
 	
 	@Override
-	public LocalDifficulty getLocalDifficulty(BlockPos blockPos_1)
+	public LocalDifficulty getLocalDifficulty(BlockPos blockPos)
 	{
-		return delegate.getLocalDifficulty(blockPos_1);
+		return delegate.getLocalDifficulty(blockPos);
 	}
 	
 	@Override
@@ -1120,17 +1106,10 @@ public class WrappedWorld extends World
 		return delegate.getAmbientDarkness();
 	}
 	
-	@Environment(EnvType.CLIENT)
 	@Override
-	public int getTicksSinceLightning()
+	public void setLightningTicksLeft(int i)
 	{
-		return delegate.getTicksSinceLightning();
-	}
-	
-	@Override
-	public void setTicksSinceLightning(int int_1)
-	{
-		delegate.setTicksSinceLightning(int_1);
+		delegate.setLightningTicksLeft(i);
 	}
 	
 	@Override
@@ -1140,15 +1119,9 @@ public class WrappedWorld extends World
 	}
 	
 	@Override
-	public void sendPacket(Packet<?> packet_1)
+	public void sendPacket(Packet<?> packet)
 	{
-		delegate.sendPacket(packet_1);
-	}
-	
-	@Override
-	public BlockPos locateStructure(String string_1, BlockPos blockPos_1, int int_1, boolean boolean_1)
-	{
-		return delegate.locateStructure(string_1, blockPos_1, int_1, boolean_1);
+		delegate.sendPacket(packet);
 	}
 	
 	@Override
@@ -1164,9 +1137,9 @@ public class WrappedWorld extends World
 	}
 	
 	@Override
-	public boolean testBlockState(BlockPos blockPos_1, Predicate<BlockState> predicate_1)
+	public boolean testBlockState(BlockPos blockPos, Predicate<BlockState> predicate)
 	{
-		return delegate.testBlockState(blockPos_1, predicate_1);
+		return delegate.testBlockState(blockPos, predicate);
 	}
 	
 	@Override
@@ -1182,9 +1155,9 @@ public class WrappedWorld extends World
 	}
 	
 	@Override
-	public BlockPos getRandomPosInChunk(int int_1, int int_2, int int_3, int int_4)
+	public BlockPos getRandomPosInChunk(int i, int j, int k, int l)
 	{
-		return delegate.getRandomPosInChunk(int_1, int_2, int_3, int_4);
+		return delegate.getRandomPosInChunk(i, j, k, l);
 	}
 	
 	@Override
@@ -1200,9 +1173,14 @@ public class WrappedWorld extends World
 	}
 	
 	@Override
-	public BlockPos getTopPosition(Type heightmap$Type_1, BlockPos blockPos_1)
+	public BiomeAccess getBiomeAccess()
 	{
-		return delegate.getTopPosition(heightmap$Type_1, blockPos_1);
+		return delegate.getBiomeAccess();
 	}
 	
+	@Override
+	public WorldChunk getChunk(int i, int j)
+	{
+		return delegate.getChunk(i, j);
+	}
 }

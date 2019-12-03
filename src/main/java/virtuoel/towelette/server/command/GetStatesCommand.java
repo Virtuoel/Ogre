@@ -5,7 +5,7 @@ import com.mojang.brigadier.CommandDispatcher;
 import net.minecraft.command.arguments.BlockPosArgumentType;
 import net.minecraft.server.command.CommandManager;
 import net.minecraft.server.command.ServerCommandSource;
-import net.minecraft.state.PropertyContainer;
+import net.minecraft.state.State;
 import net.minecraft.text.LiteralText;
 import net.minecraft.text.Style;
 import net.minecraft.text.Text;
@@ -33,7 +33,7 @@ public class GetStatesCommand
 					response.append(new LiteralText(String.format("%d, %d, %d", pos.getX(), pos.getY(), pos.getZ())).setStyle(new Style().setColor(Formatting.YELLOW)));
 					for (@SuppressWarnings("rawtypes") LayerData layer : LayerRegistrar.LAYERS)
 					{
-						final PropertyContainer<?> state = ((BlockViewStateLayer) context.getSource().getWorld()).getState(layer, pos);
+						final State<?> state = ((BlockViewStateLayer) context.getSource().getWorld()).getState(layer, pos);
 						
 						response.append("\n");
 						response.append(new LiteralText(LayerRegistrar.LAYERS.getId(layer).toString()).setStyle(new Style().setColor(Formatting.DARK_GREEN)));

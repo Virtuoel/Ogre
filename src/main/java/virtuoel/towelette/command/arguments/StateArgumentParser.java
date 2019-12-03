@@ -20,14 +20,14 @@ import com.mojang.brigadier.suggestion.Suggestions;
 import com.mojang.brigadier.suggestion.SuggestionsBuilder;
 
 import net.minecraft.server.command.CommandSource;
-import net.minecraft.state.PropertyContainer;
-import net.minecraft.state.StateFactory;
+import net.minecraft.state.State;
+import net.minecraft.state.StateManager;
 import net.minecraft.state.property.Property;
 import net.minecraft.text.TranslatableText;
 import net.minecraft.util.Identifier;
 import virtuoel.towelette.api.LayerData;
 
-public class StateArgumentParser<O, S extends PropertyContainer<S>>
+public class StateArgumentParser<O, S extends State<S>>
 {
 	public static final DynamicCommandExceptionType INVALID_BLOCK_ID_EXCEPTION = new DynamicCommandExceptionType(arg ->
 	{
@@ -56,7 +56,7 @@ public class StateArgumentParser<O, S extends PropertyContainer<S>>
 	private final StringReader reader;
 	private final Map<Property<?>, Comparable<?>> properties = Maps.newHashMap();
 	private Identifier id = new Identifier("");
-	private StateFactory<?, ?> stateFactory;
+	private StateManager<?, ?> StateManager;
 	private S state;
 	private Function<SuggestionsBuilder, CompletableFuture<Suggestions>> suggestions;
 	
@@ -159,7 +159,7 @@ public class StateArgumentParser<O, S extends PropertyContainer<S>>
 			}
 			else
 			{
-				builder.suggest(property.getName(value));
+				builder.suggest(property.name(value));
 			}
 		}
 		
@@ -201,7 +201,7 @@ public class StateArgumentParser<O, S extends PropertyContainer<S>>
 			return INVALID_BLOCK_ID_EXCEPTION.createWithContext(this.reader, this.id.toString());
 		});
 		
-		this.stateFactory = layer.getManager(entry);
+		this.StateManager = layer.getManager(entry);
 		this.state = layer.getDefaultState(entry);
 	}
 	
@@ -216,7 +216,7 @@ public class StateArgumentParser<O, S extends PropertyContainer<S>>
 			this.reader.skipWhitespace();
 			int pos = this.reader.getCursor();
 			String name = this.reader.readString();
-			Property<?> property = this.stateFactory.getProperty(name);
+			Property<?> property = this.StateManager.getProperty(name);
 			if (property == null)
 			{
 				this.reader.setCursor(pos);
@@ -277,7 +277,7 @@ public class StateArgumentParser<O, S extends PropertyContainer<S>>
 	
 	private <T extends Comparable<T>> void parsePropertyValue(Property<T> property, String valueName, int pos) throws CommandSyntaxException
 	{
-		Optional<T> value = property.getValue(valueName);
+		Optional<T> value = property.parse(valueName);
 		if (value.isPresent())
 		{
 			this.state = this.state.with(property, value.get());

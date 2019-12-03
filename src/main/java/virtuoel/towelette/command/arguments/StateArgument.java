@@ -5,14 +5,14 @@ import java.util.function.Predicate;
 
 import net.minecraft.block.pattern.CachedBlockPosition;
 import net.minecraft.server.world.ServerWorld;
-import net.minecraft.state.PropertyContainer;
+import net.minecraft.state.State;
 import net.minecraft.state.property.Property;
 import net.minecraft.util.math.BlockPos;
 import virtuoel.towelette.api.CachedStatePosition;
 import virtuoel.towelette.api.ModifiableWorldStateLayer;
 import virtuoel.towelette.api.LayerData;
 
-public class StateArgument<O, S extends PropertyContainer<S>> implements Predicate<CachedBlockPosition>
+public class StateArgument<O, S extends State<S>> implements Predicate<CachedBlockPosition>
 {
 	private final S state;
 	private final Set<Property<?>> properties;

@@ -19,7 +19,7 @@ import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.FluidBlock;
 import net.minecraft.fluid.FluidState;
-import net.minecraft.state.PropertyContainer;
+import net.minecraft.state.State;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.PacketByteBuf;
 import net.minecraft.world.chunk.ChunkSection;
@@ -56,7 +56,7 @@ public class ChunkSectionMixin implements ChunkSectionStateLayer, LayeredPalette
 	
 	@SuppressWarnings("unchecked")
 	@Override
-	public <O, S extends PropertyContainer<S>> Optional<PalettedContainer<S>> getContainer(Identifier id)
+	public <O, S extends State<S>> Optional<PalettedContainer<S>> getContainer(Identifier id)
 	{
 		if (palettedContainers.containsKey(id))
 		{
@@ -67,7 +67,7 @@ public class ChunkSectionMixin implements ChunkSectionStateLayer, LayeredPalette
 	}
 	
 	@Inject(at = @At("HEAD"), method = "calculateCounts()V", cancellable = true)
-	public <O, S extends PropertyContainer<S>> void onCalculateCounts(CallbackInfo info)
+	public <O, S extends State<S>> void onCalculateCounts(CallbackInfo info)
 	{
 		palettedContainers.entrySet().forEach(entry ->
 		{
@@ -80,7 +80,7 @@ public class ChunkSectionMixin implements ChunkSectionStateLayer, LayeredPalette
 			@SuppressWarnings("unchecked")
 			final PalettedContainer<S> container = ((PalettedContainer<S>) data.getLeft());
 			
-			container.method_21732((state, value) ->
+			container.count((state, value) ->
 			{
 				if (!layer.isEmpty(state))
 				{
@@ -188,7 +188,7 @@ public class ChunkSectionMixin implements ChunkSectionStateLayer, LayeredPalette
 	}
 	
 	@Override
-	public <O, S extends PropertyContainer<S>> S setState(LayerData<O, S> layer, int x, int y, int z, S state, boolean synchronous)
+	public <O, S extends State<S>> S setState(LayerData<O, S> layer, int x, int y, int z, S state, boolean synchronous)
 	{
 		final MutableTriple<PalettedContainer<?>, Short, Short> data = palettedContainers.get(LayerRegistrar.LAYERS.getId(layer));
 		@SuppressWarnings("unchecked")
@@ -218,7 +218,7 @@ public class ChunkSectionMixin implements ChunkSectionStateLayer, LayeredPalette
 	
 	@SuppressWarnings("unchecked")
 	@Override
-	public <O, S extends PropertyContainer<S>> S getState(LayerData<O, S> layer, int x, int y, int z)
+	public <O, S extends State<S>> S getState(LayerData<O, S> layer, int x, int y, int z)
 	{
 		return (S) palettedContainers.get(LayerRegistrar.LAYERS.getId(layer)).getLeft().get(x, y, z);
 	}

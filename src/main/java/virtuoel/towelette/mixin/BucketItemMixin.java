@@ -7,13 +7,13 @@ import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.At.Shift;
 import org.spongepowered.asm.mixin.injection.Inject;
+import org.spongepowered.asm.mixin.injection.ModifyVariable;
 import org.spongepowered.asm.mixin.injection.Redirect;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 import org.spongepowered.asm.mixin.injection.callback.LocalCapture;
 
-import net.minecraft.block.Block;
+import net.minecraft.advancement.criterion.Criterions;
 import net.minecraft.block.BlockState;
-import net.minecraft.block.FluidFillable;
 import net.minecraft.block.Material;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.fluid.BaseFluid;
@@ -22,11 +22,13 @@ import net.minecraft.fluid.FluidState;
 import net.minecraft.fluid.Fluids;
 import net.minecraft.item.BucketItem;
 import net.minecraft.item.ItemStack;
+import net.minecraft.server.network.ServerPlayerEntity;
+import net.minecraft.stat.Stats;
 import net.minecraft.util.Hand;
 import net.minecraft.util.TypedActionResult;
 import net.minecraft.util.hit.BlockHitResult;
 import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.Direction;
+import net.minecraft.util.math.Vec3d;
 import net.minecraft.world.World;
 import virtuoel.towelette.api.LayerRegistrar;
 import virtuoel.towelette.api.ModifiableWorldStateLayer;
@@ -43,66 +45,50 @@ public abstract class BucketItemMixin
 		return DummyDrainableBlock.INSTANCE.getDefaultState();
 	}
 	
-	@Redirect(method = "use", at = @At(value = "FIELD", ordinal = 2, target = "Lnet/minecraft/item/BucketItem;fluid:Lnet/minecraft/fluid/Fluid;"))
-	private Fluid onUseFluidProxy(BucketItem this$0, World world, PlayerEntity playerEntity, Hand hand)
-	{
-		return Fluids.EMPTY;
-	}
+	@Shadow abstract boolean placeFluid(@Nullable PlayerEntity playerEntity, World world, BlockPos blockPos, @Nullable BlockHitResult blockHitResult);
+	@Shadow abstract void onEmptied(World world, ItemStack itemStack, BlockPos blockPos);
+	@Shadow abstract ItemStack getEmptiedStack(ItemStack itemStack, PlayerEntity playerEntity);
 	
-	@Redirect(method = "use", at = @At(value = "INVOKE", target = "Lnet/minecraft/util/math/BlockPos;offset(Lnet/minecraft/util/math/Direction;)Lnet/minecraft/util/math/BlockPos;"))
-	private BlockPos onUseOffsetProxy(BlockPos obj, Direction side, World world, PlayerEntity playerEntity, Hand hand)
+	@Inject(method = "use", locals = LocalCapture.CAPTURE_FAILSOFT, cancellable = true, at = @At(value = "INVOKE", shift = Shift.AFTER, ordinal = 1, target = "Lnet/minecraft/world/World;getBlockState(Lnet/minecraft/util/math/BlockPos;)Lnet/minecraft/block/BlockState;"))
+	private void onUse(World world, PlayerEntity playerEntity, Hand hand, CallbackInfoReturnable<TypedActionResult<ItemStack>> info, ItemStack itemStack, BlockHitResult blockHitResult, BlockPos blockPos, BlockPos offsetPos)
 	{
-		if (world.getFluidState(obj).getFluid() != fluid)
+		final Vec3d hitPos = blockHitResult.getPos();
+		final boolean insideCube = 0.0D < hitPos.x && hitPos.x < 1.0D && 0.0D < hitPos.y && hitPos.y < 1.0D && 0.0D < hitPos.z && hitPos.z < 1.0D;
+		final BlockPos placedPos = !insideCube ? blockPos : offsetPos;
+		if (placeFluid(playerEntity, world, placedPos, blockHitResult))
 		{
-			final BlockState state = world.getBlockState(obj);
-			final Block block = state.getBlock();
-			return block instanceof FluidFillable && ((FluidFillable) block).canFillWithFluid(world, obj, state, fluid) ? obj : obj.offset(side);
+			onEmptied(world, itemStack, placedPos);
+			if (playerEntity instanceof ServerPlayerEntity)
+			{
+				Criterions.PLACED_BLOCK.trigger((ServerPlayerEntity) playerEntity, placedPos, itemStack);
+			}
+			
+			playerEntity.incrementStat(Stats.USED.getOrCreateStat((BucketItem) (Object) this));
+			info.setReturnValue(TypedActionResult.success(getEmptiedStack(itemStack, playerEntity)));
 		}
-		return obj.offset(side);
-	}
-	
-	@Redirect(method = "placeFluid", at = @At(value = "INVOKE", target = "Lnet/minecraft/block/Material;isSolid()Z"))
-	private boolean onPlaceFluidIsSolidProxy(Material obj, @Nullable PlayerEntity playerEntity, World world, BlockPos blockPos, @Nullable BlockHitResult blockHitResult)
-	{
-		final boolean solid = obj.isSolid();
-		final BlockState state = world.getBlockState(blockPos);
-		final Block block = state.getBlock();
-		if (block instanceof FluidFillable)
+		else
 		{
-			return ((FluidFillable) block).canFillWithFluid(world, blockPos, state, fluid) ? solid : true;
+			info.setReturnValue(TypedActionResult.fail(itemStack));
 		}
-		return solid;
-	}
-	
-	@Redirect(method = "placeFluid", at = @At(value = "INVOKE", target = "Lnet/minecraft/block/Material;isReplaceable()Z"))
-	private boolean onPlaceFluidIsReplaceableProxy(Material obj, @Nullable PlayerEntity playerEntity, World world, BlockPos blockPos, @Nullable BlockHitResult blockHitResult)
-	{
-		final boolean replaceable = obj.isReplaceable();
-		final BlockState state = world.getBlockState(blockPos);
-		final Block block = state.getBlock();
-		if (block instanceof FluidFillable)
-		{
-			return ((FluidFillable) block).canFillWithFluid(world, blockPos, state, fluid) || (world.getFluidState(blockPos).isEmpty() && replaceable);
-		}
-		return replaceable;
-	}
-	
-	@Redirect(method = "placeFluid", at = @At(value = "FIELD", ordinal = 3, target = "Lnet/minecraft/item/BucketItem;fluid:Lnet/minecraft/fluid/Fluid;"))
-	private Fluid onPlaceFluidFluidProxy(BucketItem this$0, @Nullable PlayerEntity playerEntity, World world, BlockPos blockPos, @Nullable BlockHitResult blockHitResult)
-	{
-		if (fluid != Fluids.WATER)
-		{
-			final BlockState state = world.getBlockState(blockPos);
-			return ((FluidFillable) state.getBlock()).canFillWithFluid(world, blockPos, state, fluid) ? Fluids.WATER : fluid;
-		}
-		return Fluids.WATER;
 	}
 	
 	@Inject(at = @At(value = "RETURN", ordinal = 2), method = "use", locals = LocalCapture.CAPTURE_FAILSOFT)
-	private void onUse(World world, PlayerEntity player, Hand hand, CallbackInfoReturnable<TypedActionResult<ItemStack>> info, ItemStack held, BlockHitResult hitResult, BlockPos pos, BlockState state, Fluid drained, ItemStack filled)
+	private void onUse(World world, PlayerEntity player, Hand hand, CallbackInfoReturnable<TypedActionResult<ItemStack>> info, ItemStack held, BlockHitResult hitResult, BlockPos pos, BlockPos offsetPos, BlockState state, Fluid drained)
 	{
 		final ModifiableWorldStateLayer w = ((ModifiableWorldStateLayer) world);
 		w.setState(LayerRegistrar.FLUID, pos, Fluids.EMPTY.getDefaultState(), 11);
+	}
+	
+	@ModifyVariable(method = "placeFluid", ordinal = 0, at = @At(value = "INVOKE_ASSIGN"))
+	private boolean modifyCanBucketPlace(boolean orig, @Nullable PlayerEntity playerEntity, World world, BlockPos blockPos, @Nullable BlockHitResult blockHitResult)
+	{
+		return orig || !world.getBlockState(blockPos).isFullOpaque(world, blockPos);
+	}
+	
+	@ModifyVariable(method = "placeFluid", ordinal = 0, at = @At(value = "INVOKE_ASSIGN"))
+	private Material modifyGetMaterial(Material orig)
+	{
+		return Material.WATER;
 	}
 	
 	@Inject(at = @At(value = "INVOKE", shift = Shift.AFTER, target = "Lnet/minecraft/item/BucketItem;playEmptyingSound(Lnet/minecraft/entity/player/PlayerEntity;Lnet/minecraft/world/IWorld;Lnet/minecraft/util/math/BlockPos;)V"), method = "placeFluid")

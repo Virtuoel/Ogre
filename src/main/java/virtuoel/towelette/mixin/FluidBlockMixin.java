@@ -9,14 +9,14 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 import net.minecraft.block.BlockState;
 import net.minecraft.block.FluidBlock;
+import net.minecraft.server.world.ServerWorld;
 import net.minecraft.util.math.BlockPos;
-import net.minecraft.world.World;
 
 @Mixin(FluidBlock.class)
 public abstract class FluidBlockMixin
 {
-	@Inject(at = @At("HEAD"), method = "onRandomTick", cancellable = true)
-	private void onOnRandomTick(BlockState state, World world, BlockPos pos, Random random, CallbackInfo info)
+	@Inject(at = @At("HEAD"), method = "randomTick", cancellable = true)
+	private void onRandomTick(BlockState state, ServerWorld world, BlockPos pos, Random random, CallbackInfo info)
 	{
 		info.cancel();
 	}

@@ -2,15 +2,15 @@ package virtuoel.towelette.util;
 
 import java.util.Arrays;
 
-import net.minecraft.state.PropertyContainer;
+import net.minecraft.state.State;
 import net.minecraft.util.math.Direction;
 
 public class StateNeighborGroup
 {
 	private final Direction direction;
-	private final PropertyContainer<?>[] states;
+	private final State<?>[] states;
 	
-	public StateNeighborGroup(Direction direction, PropertyContainer<?>... states)
+	public StateNeighborGroup(Direction direction, State<?>... states)
 	{
 		this.direction = direction;
 		this.states = states;

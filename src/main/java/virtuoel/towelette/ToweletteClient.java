@@ -3,14 +3,14 @@ package virtuoel.towelette;
 import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.network.ClientSidePacketRegistry;
 import net.fabricmc.fabric.api.network.PacketContext;
-import net.minecraft.state.PropertyContainer;
+import net.minecraft.state.State;
 import net.minecraft.util.PacketByteBuf;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.ChunkPos;
 import net.minecraft.world.World;
-import virtuoel.towelette.api.ModifiableWorldStateLayer;
 import virtuoel.towelette.api.LayerData;
 import virtuoel.towelette.api.LayerRegistrar;
+import virtuoel.towelette.api.ModifiableWorldStateLayer;
 import virtuoel.towelette.util.PacketUtils;
 
 public class ToweletteClient implements ClientModInitializer
@@ -22,7 +22,7 @@ public class ToweletteClient implements ClientModInitializer
 		ClientSidePacketRegistry.INSTANCE.register(PacketUtils.UPDATE, ToweletteClient::handleUpdatePacket);
 	}
 	
-	public static <O, S extends PropertyContainer<S>> void handleDeltaPacket(PacketContext packetContext, PacketByteBuf packetByteBuf)
+	public static <O, S extends State<S>> void handleDeltaPacket(PacketContext packetContext, PacketByteBuf packetByteBuf)
 	{
 		final World world = packetContext.getPlayer().world;
 		
@@ -32,7 +32,7 @@ public class ToweletteClient implements ClientModInitializer
 		final int length = packetByteBuf.readVarInt();
 		final BlockPos[] positions = new BlockPos[length];
 		@SuppressWarnings("unchecked")
-		final S[] states = (S[]) new PropertyContainer[length];
+		final S[] states = (S[]) new State[length];
 		
 		for (int i = 0; i < length; i++)
 		{
@@ -50,7 +50,7 @@ public class ToweletteClient implements ClientModInitializer
 		});
 	}
 	
-	public static <O, S extends PropertyContainer<S>> void handleUpdatePacket(PacketContext packetContext, PacketByteBuf packetByteBuf)
+	public static <O, S extends State<S>> void handleUpdatePacket(PacketContext packetContext, PacketByteBuf packetByteBuf)
 	{
 		final World world = packetContext.getPlayer().world;
 		

@@ -12,7 +12,7 @@ import net.minecraft.fluid.FluidState;
 import net.minecraft.util.BooleanBiFunction;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Direction;
-import net.minecraft.util.shape.SliceVoxelShape;
+import net.minecraft.util.shape.SlicedVoxelShape;
 import net.minecraft.util.shape.VoxelShape;
 import net.minecraft.util.shape.VoxelShapes;
 import net.minecraft.world.BlockView;
@@ -67,7 +67,7 @@ public class FluidUtils
 						toShape = VoxelShapes.empty();
 					}
 					
-					return !VoxelShapes.matchesAnywhere(VoxelShapes.fullCube(), VoxelShapes.combine(new SliceVoxelShape(fromShape, axis, ((VoxelShapeAccessor) fromShape).getVoxels().getSize(axis) - 1), new SliceVoxelShape(toShape, axis, 0), BooleanBiFunction.OR), BooleanBiFunction.ONLY_FIRST);
+					return !VoxelShapes.matchesAnywhere(VoxelShapes.fullCube(), VoxelShapes.combine(new SlicedVoxelShape(fromShape, axis, ((VoxelShapeAccessor) fromShape).getVoxels().getSize(axis) - 1), new SlicedVoxelShape(toShape, axis, 0), BooleanBiFunction.OR), BooleanBiFunction.ONLY_FIRST);
 				}
 				else
 				{
@@ -76,7 +76,7 @@ public class FluidUtils
 			}
 		}
 		
-		return VoxelShapes.method_1080(shape, otherShape, direction);
+		return VoxelShapes.adjacentSidesCoverSquare(shape, otherShape, direction);
 	}
 	
 	public static boolean scheduleFluidTick(IWorld world, BlockPos pos)

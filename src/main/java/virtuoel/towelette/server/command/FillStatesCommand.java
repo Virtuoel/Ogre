@@ -18,10 +18,10 @@ import net.minecraft.command.arguments.BlockPosArgumentType;
 import net.minecraft.server.command.CommandManager;
 import net.minecraft.server.command.ServerCommandSource;
 import net.minecraft.server.world.ServerWorld;
-import net.minecraft.state.PropertyContainer;
+import net.minecraft.state.State;
 import net.minecraft.text.TranslatableText;
+import net.minecraft.util.math.BlockBox;
 import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.MutableIntBoundingBox;
 import virtuoel.towelette.api.BlockViewStateLayer;
 import virtuoel.towelette.api.LayerData;
 import virtuoel.towelette.api.LayerRegistrar;
@@ -32,7 +32,7 @@ public class FillStatesCommand
 {
 	private static final SimpleCommandExceptionType FAILED_EXCEPTION = new SimpleCommandExceptionType(new TranslatableText("commands.fillstates.failed"));
 	
-	public static <O, S extends PropertyContainer<S>> void register(LayerData<O, S> layer, CommandDispatcher<ServerCommandSource> dispatcher)
+	public static <O, S extends State<S>> void register(LayerData<O, S> layer, CommandDispatcher<ServerCommandSource> dispatcher)
 	{
 		dispatcher.register(
 			CommandManager.literal("fillstates").requires(source ->
@@ -52,7 +52,7 @@ public class FillStatesCommand
 								return execute(
 									context.getSource(),
 									layer,
-									new MutableIntBoundingBox(
+									new BlockBox(
 										BlockPosArgumentType.getLoadedBlockPos(context, "from"),
 										BlockPosArgumentType.getLoadedBlockPos(context, "to")
 									),
@@ -68,7 +68,7 @@ public class FillStatesCommand
 									return execute(
 										context.getSource(),
 										layer,
-										new MutableIntBoundingBox(
+										new BlockBox(
 											BlockPosArgumentType.getLoadedBlockPos(context, "from"),
 											BlockPosArgumentType.getLoadedBlockPos(context, "to")
 										),
@@ -84,7 +84,7 @@ public class FillStatesCommand
 										return execute(
 											context.getSource(),
 											layer,
-											new MutableIntBoundingBox(
+											new BlockBox(
 												BlockPosArgumentType.getLoadedBlockPos(context, "from"),
 												BlockPosArgumentType.getLoadedBlockPos(context, "to")
 											),
@@ -102,7 +102,7 @@ public class FillStatesCommand
 									return execute(
 										context.getSource(),
 										layer,
-										new MutableIntBoundingBox(
+										new BlockBox(
 											BlockPosArgumentType.getLoadedBlockPos(context, "from"),
 											BlockPosArgumentType.getLoadedBlockPos(context, "to")
 										),
@@ -122,7 +122,7 @@ public class FillStatesCommand
 									return execute(
 										context.getSource(),
 										layer,
-										new MutableIntBoundingBox(
+										new BlockBox(
 											BlockPosArgumentType.getLoadedBlockPos(context, "from"),
 											BlockPosArgumentType.getLoadedBlockPos(context, "to")
 										),
@@ -139,7 +139,7 @@ public class FillStatesCommand
 									return execute(
 										context.getSource(),
 										layer,
-										new MutableIntBoundingBox(
+										new BlockBox(
 											BlockPosArgumentType.getLoadedBlockPos(context, "from"),
 											BlockPosArgumentType.getLoadedBlockPos(context, "to")
 										),
@@ -155,7 +155,7 @@ public class FillStatesCommand
 									return execute(
 										context.getSource(),
 										layer,
-										new MutableIntBoundingBox(
+										new BlockBox(
 											BlockPosArgumentType.getLoadedBlockPos(context, "from"),
 											BlockPosArgumentType.getLoadedBlockPos(context, "to")
 										),
@@ -172,7 +172,7 @@ public class FillStatesCommand
 		);
 	}
 	
-	private static <O, S extends PropertyContainer<S>> int execute(ServerCommandSource source, LayerData<O, S> layer, MutableIntBoundingBox box, StateArgument<?, ?> state, Mode mode, @Nullable Predicate<CachedBlockPosition> predicate) throws CommandSyntaxException
+	private static <O, S extends State<S>> int execute(ServerCommandSource source, LayerData<O, S> layer, BlockBox box, StateArgument<?, ?> state, Mode mode, @Nullable Predicate<CachedBlockPosition> predicate) throws CommandSyntaxException
 	{
 		final List<BlockPos> positions = Lists.newArrayList();
 		final ServerWorld world = source.getWorld();
@@ -229,7 +229,7 @@ public class FillStatesCommand
 	public interface Filter
 	{
 		@Nullable
-		StateArgument<?, ?> filter(MutableIntBoundingBox var1, BlockPos var2, StateArgument<?, ?> var3, ServerWorld var4);
+		StateArgument<?, ?> filter(BlockBox var1, BlockPos var2, StateArgument<?, ?> var3, ServerWorld var4);
 	}
 	
 	static enum Mode

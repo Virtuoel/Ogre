@@ -58,7 +58,7 @@ public class FluidMixin implements CollidableFluid, UpdateableFluid
 		{
 			for (final Direction direction : UPDATE_ORDER)
 			{
-				mutablePos.method_10114(pos).method_10118(direction);
+				mutablePos.set(pos).setOffset(direction);
 				final FluidState fluidState = world.getFluidState(mutablePos);
 				final FluidState newState = getStateForNeighborUpdate(fluidState, direction.getOpposite(), state, world, mutablePos, pos);
 				if (newState != fluidState)

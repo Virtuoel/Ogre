@@ -19,15 +19,17 @@ import net.minecraft.block.Block;
 import net.minecraft.block.BlockRenderType;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.Blocks;
-import net.minecraft.client.render.BufferBuilder;
+import net.minecraft.client.render.RenderLayers;
+import net.minecraft.client.render.VertexConsumer;
 import net.minecraft.client.render.block.BlockRenderManager;
-import net.minecraft.client.render.chunk.ChunkOcclusionGraphBuilder;
+import net.minecraft.client.render.chunk.ChunkOcclusionDataBuilder;
+import net.minecraft.client.util.math.MatrixStack;
 import net.minecraft.fluid.Fluid;
 import net.minecraft.fluid.FluidState;
 import net.minecraft.fluid.Fluids;
 import net.minecraft.nbt.CompoundTag;
-import net.minecraft.state.PropertyContainer;
-import net.minecraft.state.StateFactory;
+import net.minecraft.state.State;
+import net.minecraft.state.StateManager;
 import net.minecraft.state.property.Property;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.registry.DefaultedRegistry;
@@ -77,7 +79,7 @@ public class LayerRegistrar
 			.invalidPositionSupplier(Blocks.VOID_AIR::getDefaultState)
 			.lightUpdatePredicate((world, pos, newState, oldState) ->
 			{
-				return newState != oldState && (newState.getLightSubtracted(world, pos) != oldState.getLightSubtracted(world, pos) || newState.getLuminance() != oldState.getLuminance() || newState.hasSidedTransparency() || oldState.hasSidedTransparency());
+				return newState != oldState && (newState.getOpacity(world, pos) != oldState.getOpacity(world, pos) || newState.getLuminance() != oldState.getLuminance() || newState.hasSidedTransparency() || oldState.hasSidedTransparency());
 			})
 			.heightmapCallback((chunk, x, y, z, state) ->
 			{
@@ -105,12 +107,12 @@ public class LayerRegistrar
 				}
 			})
 			.randomTickPredicate(BlockState::hasRandomTicks)
-			.randomTickCallback(BlockState::onRandomTick)
+			.randomTickCallback(BlockState::randomTick)
 			.entityCollisionCallback(BlockState::onEntityCollision)
 			.registry(Registry.BLOCK)
 			.ownerFunction(BlockState::getBlock)
 			.defaultStateFunction(Block::getDefaultState)
-			.managerFunction(Block::getStateFactory)
+			.managerFunction(Block::getStateManager)
 			.emptyStateSupplier(Blocks.AIR::getDefaultState)
 			.defaultIdFunction(Registry.BLOCK::getDefaultId);
 		
@@ -120,14 +122,20 @@ public class LayerRegistrar
 				{
 					if (state.isFullOpaque(world, pos))
 					{
-						((ChunkOcclusionGraphBuilder) chunkOcclusionGraphBuilder).markClosed(pos);
+						((ChunkOcclusionDataBuilder) chunkOcclusionGraphBuilder).markClosed(pos);
 					}
 				})
 				.renderPredicate(state -> state.getRenderType() != BlockRenderType.INVISIBLE)
-				.renderLayerFunction(state -> state.getBlock().getRenderLayer())
-				.tesselationCallback((blockRenderManager, state, pos, world, bufferBuilder, random) ->
+				.renderLayerFunction(RenderLayers::getBlockLayer)
+				.tesselationCallback((blockRenderManager, state, pos, world, matrixStack, vertexConsumer, checkSides, random) ->
 				{
-					return ((BlockRenderManager) blockRenderManager).tesselateBlock(state, pos, world, (BufferBuilder) bufferBuilder, random);
+					final MatrixStack stack = (MatrixStack) matrixStack;
+					stack.push();
+					stack.translate(pos.getX() & 15, pos.getY() & 15, pos.getZ() & 15);
+					final boolean result = ((BlockRenderManager) blockRenderManager).renderBlock(state, pos, world, (MatrixStack) matrixStack, (VertexConsumer) vertexConsumer, checkSides, random);
+					stack.pop();
+					
+					return result;
 				});
 		}
 		
@@ -148,7 +156,7 @@ public class LayerRegistrar
 			.emptyPredicate(FluidState::isEmpty)
 			.lightUpdatePredicate((world, pos, newState, oldState) ->
 			{
-				return newState != oldState && (newState.getBlockState().getLightSubtracted(world, pos) != oldState.getBlockState().getLightSubtracted(world, pos) || newState.getBlockState().getLuminance() != oldState.getBlockState().getLuminance() || newState.getBlockState().hasSidedTransparency() || oldState.getBlockState().hasSidedTransparency());
+				return newState != oldState && (newState.getBlockState().getOpacity(world, pos) != oldState.getBlockState().getOpacity(world, pos) || newState.getBlockState().getLuminance() != oldState.getBlockState().getLuminance() || newState.getBlockState().hasSidedTransparency() || oldState.getBlockState().hasSidedTransparency());
 			})
 			.stateAdditionCallback((state, world, pos, oldState, pushed) ->
 			{
@@ -171,17 +179,17 @@ public class LayerRegistrar
 			.registry(Registry.FLUID)
 			.ownerFunction(FluidState::getFluid)
 			.defaultStateFunction(Fluid::getDefaultState)
-			.managerFunction(Fluid::getStateFactory)
+			.managerFunction(Fluid::getStateManager)
 			.emptyStateSupplier(Fluids.EMPTY::getDefaultState)
 			.defaultIdFunction(Registry.FLUID::getDefaultId);
 		
 		if (FabricLoader.getInstance().getEnvironmentType() == EnvType.CLIENT)
 		{
 			builder.renderPredicate(state -> !state.isEmpty())
-				.renderLayerFunction(FluidState::getRenderLayer)
-				.tesselationCallback((blockRenderManager, state, pos, world, bufferBuilder, random) ->
+				.renderLayerFunction(RenderLayers::getFluidLayer)
+				.tesselationCallback((blockRenderManager, state, pos, world, matrixStack, vertexConsumer, checkSides, random) ->
 				{
-					return ((BlockRenderManager) blockRenderManager).tesselateFluid(pos, world, (BufferBuilder) bufferBuilder, state);
+					return ((BlockRenderManager) blockRenderManager).renderFluid(pos, world, (VertexConsumer) vertexConsumer, state);
 				});
 		}
 		
@@ -189,30 +197,30 @@ public class LayerRegistrar
 	}
 	
 	@SuppressWarnings("unchecked")
-	public static <O, S extends PropertyContainer<S>> LayerData<O, S> getLayerData(final Identifier id)
+	public static <O, S extends State<S>> LayerData<O, S> getLayerData(final Identifier id)
 	{
 		return (LayerData<O, S>) LayerRegistrar.LAYERS.get(id);
 	}
 	
 	@SuppressWarnings("unchecked")
-	public static <O, S extends PropertyContainer<S>> LayerData<O, S> getLayerData(final int id)
+	public static <O, S extends State<S>> LayerData<O, S> getLayerData(final int id)
 	{
 		return (LayerData<O, S>) LayerRegistrar.LAYERS.get(id);
 	}
 	
-	public static <O, S extends PropertyContainer<S>> S deserializeState(CompoundTag compound, Registry<O> registry, Supplier<Identifier> defaultIdSupplier, Function<O, S> defaultStateFunc, Function<O, StateFactory<O, S>> stateManagerFunc)
+	public static <O, S extends State<S>> S deserializeState(CompoundTag compound, Registry<O> registry, Supplier<Identifier> defaultIdSupplier, Function<O, S> defaultStateFunc, Function<O, StateManager<O, S>> stateManagerFunc)
 	{
-		final O entry = registry.get(compound.containsKey("Name", 8) ? new Identifier(compound.getString("Name")) : defaultIdSupplier.get());
+		final O entry = registry.get(compound.contains("Name", 8) ? new Identifier(compound.getString("Name")) : defaultIdSupplier.get());
 		S container = defaultStateFunc.apply(entry);
 		
-		if (compound.containsKey("Properties", 10))
+		if (compound.contains("Properties", 10))
 		{
 			final CompoundTag properties = compound.getCompound("Properties");
-			final StateFactory<O, S> stateFactory = stateManagerFunc.apply(entry);
+			final StateManager<O, S> StateManager = stateManagerFunc.apply(entry);
 			
 			for (final String key : properties.getKeys())
 			{
-				final Property<?> property = stateFactory.getProperty(key);
+				final Property<?> property = StateManager.getProperty(key);
 				if (property != null)
 				{
 					container = withProperty(container, property, key, properties, compound);
@@ -225,16 +233,16 @@ public class LayerRegistrar
 	
 	private static final Logger LOGGER = LogManager.getLogger(ToweletteApi.MOD_ID);
 	
-	private static <S extends PropertyContainer<S>, T extends Comparable<T>> S withProperty(S container, Property<T> property, String key, CompoundTag properties, CompoundTag compound)
+	private static <S extends State<S>, T extends Comparable<T>> S withProperty(S container, Property<T> property, String key, CompoundTag properties, CompoundTag compound)
 	{
-		return property.getValue(properties.getString(key)).map(v -> container.with(property, v)).orElseGet(() ->
+		return property.parse(properties.getString(key)).map(v -> container.with(property, v)).orElseGet(() ->
 		{
 			LOGGER.warn("Unable to read property: {} with value: {} for property container: {}", key, properties.getString(key), compound.toString());
 			return container;
 		});
 	}
 	
-	public static <O, S extends PropertyContainer<S>> CompoundTag serializeState(S state, Registry<O> registry, Function<S, O> entryFunc)
+	public static <O, S extends State<S>> CompoundTag serializeState(S state, Registry<O> registry, Function<S, O> entryFunc)
 	{
 		final CompoundTag stateCompound = new CompoundTag();
 		stateCompound.putString("Name", registry.getId(entryFunc.apply(state)).toString());
@@ -248,7 +256,7 @@ public class LayerRegistrar
 				@SuppressWarnings("rawtypes")
 				final Property property = entry.getKey();
 				@SuppressWarnings("unchecked")
-				final String name = property.getName(entry.getValue());
+				final String name = property.name(entry.getValue());
 				propertyCompound.putString(property.getName(), name);
 			}
 			

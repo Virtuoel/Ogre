@@ -10,7 +10,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.FluidBlock;
-import net.minecraft.state.PropertyContainer;
+import net.minecraft.state.State;
 import net.minecraft.util.crash.CrashException;
 import net.minecraft.util.crash.CrashReport;
 import net.minecraft.util.crash.CrashReportSection;
@@ -27,7 +27,7 @@ import virtuoel.towelette.api.LayerRegistrar;
 public abstract class WorldChunkMixin implements ChunkStateLayer
 {
 	@Override
-	public <O, S extends PropertyContainer<S>> S getState(LayerData<O, S> layer, int x, int y, int z)
+	public <O, S extends State<S>> S getState(LayerData<O, S> layer, int x, int y, int z)
 	{
 		final WorldChunk self = (WorldChunk) (Object) this;
 		
@@ -71,7 +71,7 @@ public abstract class WorldChunkMixin implements ChunkStateLayer
 	
 	@Override
 	@Nullable
-	public <O, S extends PropertyContainer<S>> S setState(LayerData<O, S> layer, BlockPos pos, S state, boolean pushed)
+	public <O, S extends State<S>> S setState(LayerData<O, S> layer, BlockPos pos, S state, boolean pushed)
 	{
 		final WorldChunk self = (WorldChunk) (Object) this;
 		final World world = self.getWorld();

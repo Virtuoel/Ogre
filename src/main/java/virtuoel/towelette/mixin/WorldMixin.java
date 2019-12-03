@@ -17,7 +17,7 @@ import net.minecraft.block.Blocks;
 import net.minecraft.fluid.FluidState;
 import net.minecraft.server.world.ChunkHolder;
 import net.minecraft.server.world.ServerWorld;
-import net.minecraft.state.PropertyContainer;
+import net.minecraft.state.State;
 import net.minecraft.tag.FluidTags;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Box;
@@ -54,8 +54,8 @@ public abstract class WorldMixin implements ModifiableWorldMixin
 	
 	@Shadow abstract boolean setBlockState(BlockPos pos, BlockState state, int flags);
 	
-	@Inject(at = @At(value = "HEAD"), method = "clearBlockState", cancellable = true)
-	private void onClearBlockState(BlockPos pos, boolean flag, CallbackInfoReturnable<Boolean> info)
+	@Inject(at = @At(value = "HEAD"), method = "removeBlock", cancellable = true)
+	private void onRemoveBlock(BlockPos pos, boolean flag, CallbackInfoReturnable<Boolean> info)
 	{
 		info.setReturnValue(setBlockState(pos, Blocks.AIR.getDefaultState(), 3 | (flag ? 64 : 0)));
 	}
@@ -67,7 +67,7 @@ public abstract class WorldMixin implements ModifiableWorldMixin
 	}
 	
 	@Override
-	public <O, S extends PropertyContainer<S>> S getState(LayerData<O, S> layer, BlockPos pos)
+	public <O, S extends State<S>> S getState(LayerData<O, S> layer, BlockPos pos)
 	{
 		final World self = World.class.cast(this);
 		if (World.isHeightInvalid(pos))
@@ -82,7 +82,7 @@ public abstract class WorldMixin implements ModifiableWorldMixin
 	}
 	
 	@Override
-	public <O, S extends PropertyContainer<S>> boolean setState(LayerData<O, S> layer, BlockPos pos, S state, int flags)
+	public <O, S extends State<S>> boolean setState(LayerData<O, S> layer, BlockPos pos, S state, int flags)
 	{
 		final World self = World.class.cast(this);
 		if (World.isHeightInvalid(pos))
@@ -108,21 +108,21 @@ public abstract class WorldMixin implements ModifiableWorldMixin
 				
 				if (layer.shouldEnqueueLightUpdate(self, pos, newState, oldState))
 				{
-					self.getChunkManager().getLightingProvider().enqueueLightUpdate(pos);
+					self.getChunkManager().getLightingProvider().checkBlock(pos);
 				}
 				
 				if (newState == state)
 				{
 					if (oldState != newState)
 					{
-						self.scheduleBlockRender(pos, Blocks.AIR.getDefaultState(), Blocks.VOID_AIR.getDefaultState());
+						self.checkBlockRerender(pos, Blocks.AIR.getDefaultState(), Blocks.VOID_AIR.getDefaultState());
 					}
 					
 					if ((flags & 2) != 0 && (!self.isClient || (flags & 4) == 0) && (self.isClient || chunk.getLevelType() != null && chunk.getLevelType().isAfter(ChunkHolder.LevelType.TICKING)))
 					{
 						if (self instanceof ServerWorld)
 						{
-							((StateUpdateableChunkManager) ((ServerWorld) self).method_14178()).onStateUpdate(layer, pos);
+							((StateUpdateableChunkManager) ((ServerWorld) self).getChunkManager()).onStateUpdate(layer, pos);
 						}
 						else
 						{
@@ -148,7 +148,7 @@ public abstract class WorldMixin implements ModifiableWorldMixin
 	}
 	
 	@Unique
-	private static <O, S extends PropertyContainer<S>> void updateNeighbors(LayerData<O, S> layer, World world, BlockPos pos, S oldState)
+	private static <O, S extends State<S>> void updateNeighbors(LayerData<O, S> layer, World world, BlockPos pos, S oldState)
 	{
 		if (world.getLevelProperties().getGeneratorType() != LevelGeneratorType.DEBUG_ALL_BLOCK_STATES)
 		{
@@ -157,7 +157,7 @@ public abstract class WorldMixin implements ModifiableWorldMixin
 	}
 	
 	@Unique
-	private static <O, S extends PropertyContainer<S>> void updateNeighborsAlways(LayerData<O, S> layer, World world, BlockPos pos, S oldState)
+	private static <O, S extends State<S>> void updateNeighborsAlways(LayerData<O, S> layer, World world, BlockPos pos, S oldState)
 	{
 		updateNeighbor(layer, world, pos.west(), pos, oldState);
 		updateNeighbor(layer, world, pos.east(), pos, oldState);
@@ -168,7 +168,7 @@ public abstract class WorldMixin implements ModifiableWorldMixin
 	}
 	
 	@Unique
-	private static <O, S extends PropertyContainer<S>> void updateNeighborsExcept(LayerData<O, S> layer, World world, BlockPos pos, Direction direction, S oldState)
+	private static <O, S extends State<S>> void updateNeighborsExcept(LayerData<O, S> layer, World world, BlockPos pos, Direction direction, S oldState)
 	{
 		if (direction != Direction.WEST)
 		{
@@ -203,7 +203,7 @@ public abstract class WorldMixin implements ModifiableWorldMixin
 	}
 	
 	@Unique
-	private static <O, S extends PropertyContainer<S>> void updateNeighbor(LayerData<O, S> layer, World world, BlockPos pos, BlockPos otherPos, S oldState)
+	private static <O, S extends State<S>> void updateNeighbor(LayerData<O, S> layer, World world, BlockPos pos, BlockPos otherPos, S oldState)
 	{
 		if (!world.isClient())
 		{
@@ -214,7 +214,7 @@ public abstract class WorldMixin implements ModifiableWorldMixin
 	
 	@SuppressWarnings("unchecked")
 	@Unique
-	private static <O, S extends PropertyContainer<S>> void updateNeighborExceptLayer(LayerData<O, S> exceptLayer, World world, BlockPos pos, BlockPos otherPos)
+	private static <O, S extends State<S>> void updateNeighborExceptLayer(LayerData<O, S> exceptLayer, World world, BlockPos pos, BlockPos otherPos)
 	{
 		final BlockViewStateLayer w = ((BlockViewStateLayer) world);
 		for (@SuppressWarnings("rawtypes") final LayerData layer : LayerRegistrar.LAYERS)

@@ -7,20 +7,20 @@ import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Box;
 import net.minecraft.util.math.MathHelper;
 import net.minecraft.world.BlockView;
-import net.minecraft.world.ViewableWorld;
+import net.minecraft.world.WorldView;
 
-@Mixin(ViewableWorld.class)
-public interface ViewableWorldMixin extends BlockView
+@Mixin(WorldView.class)
+public interface WorldViewMixin extends BlockView
 {
 	@Overwrite
-	default boolean intersectsFluid(Box box)
+	default boolean containsFluid(Box box)
 	{
-		final int minX = MathHelper.floor(box.minX);
-		final int maxX = MathHelper.ceil(box.maxX);
-		final int minY = MathHelper.floor(box.minY);
-		final int maxY = MathHelper.ceil(box.maxY);
-		final int minZ = MathHelper.floor(box.minZ);
-		final int maxZ = MathHelper.ceil(box.maxZ);
+		final int minX = MathHelper.floor(box.x1);
+		final int maxX = MathHelper.ceil(box.x2);
+		final int minY = MathHelper.floor(box.y1);
+		final int maxY = MathHelper.ceil(box.y2);
+		final int minZ = MathHelper.floor(box.z1);
+		final int maxZ = MathHelper.ceil(box.z2);
 		
 		try (BlockPos.PooledMutable pos = BlockPos.PooledMutable.get())
 		{
@@ -30,7 +30,7 @@ public interface ViewableWorldMixin extends BlockView
 				{
 					for (int z = minZ; z < maxZ; z++)
 					{
-						if (!this.getFluidState(pos.method_10113(x, y, z)).isEmpty())
+						if (!this.getFluidState(pos.set(x, y, z)).isEmpty())
 						{
 							return true;
 						}

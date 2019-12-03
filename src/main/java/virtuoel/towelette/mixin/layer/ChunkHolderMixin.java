@@ -14,7 +14,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 import net.minecraft.network.Packet;
 import net.minecraft.server.world.ChunkHolder;
-import net.minecraft.state.PropertyContainer;
+import net.minecraft.state.State;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.ChunkPos;
@@ -47,7 +47,7 @@ public abstract class ChunkHolderMixin implements StateUpdateableChunkHolder
 	}
 	
 	@Override
-	public <O, S extends PropertyContainer<S>> void markForStateUpdate(LayerData<O, S> layer, int x, int y, int z)
+	public <O, S extends State<S>> void markForStateUpdate(LayerData<O, S> layer, int x, int y, int z)
 	{
 		if (this.getWorldChunk() != null)
 		{

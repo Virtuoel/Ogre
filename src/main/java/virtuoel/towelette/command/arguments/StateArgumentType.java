@@ -14,16 +14,16 @@ import com.mojang.brigadier.suggestion.SuggestionsBuilder;
 
 import net.minecraft.command.arguments.serialize.ArgumentSerializer;
 import net.minecraft.server.command.ServerCommandSource;
-import net.minecraft.state.PropertyContainer;
+import net.minecraft.state.State;
 import net.minecraft.util.PacketByteBuf;
 import virtuoel.towelette.api.LayerData;
 import virtuoel.towelette.api.LayerRegistrar;
 
-public class StateArgumentType<O, S extends PropertyContainer<S>> implements ArgumentType<StateArgument<O, S>>
+public class StateArgumentType<O, S extends State<S>> implements ArgumentType<StateArgument<O, S>>
 {
 	private static final Collection<String> EXAMPLES = Arrays.asList("stone", "minecraft:stone", "stone[foo=bar]");
 	
-	public static <O, S extends PropertyContainer<S>> StateArgumentType<O, S> create(LayerData<O, S> layer)
+	public static <O, S extends State<S>> StateArgumentType<O, S> create(LayerData<O, S> layer)
 	{
 		return new StateArgumentType<O, S>(layer);
 	}
@@ -48,7 +48,7 @@ public class StateArgumentType<O, S extends PropertyContainer<S>> implements Arg
 	}
 	
 	@SuppressWarnings("unchecked")
-	public static <O, S extends PropertyContainer<S>> StateArgument<O, S> getArgument(CommandContext<ServerCommandSource> context, String name)
+	public static <O, S extends State<S>> StateArgument<O, S> getArgument(CommandContext<ServerCommandSource> context, String name)
 	{
 		return context.getArgument(name, StateArgument.class);
 	}
@@ -78,7 +78,7 @@ public class StateArgumentType<O, S extends PropertyContainer<S>> implements Arg
 		return EXAMPLES;
 	}
 	
-	public static class Serializer<O, S extends PropertyContainer<S>> implements ArgumentSerializer<StateArgumentType<O, S>>
+	public static class Serializer<O, S extends State<S>> implements ArgumentSerializer<StateArgumentType<O, S>>
 	{
 		@Override
 		public void toPacket(StateArgumentType<O, S> argType, PacketByteBuf buffer)

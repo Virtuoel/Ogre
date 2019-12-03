@@ -2,7 +2,7 @@ package virtuoel.towelette.util;
 
 import io.netty.buffer.Unpooled;
 import net.minecraft.client.network.packet.CustomPayloadS2CPacket;
-import net.minecraft.state.PropertyContainer;
+import net.minecraft.state.State;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.PacketByteBuf;
 import net.minecraft.util.math.BlockPos;
@@ -20,7 +20,7 @@ public class PacketUtils
 	public static final Identifier UPDATE = Towelette.id("state_update");
 	public static final Identifier DELTA = Towelette.id("delta_update");
 	
-	public static <O, S extends PropertyContainer<S>> CustomPayloadS2CPacket stateUpdate(LayerData<O, S> data, BlockView world, BlockPos pos)
+	public static <O, S extends State<S>> CustomPayloadS2CPacket stateUpdate(LayerData<O, S> data, BlockView world, BlockPos pos)
 	{
 		final PacketByteBuf buffer = new PacketByteBuf(Unpooled.buffer()).writeBlockPos(pos);
 		
@@ -33,7 +33,7 @@ public class PacketUtils
 		return new CustomPayloadS2CPacket(UPDATE, buffer);
 	}
 	
-	public static <O, S extends PropertyContainer<S>> CustomPayloadS2CPacket deltaUpdate(LayerData<O, S> layer, int records, short[] positions, WorldChunk chunk)
+	public static <O, S extends State<S>> CustomPayloadS2CPacket deltaUpdate(LayerData<O, S> layer, int records, short[] positions, WorldChunk chunk)
 	{
 		final PacketByteBuf buffer = new PacketByteBuf(Unpooled.buffer());
 		

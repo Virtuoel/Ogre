@@ -12,7 +12,7 @@ import it.unimi.dsi.fastutil.objects.Object2ObjectLinkedOpenHashMap;
 import net.minecraft.block.BlockState;
 import net.minecraft.client.render.chunk.ChunkRendererRegion;
 import net.minecraft.fluid.FluidState;
-import net.minecraft.state.PropertyContainer;
+import net.minecraft.state.State;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
@@ -33,12 +33,12 @@ public abstract class ChunkRendererRegionMixin implements BlockViewStateLayer
 	
 	@Shadow abstract int getIndex(BlockPos pos);
 	
-	@Unique private Object2ObjectLinkedOpenHashMap<Identifier, PropertyContainer<?>[]> states;
+	@Unique private Object2ObjectLinkedOpenHashMap<Identifier, State<?>[]> states;
 	
 	@Inject(at = @At("RETURN"), method = "<init>(Lnet/minecraft/world/World;II[[Lnet/minecraft/world/chunk/WorldChunk;Lnet/minecraft/util/math/BlockPos;Lnet/minecraft/util/math/BlockPos;)V")
-	private <O, S extends PropertyContainer<S>> void onConstruct(World world, int x, int z, WorldChunk[][] chunks, BlockPos from, BlockPos to, CallbackInfo info)
+	private <O, S extends State<S>> void onConstruct(World world, int x, int z, WorldChunk[][] chunks, BlockPos from, BlockPos to, CallbackInfo info)
 	{
-		states = new Object2ObjectLinkedOpenHashMap<Identifier, PropertyContainer<?>[]>();
+		states = new Object2ObjectLinkedOpenHashMap<Identifier, State<?>[]>();
 		
 		boolean blockState = false;
 		boolean fluidState = false;
@@ -46,7 +46,7 @@ public abstract class ChunkRendererRegionMixin implements BlockViewStateLayer
 		{
 			final LayerData<O, S> layer = LayerRegistrar.getLayerData(id);
 			
-			final PropertyContainer<?>[] array;
+			final State<?>[] array;
 			if (!blockState && layer == LayerRegistrar.BLOCK)
 			{
 				blockState = true;
@@ -59,7 +59,7 @@ public abstract class ChunkRendererRegionMixin implements BlockViewStateLayer
 			}
 			else
 			{
-				array = new PropertyContainer[xSize * ySize * zSize];
+				array = new State[xSize * ySize * zSize];
 				
 				for (final BlockPos pos : BlockPos.iterate(from, to))
 				{
@@ -75,7 +75,7 @@ public abstract class ChunkRendererRegionMixin implements BlockViewStateLayer
 	
 	@SuppressWarnings("unchecked")
 	@Override
-	public <O, S extends PropertyContainer<S>> S getState(LayerData<O, S> layer, BlockPos pos)
+	public <O, S extends State<S>> S getState(LayerData<O, S> layer, BlockPos pos)
 	{
 		return (S) states.get(LayerRegistrar.LAYERS.getId(layer))[this.getIndex(pos)];
 	}

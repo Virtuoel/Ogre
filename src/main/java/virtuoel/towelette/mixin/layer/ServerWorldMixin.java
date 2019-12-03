@@ -7,7 +7,7 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 import net.minecraft.server.world.ServerWorld;
-import net.minecraft.state.PropertyContainer;
+import net.minecraft.state.State;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.ChunkPos;
 import net.minecraft.util.profiler.Profiler;
@@ -51,7 +51,7 @@ public class ServerWorldMixin
 						
 						for (@SuppressWarnings("rawtypes") final LayerData layer : LayerRegistrar.LAYERS)
 						{
-							final PropertyContainer<?> state = sectionLayer.getState(layer, pos.getX() - x, pos.getY() - y, pos.getZ() - z);
+							final State<?> state = sectionLayer.getState(layer, pos.getX() - x, pos.getY() - y, pos.getZ() - z);
 							if (layer.hasRandomTicks(state))
 							{
 								layer.onRandomTick(state, self, pos, self.random);

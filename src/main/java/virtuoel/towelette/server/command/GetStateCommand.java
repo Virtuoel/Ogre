@@ -5,7 +5,7 @@ import com.mojang.brigadier.CommandDispatcher;
 import net.minecraft.command.arguments.BlockPosArgumentType;
 import net.minecraft.server.command.CommandManager;
 import net.minecraft.server.command.ServerCommandSource;
-import net.minecraft.state.PropertyContainer;
+import net.minecraft.state.State;
 import net.minecraft.text.LiteralText;
 import net.minecraft.text.Style;
 import net.minecraft.text.Text;
@@ -18,7 +18,7 @@ import virtuoel.towelette.api.LayerRegistrar;
 
 public class GetStateCommand
 {
-	public static <O, S extends PropertyContainer<S>> void register(LayerData<O, S> layer, CommandDispatcher<ServerCommandSource> dispatcher)
+	public static <O, S extends State<S>> void register(LayerData<O, S> layer, CommandDispatcher<ServerCommandSource> dispatcher)
 	{
 		final Identifier layerId = LayerRegistrar.LAYERS.getId(layer);
 		dispatcher.register(

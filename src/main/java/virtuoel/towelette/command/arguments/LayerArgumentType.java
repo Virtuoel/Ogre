@@ -15,7 +15,7 @@ import com.mojang.brigadier.suggestion.SuggestionsBuilder;
 
 import net.minecraft.server.command.CommandSource;
 import net.minecraft.server.command.ServerCommandSource;
-import net.minecraft.state.PropertyContainer;
+import net.minecraft.state.State;
 import net.minecraft.text.TranslatableText;
 import net.minecraft.util.Identifier;
 import virtuoel.towelette.api.LayerData;
@@ -62,7 +62,7 @@ public class LayerArgumentType implements ArgumentType<LayerData<?, ?>>
 	}
 	
 	@SuppressWarnings("unchecked")
-	public static <O, S extends PropertyContainer<S>> LayerData<O, S> getLayerArgument(CommandContext<ServerCommandSource> context, String name)
+	public static <O, S extends State<S>> LayerData<O, S> getLayerArgument(CommandContext<ServerCommandSource> context, String name)
 	{
 		return context.getArgument(name, LayerData.class);
 	}

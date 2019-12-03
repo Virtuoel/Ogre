@@ -18,7 +18,7 @@ import net.minecraft.util.math.ChunkPos;
 import net.minecraft.village.PointOfInterestStorage;
 import net.minecraft.world.ChunkSerializer;
 import net.minecraft.world.ChunkTickScheduler;
-import net.minecraft.world.biome.Biome;
+import net.minecraft.world.biome.source.BiomeArray;
 import net.minecraft.world.biome.source.BiomeSource;
 import net.minecraft.world.chunk.Chunk;
 import net.minecraft.world.chunk.ChunkManager;
@@ -36,9 +36,9 @@ import virtuoel.towelette.api.LayerRegistrar;
 public class ChunkSerializerMixin
 {
 	@Inject(method = "deserialize", locals = LocalCapture.CAPTURE_FAILSOFT, at = @At(value = "INVOKE", shift = Shift.AFTER, target = "Lnet/minecraft/world/chunk/PalettedContainer;read(Lnet/minecraft/nbt/ListTag;[J)V"))
-	private static void onDeserialize(ServerWorld world, StructureManager structureManager, PointOfInterestStorage poiStorage, ChunkPos pos, CompoundTag tag, CallbackInfoReturnable<ProtoChunk> info, ChunkGenerator<?> chunkGenerator, BiomeSource biomeSource, CompoundTag levelTag, Biome biomes[], UpgradeData upgradeData, ChunkTickScheduler<Block> blockTickScheduler, ChunkTickScheduler<Fluid> fluidTickScheduler, boolean isLightOn, ListTag sectionList, int noop, ChunkSection sections[], boolean hasSkyLight, ChunkManager chunkManager, LightingProvider lightingProvider, int i, CompoundTag sectionTag, int y, ChunkSection chunkSection)
+	private static void onDeserialize(ServerWorld world, StructureManager structureManager, PointOfInterestStorage poiStorage, ChunkPos pos, CompoundTag tag, CallbackInfoReturnable<ProtoChunk> info, ChunkGenerator<?> chunkGenerator, BiomeSource biomeSource, CompoundTag levelTag, BiomeArray biomes, UpgradeData upgradeData, ChunkTickScheduler<Block> blockTickScheduler, ChunkTickScheduler<Fluid> fluidTickScheduler, boolean isLightOn, ListTag sectionList, int noop, ChunkSection sections[], boolean hasSkyLight, ChunkManager chunkManager, LightingProvider lightingProvider, int i, CompoundTag sectionTag, int y, ChunkSection chunkSection)
 	{
-		if (sectionTag.containsKey("StateLayerData"))
+		if (sectionTag.contains("StateLayerData"))
 		{
 			final CompoundTag layerTag = sectionTag.getCompound("StateLayerData");
 			for (final LayerData<?, ?> layer : LayerRegistrar.LAYERS)
@@ -49,7 +49,7 @@ public class ChunkSerializerMixin
 				}
 				
 				final Identifier id = LayerRegistrar.LAYERS.getId(layer);
-				if (layerTag.containsKey(id.toString()))
+				if (layerTag.contains(id.toString()))
 				{
 					final CompoundTag layerDataTag = layerTag.getCompound(id.toString());
 					

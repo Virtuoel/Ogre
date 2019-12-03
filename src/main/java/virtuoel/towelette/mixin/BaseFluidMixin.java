@@ -28,7 +28,7 @@ import net.minecraft.util.shape.VoxelShape;
 import net.minecraft.util.shape.VoxelShapes;
 import net.minecraft.world.BlockView;
 import net.minecraft.world.IWorld;
-import net.minecraft.world.ViewableWorld;
+import net.minecraft.world.WorldView;
 import net.minecraft.world.World;
 import virtuoel.towelette.Towelette;
 import virtuoel.towelette.api.LayerRegistrar;
@@ -39,8 +39,8 @@ import virtuoel.towelette.util.StateNeighborGroup;
 @Mixin(BaseFluid.class)
 public abstract class BaseFluidMixin
 {
-	@Redirect(method = "receivesFlow", at = @At(value = "INVOKE", target = "Lnet/minecraft/util/shape/VoxelShapes;method_1080(Lnet/minecraft/util/shape/VoxelShape;Lnet/minecraft/util/shape/VoxelShape;Lnet/minecraft/util/math/Direction;)Z"))
-	private boolean receivesFlowMethod_1080Proxy(VoxelShape shape, VoxelShape otherShape, Direction direction, Direction noop, BlockView world, BlockPos blockPos, BlockState blockState, BlockPos otherPos, BlockState otherState)
+	@Redirect(method = "receivesFlow", at = @At(value = "INVOKE", target = "Lnet/minecraft/util/shape/VoxelShapes;adjacentSidesCoverSquare(Lnet/minecraft/util/shape/VoxelShape;Lnet/minecraft/util/shape/VoxelShape;Lnet/minecraft/util/math/Direction;)Z"))
+	private boolean receivesFlowAdjacentSidesCoverSquareProxy(VoxelShape shape, VoxelShape otherShape, Direction direction, Direction noop, BlockView world, BlockPos blockPos, BlockState blockState, BlockPos otherPos, BlockState otherState)
 	{
 		return FluidUtils.isFluidFlowBlocked(direction, world, shape, blockState, blockPos, otherShape, otherState, otherPos);
 	}
@@ -105,11 +105,11 @@ public abstract class BaseFluidMixin
 	
 	@Shadow abstract boolean isInfinite();
 	@Shadow abstract boolean method_15752(FluidState state);
-	@Shadow abstract int getLevelDecreasePerBlock(ViewableWorld world);
+	@Shadow abstract int getLevelDecreasePerBlock(WorldView world);
 	@Shadow abstract boolean receivesFlow(Direction direction, BlockView world, BlockPos blockPos, BlockState blockState, BlockPos otherPos, BlockState otherState);
 	
 	@Inject(method = "getUpdatedState", at = @At(value = "HEAD"), cancellable = true)
-	private void onGetUpdatedState(ViewableWorld world, BlockPos pos, BlockState state, CallbackInfoReturnable<FluidState> info)
+	private void onGetUpdatedState(WorldView world, BlockPos pos, BlockState state, CallbackInfoReturnable<FluidState> info)
 	{
 		final BaseFluid self = (BaseFluid) (Object) this;
 		int maxLevel = 0;
@@ -229,14 +229,14 @@ public abstract class BaseFluidMixin
 		info.setReturnValue(state.getCollisionShape(blockView, pos) != VoxelShapes.fullCube());
 	}
 	
-	@Inject(method = "method_15734(Lnet/minecraft/world/ViewableWorld;Lnet/minecraft/util/math/BlockPos;I)Lcom/mojang/datafixers/util/Pair;", at = @At(value = "RETURN"), cancellable = true)
-	private static void onCompute1(ViewableWorld world, BlockPos pos, int key, CallbackInfoReturnable<Pair<BlockState, FluidState>> info)
+	@Inject(method = "method_15734(Lnet/minecraft/world/WorldView;Lnet/minecraft/util/math/BlockPos;I)Lcom/mojang/datafixers/util/Pair;", at = @At(value = "RETURN"), cancellable = true)
+	private static void onCompute1(WorldView world, BlockPos pos, int key, CallbackInfoReturnable<Pair<BlockState, FluidState>> info)
 	{
 		info.setReturnValue(Pair.of(info.getReturnValue().getFirst(), world.getFluidState(pos)));
 	}
 	
-	@Inject(method = "method_15755(Lnet/minecraft/world/ViewableWorld;Lnet/minecraft/util/math/BlockPos;I)Lcom/mojang/datafixers/util/Pair;", at = @At(value = "RETURN"), cancellable = true)
-	private static void onCompute2(ViewableWorld world, BlockPos pos, int key, CallbackInfoReturnable<Pair<BlockState, FluidState>> info)
+	@Inject(method = "method_15755(Lnet/minecraft/world/WorldView;Lnet/minecraft/util/math/BlockPos;I)Lcom/mojang/datafixers/util/Pair;", at = @At(value = "RETURN"), cancellable = true)
+	private static void onCompute2(WorldView world, BlockPos pos, int key, CallbackInfoReturnable<Pair<BlockState, FluidState>> info)
 	{
 		info.setReturnValue(Pair.of(info.getReturnValue().getFirst(), world.getFluidState(pos)));
 	}

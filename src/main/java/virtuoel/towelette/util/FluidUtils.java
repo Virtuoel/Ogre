@@ -7,6 +7,7 @@ import com.google.gson.JsonElement;
 
 import it.unimi.dsi.fastutil.objects.Object2ByteLinkedOpenHashMap;
 import net.minecraft.block.BlockState;
+import net.minecraft.block.FluidBlock;
 import net.minecraft.fluid.Fluid;
 import net.minecraft.fluid.FluidState;
 import net.minecraft.util.BooleanBiFunction;
@@ -36,6 +37,13 @@ public class FluidUtils
 		map.defaultReturnValue((byte) 127);
 		return map;
 	});
+	
+	public static boolean canFluidInteractionReplace(BlockView world, BlockPos pos)
+	{
+		// TODO Make replacement more flexible. Use tags?
+		final BlockState blockState = world.getBlockState(pos);
+		return blockState.isAir() || blockState.getMaterial().isReplaceable() || blockState.getBlock() instanceof FluidBlock;
+	}
 	
 	public static boolean isFluidFlowBlocked(Direction direction, BlockView world, VoxelShape shape, BlockState blockState, BlockPos blockPos, VoxelShape otherShape, BlockState otherState, BlockPos otherPos)
 	{

@@ -16,6 +16,7 @@ import virtuoel.towelette.api.CollidableFluid;
 import virtuoel.towelette.api.LayerRegistrar;
 import virtuoel.towelette.api.ModifiableWorldStateLayer;
 import virtuoel.towelette.api.UpdateableFluid;
+import virtuoel.towelette.util.FluidUtils;
 
 @Mixin(Fluid.class)
 public class FluidMixin implements CollidableFluid, UpdateableFluid
@@ -73,7 +74,7 @@ public class FluidMixin implements CollidableFluid, UpdateableFluid
 	@Unique
 	private static boolean lavaTouchedWater(FluidState state, World world, BlockPos pos)
 	{
-		if (state.matches(FluidTags.LAVA))
+		if (state.matches(FluidTags.LAVA) && FluidUtils.canFluidInteractionReplace(world, pos))
 		{
 			boolean touchingWater = false;
 			for (final Direction dir : Direction.values())
@@ -91,6 +92,7 @@ public class FluidMixin implements CollidableFluid, UpdateableFluid
 				if (state.isStill())
 				{
 					w.setState(LayerRegistrar.FLUID, pos, Fluids.EMPTY.getDefaultState());
+					world.breakBlock(pos, true);
 					world.setBlockState(pos, Blocks.OBSIDIAN.getDefaultState());
 					world.playLevelEvent(1501, pos, 0);
 					return true;
@@ -98,6 +100,7 @@ public class FluidMixin implements CollidableFluid, UpdateableFluid
 				else if (state.getHeight(world, pos) >= 4.0F/9.0F)
 				{
 					w.setState(LayerRegistrar.FLUID, pos, Fluids.EMPTY.getDefaultState());
+					world.breakBlock(pos, true);
 					world.setBlockState(pos, Blocks.COBBLESTONE.getDefaultState());
 					world.playLevelEvent(1501, pos, 0);
 					return true;

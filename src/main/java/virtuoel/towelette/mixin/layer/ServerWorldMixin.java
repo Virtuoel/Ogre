@@ -8,6 +8,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.state.State;
+import net.minecraft.util.Identifier;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.ChunkPos;
 import net.minecraft.util.profiler.Profiler;
@@ -49,9 +50,12 @@ public class ServerWorldMixin
 						final BlockPos pos = self.getRandomPosInChunk(x, y, z, 15);
 						profiler.push("randomTick");
 						
-						for (@SuppressWarnings("rawtypes") final LayerData layer : LayerRegistrar.LAYERS)
+						for (final Identifier id : LayerRegistrar.LAYERS.getIds())
 						{
+							@SuppressWarnings("rawtypes")
+							final LayerData layer = LayerRegistrar.LAYERS.get(id);
 							final State<?> state = sectionLayer.getState(layer, pos.getX() - x, pos.getY() - y, pos.getZ() - z);
+							
 							if (layer.hasRandomTicks(state))
 							{
 								layer.onRandomTick(state, self, pos, self.random);

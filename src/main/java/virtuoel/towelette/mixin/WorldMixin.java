@@ -19,6 +19,7 @@ import net.minecraft.server.world.ChunkHolder;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.state.State;
 import net.minecraft.tag.FluidTags;
+import net.minecraft.util.Identifier;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Box;
 import net.minecraft.util.math.Direction;
@@ -217,12 +218,16 @@ public abstract class WorldMixin implements ModifiableWorldMixin
 	private static <O, S extends State<S>> void updateNeighborExceptLayer(LayerData<O, S> exceptLayer, World world, BlockPos pos, BlockPos otherPos)
 	{
 		final BlockViewStateLayer w = ((BlockViewStateLayer) world);
-		for (@SuppressWarnings("rawtypes") final LayerData layer : LayerRegistrar.LAYERS)
+		final Identifier exceptId = LayerRegistrar.LAYERS.getId(exceptLayer);
+		for (final Identifier id : LayerRegistrar.LAYERS.getIds())
 		{
-			if (layer == exceptLayer)
+			if (id.equals(exceptId))
 			{
 				continue;
 			}
+			
+			@SuppressWarnings("rawtypes")
+			final LayerData layer = LayerRegistrar.LAYERS.get(id);
 			
 			layer.onNeighborUpdate(w.getState(layer, pos), world, pos, w.getState(layer, otherPos), otherPos, false);
 		}

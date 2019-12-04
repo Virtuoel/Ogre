@@ -29,7 +29,6 @@ import net.minecraft.world.chunk.UpgradeData;
 import net.minecraft.world.chunk.light.LightingProvider;
 import net.minecraft.world.gen.chunk.ChunkGenerator;
 import virtuoel.towelette.api.ChunkSectionStateLayer;
-import virtuoel.towelette.api.LayerData;
 import virtuoel.towelette.api.LayerRegistrar;
 
 @Mixin(ChunkSerializer.class)
@@ -41,14 +40,13 @@ public class ChunkSerializerMixin
 		if (sectionTag.contains("StateLayerData"))
 		{
 			final CompoundTag layerTag = sectionTag.getCompound("StateLayerData");
-			for (final LayerData<?, ?> layer : LayerRegistrar.LAYERS)
+			for (final Identifier id : LayerRegistrar.LAYERS.getIds())
 			{
-				if (layer == LayerRegistrar.BLOCK)
+				if (id.equals(LayerRegistrar.LAYERS.getDefaultId()))
 				{
 					continue;
 				}
 				
-				final Identifier id = LayerRegistrar.LAYERS.getId(layer);
 				if (layerTag.contains(id.toString()))
 				{
 					final CompoundTag layerDataTag = layerTag.getCompound(id.toString());
@@ -66,14 +64,13 @@ public class ChunkSerializerMixin
 	private static void onSerialize(ServerWorld world, Chunk chunk, CallbackInfoReturnable<CompoundTag> info, ChunkPos pos, CompoundTag tag, CompoundTag levelTag, ChunkSection sections[], ListTag sectionList, LightingProvider lightingProvider, boolean isLightOn, int i, int j, ChunkSection chunkSection, ChunkNibbleArray blockLight, ChunkNibbleArray skyLight, CompoundTag sectionTag)
 	{
 		final CompoundTag layerTag = new CompoundTag();
-		for (final LayerData<?, ?> layer : LayerRegistrar.LAYERS)
+		for (final Identifier id : LayerRegistrar.LAYERS.getIds())
 		{
-			if (layer == LayerRegistrar.BLOCK)
+			if (id.equals(LayerRegistrar.LAYERS.getDefaultId()))
 			{
 				continue;
 			}
 			
-			final Identifier id = LayerRegistrar.LAYERS.getId(layer);
 			final CompoundTag layerDataTag = new CompoundTag();
 			
 			((ChunkSectionStateLayer) chunkSection).getContainer(id).ifPresent(container ->

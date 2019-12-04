@@ -10,6 +10,7 @@ import net.minecraft.text.LiteralText;
 import net.minecraft.text.Style;
 import net.minecraft.text.Text;
 import net.minecraft.util.Formatting;
+import net.minecraft.util.Identifier;
 import net.minecraft.util.math.BlockPos;
 import virtuoel.towelette.api.BlockViewStateLayer;
 import virtuoel.towelette.api.LayerData;
@@ -31,12 +32,14 @@ public class GetStatesCommand
 					
 					final Text response = new LiteralText("");
 					response.append(new LiteralText(String.format("%d, %d, %d", pos.getX(), pos.getY(), pos.getZ())).setStyle(new Style().setColor(Formatting.YELLOW)));
-					for (@SuppressWarnings("rawtypes") LayerData layer : LayerRegistrar.LAYERS)
+					for (final Identifier id : LayerRegistrar.LAYERS.getIds())
 					{
+						@SuppressWarnings("rawtypes")
+						final LayerData layer = LayerRegistrar.LAYERS.get(id);
 						final State<?> state = ((BlockViewStateLayer) context.getSource().getWorld()).getState(layer, pos);
 						
 						response.append("\n");
-						response.append(new LiteralText(LayerRegistrar.LAYERS.getId(layer).toString()).setStyle(new Style().setColor(Formatting.DARK_GREEN)));
+						response.append(new LiteralText(id.toString()).setStyle(new Style().setColor(Formatting.DARK_GREEN)));
 						response.append("\n");
 						response.append(layer.serializeState(state).toText());
 					}

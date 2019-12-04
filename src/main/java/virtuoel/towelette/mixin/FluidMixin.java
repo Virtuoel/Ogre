@@ -88,20 +88,12 @@ public class FluidMixin implements CollidableFluid, UpdateableFluid
 			
 			if (touchingWater)
 			{
-				final ModifiableWorldStateLayer w = ((ModifiableWorldStateLayer) world);
-				if (state.isStill())
+				final boolean still = state.isStill();
+				if (still || state.getHeight(world, pos) >= 4.0F/9.0F)
 				{
-					w.setState(LayerRegistrar.FLUID, pos, Fluids.EMPTY.getDefaultState());
+					((ModifiableWorldStateLayer) world).setState(LayerRegistrar.FLUID, pos, Fluids.EMPTY.getDefaultState());
 					world.breakBlock(pos, true);
-					world.setBlockState(pos, Blocks.OBSIDIAN.getDefaultState());
-					world.playLevelEvent(1501, pos, 0);
-					return true;
-				}
-				else if (state.getHeight(world, pos) >= 4.0F/9.0F)
-				{
-					w.setState(LayerRegistrar.FLUID, pos, Fluids.EMPTY.getDefaultState());
-					world.breakBlock(pos, true);
-					world.setBlockState(pos, Blocks.COBBLESTONE.getDefaultState());
+					world.setBlockState(pos, (still ? Blocks.OBSIDIAN : Blocks.COBBLESTONE).getDefaultState());
 					world.playLevelEvent(1501, pos, 0);
 					return true;
 				}

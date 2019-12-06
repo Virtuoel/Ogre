@@ -36,6 +36,7 @@ public class LayerData<O, S extends State<S>>
 	private final HeightmapUpdateCallback<S> heightmapCallback;
 	
 	private final StateAdditionCallback<S> stateAdditionCallback;
+	private final StateRemovalCallback<S> stateRemovalCallback;
 	private final StateNeighborUpdateCallback<S> stateNeighborUpdateCallback;
 	private final UpdateStateNeighborsCallback<S> updateNeighborStatesCallback;
 	private final UpdateAdjacentComparatorsCallback<S> updateAdjacentComparatorsCallback;
@@ -71,6 +72,7 @@ public class LayerData<O, S extends State<S>>
 		final HeightmapUpdateCallback<S> heightmapCallback,
 		
 		final StateAdditionCallback<S> stateAdditionCallback,
+		final StateRemovalCallback<S> stateRemovalCallback,
 		final StateNeighborUpdateCallback<S> stateNeighborUpdateCallback,
 		final UpdateStateNeighborsCallback<S> updateNeighborStatesCallback,
 		final UpdateAdjacentComparatorsCallback<S> updateAdjacentComparatorsCallback,
@@ -86,7 +88,7 @@ public class LayerData<O, S extends State<S>>
 		final Function<O, StateManager<O, S>> managerFunction,
 		final Supplier<S> emptyStateSupplier,
 		final Supplier<Identifier> defaultIdSupplier,
-
+		
 		final BiFunction<World, LayerData<O, S>, World> worldFunction,
 		final BiFunction<ServerWorld, LayerData<O, S>, ServerWorld> serverWorldFunction,
 		
@@ -106,6 +108,7 @@ public class LayerData<O, S extends State<S>>
 		this.heightmapCallback = heightmapCallback;
 		
 		this.stateAdditionCallback = stateAdditionCallback;
+		this.stateRemovalCallback = stateRemovalCallback;
 		this.stateNeighborUpdateCallback = stateNeighborUpdateCallback;
 		this.updateNeighborStatesCallback = updateNeighborStatesCallback;
 		this.updateAdjacentComparatorsCallback = updateAdjacentComparatorsCallback;
@@ -169,6 +172,11 @@ public class LayerData<O, S extends State<S>>
 	public void onStateAdded(S state, World world, BlockPos pos, S oldState, boolean pushed)
 	{
 		stateAdditionCallback.onStateAdded(state, worldFunction.apply(world, this), pos, oldState, pushed);
+	}
+	
+	public void onStateRemoved(S oldState, World world, BlockPos pos, S state, boolean pushed)
+	{
+		stateRemovalCallback.onStateRemoved(oldState, worldFunction.apply(world, this), pos, state, pushed);
 	}
 	
 	public void onNeighborUpdate(S state, World world, BlockPos pos, S otherState, BlockPos otherPos, boolean pushed)
@@ -288,6 +296,7 @@ public class LayerData<O, S extends State<S>>
 		private HeightmapUpdateCallback<S> heightmapCallback = (c, x, y, z, s) -> {};
 		
 		private StateAdditionCallback<S> stateAdditionCallback = (s, w, p, o, b) -> {};
+		private StateRemovalCallback<S> stateRemovalCallback = (o, w, p, s, b) -> {};
 		private StateNeighborUpdateCallback<S> stateNeighborUpdateCallback = (s, w, p, e, o, u) -> {};
 		private UpdateStateNeighborsCallback<S> updateNeighborStatesCallback = (w, p, s, o, f) -> {};
 		private UpdateAdjacentComparatorsCallback<S> updateAdjacentComparatorsCallback = (w, p, s, o) -> {};
@@ -303,7 +312,7 @@ public class LayerData<O, S extends State<S>>
 		private Function<O, StateManager<O, S>> managerFunction;
 		private Supplier<S> emptyStateSupplier;
 		private Supplier<Identifier> defaultIdSupplier = () -> entryRegistry.getId(ownerFunction.apply(emptyStateSupplier.get()));
-
+		
 		private BiFunction<World, LayerData<O, S>, World> worldFunction = (w, l) -> w;
 		private BiFunction<ServerWorld, LayerData<O, S>, ServerWorld> serverWorldFunction = (w, l) -> w;
 		
@@ -356,6 +365,12 @@ public class LayerData<O, S extends State<S>>
 		public Builder<O, S> stateAdditionCallback(StateAdditionCallback<S> stateAdditionCallback)
 		{
 			this.stateAdditionCallback = stateAdditionCallback;
+			return this;
+		}
+		
+		public Builder<O, S> stateRemovalCallback(StateRemovalCallback<S> stateRemovalCallback)
+		{
+			this.stateRemovalCallback = stateRemovalCallback;
 			return this;
 		}
 		
@@ -480,6 +495,7 @@ public class LayerData<O, S extends State<S>>
 				heightmapCallback,
 				
 				stateAdditionCallback,
+				stateRemovalCallback,
 				stateNeighborUpdateCallback,
 				updateNeighborStatesCallback,
 				updateAdjacentComparatorsCallback,

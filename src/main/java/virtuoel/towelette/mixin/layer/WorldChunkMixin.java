@@ -112,16 +112,15 @@ public abstract class WorldChunkMixin implements ChunkStateLayer
 				world.getChunkManager().getLightingProvider().updateSectionStatus(pos, isEmpty);
 			}
 			
+			layer.onStateRemoved(oldState, world, pos, state, pushed);
+			
 			if (layer.getOwner(s.getState(layer, x, y & 15, z)) != entry)
 			{
 				return null;
 			}
 			else
 			{
-				if (!world.isClient)
-				{
-					layer.onStateAdded(state, world, pos, oldState, pushed);
-				}
+				layer.onStateAdded(state, world, pos, oldState, pushed);
 				
 				self.setShouldSave(true);
 				return oldState;

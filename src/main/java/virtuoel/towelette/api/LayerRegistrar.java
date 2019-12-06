@@ -16,9 +16,11 @@ import com.google.common.reflect.Reflection;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.block.Block;
+import net.minecraft.block.BlockEntityProvider;
 import net.minecraft.block.BlockRenderType;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.Blocks;
+import net.minecraft.block.entity.BlockEntity;
 import net.minecraft.client.render.RenderLayers;
 import net.minecraft.client.render.VertexConsumer;
 import net.minecraft.client.render.block.BlockRenderManager;
@@ -38,6 +40,7 @@ import net.minecraft.world.Heightmap;
 import net.minecraft.world.chunk.ChunkSection;
 import net.minecraft.world.chunk.IdListPalette;
 import net.minecraft.world.chunk.Palette;
+import net.minecraft.world.chunk.WorldChunk;
 import virtuoel.towelette.mixin.layer.ChunkSectionAccessor;
 
 public class LayerRegistrar
@@ -88,7 +91,52 @@ public class LayerRegistrar
 				chunk.getHeightmap(Heightmap.Type.OCEAN_FLOOR).trackUpdate(x, y, z, state);
 				chunk.getHeightmap(Heightmap.Type.WORLD_SURFACE).trackUpdate(x, y, z, state);
 			})
-			.stateAdditionCallback(BlockState::onBlockAdded)
+			.stateAdditionCallback((state, world, pos, oldState, pushed) ->
+			{
+				final Block block = state.getBlock();
+				final Block oldBlock = oldState.getBlock();
+				
+				if (oldBlock.hasBlockEntity())
+				{
+					final BlockEntity blockEntity = world.getWorldChunk(pos).getBlockEntity(pos, WorldChunk.CreationType.CHECK);
+					if (blockEntity != null)
+					{
+						blockEntity.resetBlock();
+					}
+				}
+				
+				if (!world.isClient)
+				{
+					state.onBlockAdded(world, pos, oldState, pushed);
+				}
+				
+				if (block.hasBlockEntity())
+				{
+					final BlockEntity blockEntity = world.getWorldChunk(pos).getBlockEntity(pos, WorldChunk.CreationType.CHECK);
+					if (blockEntity == null)
+					{
+						world.setBlockEntity(pos, ((BlockEntityProvider) block).createBlockEntity(world));
+					}
+					else
+					{
+						blockEntity.resetBlock();
+					}
+				}
+			})
+			.stateRemovalCallback((oldState, world, pos, state, pushed) ->
+			{
+				final Block block = state.getBlock();
+				final Block oldBlock = oldState.getBlock();
+				
+				if (!world.isClient)
+				{
+					oldState.onBlockRemoved(world, pos, state, pushed);
+				}
+				else if (oldBlock != block && oldBlock instanceof BlockEntityProvider)
+				{
+					world.removeBlockEntity(pos);
+				}
+			})
 			.stateNeighborUpdateCallback((state, world, pos, otherState, otherPos, pushed) ->
 			{
 				state.neighborUpdate(world, pos, otherState.getBlock(), otherPos, pushed);
@@ -160,7 +208,10 @@ public class LayerRegistrar
 			})
 			.stateAdditionCallback((state, world, pos, oldState, pushed) ->
 			{
-				((UpdateableFluid) state.getFluid()).onFluidAdded(state, world, pos, oldState);
+				if (!world.isClient)
+				{
+					((UpdateableFluid) state.getFluid()).onFluidAdded(state, world, pos, oldState);
+				}
 			})
 			.stateNeighborUpdateCallback((state, world, pos, otherState, otherPos, pushed) ->
 			{
@@ -216,11 +267,11 @@ public class LayerRegistrar
 		if (compound.contains("Properties", 10))
 		{
 			final CompoundTag properties = compound.getCompound("Properties");
-			final StateManager<O, S> StateManager = stateManagerFunc.apply(entry);
+			final StateManager<O, S> stateManager = stateManagerFunc.apply(entry);
 			
 			for (final String key : properties.getKeys())
 			{
-				final Property<?> property = StateManager.getProperty(key);
+				final Property<?> property = stateManager.getProperty(key);
 				if (property != null)
 				{
 					container = withProperty(container, property, key, properties, compound);

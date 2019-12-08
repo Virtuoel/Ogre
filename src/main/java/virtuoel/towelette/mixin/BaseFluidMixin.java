@@ -216,10 +216,17 @@ public abstract class BaseFluidMixin
 		return false;
 	}
 	
+	@Unique private static final Direction[] NEIGHBOR_UPDATE_ORDER = new Direction[] { Direction.WEST, Direction.EAST, Direction.DOWN, Direction.UP, Direction.NORTH, Direction.SOUTH };
+	
 	@Inject(method = "onScheduledTick", at = @At(value = "INVOKE", shift = Shift.AFTER, target = "Lnet/minecraft/world/World;setBlockState(Lnet/minecraft/util/math/BlockPos;Lnet/minecraft/block/BlockState;I)Z"))
 	private void onOnScheduledTick(World world, BlockPos pos, FluidState fluidState, CallbackInfo info)
 	{
 		final ModifiableWorldStateLayer w = ((ModifiableWorldStateLayer) world);
 		w.setState(LayerRegistrar.FLUID, pos, fluidState, fluidState.isEmpty() ? 3 : 2);
+		
+		for(final Direction direction : NEIGHBOR_UPDATE_ORDER)
+		{
+			LayerRegistrar.FLUID.onNeighborUpdate(fluidState, world, pos.offset(direction), fluidState, pos, false);
+		}
 	}
 }

@@ -6,7 +6,6 @@ import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.At.Shift;
 import org.spongepowered.asm.mixin.injection.Inject;
-import org.spongepowered.asm.mixin.injection.ModifyVariable;
 import org.spongepowered.asm.mixin.injection.Redirect;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
@@ -28,8 +27,8 @@ import net.minecraft.util.shape.VoxelShape;
 import net.minecraft.util.shape.VoxelShapes;
 import net.minecraft.world.BlockView;
 import net.minecraft.world.IWorld;
-import net.minecraft.world.WorldView;
 import net.minecraft.world.World;
+import net.minecraft.world.WorldView;
 import virtuoel.towelette.Towelette;
 import virtuoel.towelette.api.LayerRegistrar;
 import virtuoel.towelette.api.ModifiableWorldStateLayer;
@@ -53,39 +52,10 @@ public abstract class BaseFluidMixin
 		return fillable ? block : null;
 	}
 	
-	@Unique private final ThreadLocal<Block> towelette$cachedBlock = ThreadLocal.withInitial(() -> Blocks.AIR);
-	
-	@ModifyVariable(method = "method_15754", at = @At(value = "LOAD", ordinal = 0), allow = 1, require = 1)
-	private Block hookMethod_15754NotFillable(Block block)
+	@Inject(at = @At("HEAD"), method = "method_15754", cancellable = true)
+	private void onMethod_15754Pre(BlockView blockView, BlockPos pos, BlockState state, Fluid fluid, CallbackInfoReturnable<Boolean> info)
 	{
-		towelette$cachedBlock.set(block);
-		return null;
-	}
-	
-	@ModifyVariable(method = "method_15754", at = @At(value = "LOAD", ordinal = 2), allow = 1, require = 1)
-	private Block hookMethod_15754RevertBlock(Block block)
-	{
-		final Block cache = towelette$cachedBlock.get();
-		towelette$cachedBlock.remove();
-		return cache;
-	}
-	
-	@Inject(at = @At("RETURN"), method = "method_15754", cancellable = true)
-	private void onMethod_15754(BlockView blockView, BlockPos pos, BlockState state, Fluid fluid, CallbackInfoReturnable<Boolean> info)
-	{
-		final Block block = state.getBlock();
-		
-		if (!info.getReturnValueZ())
-		{
-			if ((block instanceof FluidFillable && ((FluidFillable) block).canFillWithFluid(blockView, pos, state, fluid)) || (block.matches(Towelette.DISPLACEABLE) && !block.matches(Towelette.UNDISPLACEABLE) && blockView.getFluidState(pos).isEmpty()))
-			{
-				info.setReturnValue(true);
-			}
-		}
-		else if (block instanceof FluidFillable && (block.matches(Towelette.UNDISPLACEABLE) || !blockView.getFluidState(pos).isEmpty()))
-		{
-			info.setReturnValue(false);
-		}
+		info.setReturnValue(blockView.getFluidState(pos).isEmpty() && state.getCollisionShape(blockView, pos) != VoxelShapes.fullCube());
 	}
 	
 	@Shadow abstract boolean isInfinite();
@@ -206,12 +176,6 @@ public abstract class BaseFluidMixin
 		{
 			info.cancel();
 		}
-	}
-	
-	@Inject(at = @At("HEAD"), method = "method_15754", cancellable = true)
-	private void onMethod_15754Pre(BlockView blockView, BlockPos pos, BlockState state, Fluid fluid, CallbackInfoReturnable<Boolean> info)
-	{
-		info.setReturnValue(state.getCollisionShape(blockView, pos) != VoxelShapes.fullCube());
 	}
 	
 	@Inject(method = "method_15734(Lnet/minecraft/world/WorldView;Lnet/minecraft/util/math/BlockPos;I)Lcom/mojang/datafixers/util/Pair;", at = @At(value = "RETURN"), cancellable = true)

@@ -15,6 +15,7 @@
 		"FluidMixin",
 		"IceBlockMixin",
 		"LavaFluidMixin",
+		"PlayerEntityMixin",
 		"TrapdoorBlockMixin",
 		"VoxelShapeAccessor",
 		"WorldMixin",

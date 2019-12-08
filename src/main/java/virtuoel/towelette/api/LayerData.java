@@ -61,77 +61,42 @@ public class LayerData<O, S extends State<S>>
 	private final Function<S, RenderLayer> renderLayerFunction;
 	private final StateTesselationCallback<S> tesselationCallback;
 	
-	private LayerData(
-		final Palette<S> palette,
-		final IdList<S> ids,
-		
-		final Predicate<S> emptyPredicate,
-		final Supplier<S> invalidPositionSupplier,
-		
-		final LightUpdatePredicate<S> lightUpdatePredicate,
-		final HeightmapUpdateCallback<S> heightmapCallback,
-		
-		final StateAdditionCallback<S> stateAdditionCallback,
-		final StateRemovalCallback<S> stateRemovalCallback,
-		final StateNeighborUpdateCallback<S> stateNeighborUpdateCallback,
-		final UpdateStateNeighborsCallback<S> updateNeighborStatesCallback,
-		final UpdateAdjacentComparatorsCallback<S> updateAdjacentComparatorsCallback,
-		
-		final Predicate<S> randomTickPredicate,
-		final RandomTickCallback<S> randomTickCallback,
-		
-		final EntityCollisionCallback<S> entityCollisionCallback,
-		
-		final Registry<O> entryRegistry,
-		final Function<S, O> ownerFunction,
-		final Function<O, S> defaultStateFunction,
-		final Function<O, StateManager<O, S>> managerFunction,
-		final Supplier<S> emptyStateSupplier,
-		final Supplier<Identifier> defaultIdSupplier,
-		
-		final BiFunction<World, LayerData<O, S>, World> worldFunction,
-		final BiFunction<ServerWorld, LayerData<O, S>, ServerWorld> serverWorldFunction,
-		
-		final OcclusionGraphCallback<S> occlusionGraphCallback,
-		final Predicate<S> renderPredicate,
-		final Function<S, RenderLayer> renderLayerFunction,
-		final StateTesselationCallback<S> tesselationCallback
-	)
+	private LayerData(LayerData.Builder<O, S> builder)
 	{
-		this.palette = palette;
-		this.ids = ids;
+		this.palette = builder.palette;
+		this.ids = builder.ids;
 		
-		this.emptyPredicate = emptyPredicate;
-		this.invalidPositionSupplier = invalidPositionSupplier;
+		this.emptyPredicate = builder.emptyPredicate;
+		this.invalidPositionSupplier = Optional.ofNullable(builder.invalidPositionSupplier).orElse(builder.emptyStateSupplier);
 		
-		this.lightUpdatePredicate = lightUpdatePredicate;
-		this.heightmapCallback = heightmapCallback;
+		this.lightUpdatePredicate = builder.lightUpdatePredicate;
+		this.heightmapCallback = builder.heightmapCallback;
 		
-		this.stateAdditionCallback = stateAdditionCallback;
-		this.stateRemovalCallback = stateRemovalCallback;
-		this.stateNeighborUpdateCallback = stateNeighborUpdateCallback;
-		this.updateNeighborStatesCallback = updateNeighborStatesCallback;
-		this.updateAdjacentComparatorsCallback = updateAdjacentComparatorsCallback;
+		this.stateAdditionCallback = builder.stateAdditionCallback;
+		this.stateRemovalCallback = builder.stateRemovalCallback;
+		this.stateNeighborUpdateCallback = builder.stateNeighborUpdateCallback;
+		this.updateNeighborStatesCallback = builder.updateNeighborStatesCallback;
+		this.updateAdjacentComparatorsCallback = builder.updateAdjacentComparatorsCallback;
 		
-		this.randomTickPredicate = randomTickPredicate;
-		this.randomTickCallback = randomTickCallback;
+		this.randomTickPredicate = builder.randomTickPredicate;
+		this.randomTickCallback = builder.randomTickCallback;
 		
-		this.entityCollisionCallback = entityCollisionCallback;
+		this.entityCollisionCallback = builder.entityCollisionCallback;
 		
-		this.entryRegistry = entryRegistry;
-		this.ownerFunction = ownerFunction;
-		this.defaultStateFunction = defaultStateFunction;
-		this.managerFunction = managerFunction;
-		this.emptyStateSupplier = emptyStateSupplier;
-		this.defaultIdSupplier = defaultIdSupplier;
+		this.entryRegistry = builder.entryRegistry;
+		this.ownerFunction = builder.ownerFunction;
+		this.defaultStateFunction = builder.defaultStateFunction;
+		this.managerFunction = builder.managerFunction;
+		this.emptyStateSupplier = builder.emptyStateSupplier;
+		this.defaultIdSupplier = builder.defaultIdSupplier;
 		
-		this.worldFunction = worldFunction;
-		this.serverWorldFunction = serverWorldFunction;
+		this.worldFunction = builder.worldFunction;
+		this.serverWorldFunction = builder.serverWorldFunction;
 		
-		this.occlusionGraphCallback = occlusionGraphCallback;
-		this.renderPredicate = renderPredicate;
-		this.renderLayerFunction = renderLayerFunction;
-		this.tesselationCallback = tesselationCallback;
+		this.occlusionGraphCallback = builder.occlusionGraphCallback;
+		this.renderPredicate = Optional.ofNullable(builder.renderPredicate).orElse(builder.emptyPredicate);
+		this.renderLayerFunction = builder.renderLayerFunction;
+		this.tesselationCallback = builder.tesselationCallback;
 	}
 	
 	public Palette<S> getPalette()
@@ -290,7 +255,7 @@ public class LayerData<O, S extends State<S>>
 		private IdList<S> ids;
 		
 		private Predicate<S> emptyPredicate;
-		private Optional<Supplier<S>> invalidPositionSupplier = Optional.empty();
+		private Supplier<S> invalidPositionSupplier;
 		
 		private LightUpdatePredicate<S> lightUpdatePredicate;
 		private HeightmapUpdateCallback<S> heightmapCallback = (c, x, y, z, s) -> {};
@@ -317,7 +282,7 @@ public class LayerData<O, S extends State<S>>
 		private BiFunction<ServerWorld, LayerData<O, S>, ServerWorld> serverWorldFunction = (w, l) -> w;
 		
 		private OcclusionGraphCallback<S> occlusionGraphCallback = (b, s, w, p) -> {};
-		private Optional<Predicate<S>> renderPredicate = Optional.empty();
+		private Predicate<S> renderPredicate;
 		private Function<S, RenderLayer> renderLayerFunction;
 		private StateTesselationCallback<S> tesselationCallback;
 		
@@ -346,7 +311,7 @@ public class LayerData<O, S extends State<S>>
 		
 		public Builder<O, S> invalidPositionSupplier(Supplier<S> invalidPositionSupplier)
 		{
-			this.invalidPositionSupplier = Optional.ofNullable(invalidPositionSupplier);
+			this.invalidPositionSupplier = invalidPositionSupplier;
 			return this;
 		}
 		
@@ -466,7 +431,7 @@ public class LayerData<O, S extends State<S>>
 		
 		public Builder<O, S> renderPredicate(Predicate<S> renderPredicate)
 		{
-			this.renderPredicate = Optional.ofNullable(renderPredicate);
+			this.renderPredicate = renderPredicate;
 			return this;
 		}
 		
@@ -484,42 +449,7 @@ public class LayerData<O, S extends State<S>>
 		
 		public LayerData<O, S> build()
 		{
-			return new LayerData<>(
-				palette,
-				ids,
-				
-				emptyPredicate,
-				invalidPositionSupplier.orElse(emptyStateSupplier),
-				
-				lightUpdatePredicate,
-				heightmapCallback,
-				
-				stateAdditionCallback,
-				stateRemovalCallback,
-				stateNeighborUpdateCallback,
-				updateNeighborStatesCallback,
-				updateAdjacentComparatorsCallback,
-				
-				randomTickPredicate,
-				randomTickCallback,
-				
-				entityCollisionCallback,
-				
-				entryRegistry,
-				ownerFunction,
-				defaultStateFunction,
-				managerFunction,
-				emptyStateSupplier,
-				defaultIdSupplier,
-				
-				worldFunction,
-				serverWorldFunction,
-				
-				occlusionGraphCallback,
-				renderPredicate.orElse(emptyPredicate),
-				renderLayerFunction,
-				tesselationCallback
-			);
+			return new LayerData<>(this);
 		}
 	}
 }

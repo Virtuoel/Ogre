@@ -41,13 +41,17 @@ import net.minecraft.world.chunk.ChunkSection;
 import net.minecraft.world.chunk.IdListPalette;
 import net.minecraft.world.chunk.Palette;
 import net.minecraft.world.chunk.WorldChunk;
-import virtuoel.towelette.mixin.layer.ChunkSectionAccessor;
 
 public class LayerRegistrar
 {
+	public static final DefaultedRegistry<Palette<?>> PALETTES = Registry.REGISTRIES.add(
+		new Identifier(ToweletteApi.MOD_ID, "palettes"),
+		new DefaultedRegistry<Palette<?>>("block_state")
+	);
+	
 	public static final DefaultedRegistry<LayerData<?, ?>> LAYERS = Registry.REGISTRIES.add(
 		new Identifier(ToweletteApi.MOD_ID, "layers"),
-		new DefaultedRegistry<LayerData<?, ?>>(ToweletteApi.MOD_ID + ":block_state")
+		new DefaultedRegistry<LayerData<?, ?>>("block_state")
 	);
 	
 	public static final Palette<BlockState> BLOCK_PALETTE;
@@ -60,11 +64,11 @@ public class LayerRegistrar
 	{
 		Reflection.initialize(ChunkSection.class);
 		
-		BLOCK_PALETTE = ChunkSectionAccessor.getBlockStatePalette();
-		FLUID_PALETTE = new IdListPalette<>(Fluid.STATE_IDS, Fluids.EMPTY.getDefaultState());
+		BLOCK_PALETTE = LayerRegistrar.<BlockState>getPalette(PALETTES.getDefaultId());
+		FLUID_PALETTE = PALETTES.add(new Identifier("fluid_state"), new IdListPalette<>(Fluid.STATE_IDS, Fluids.EMPTY.getDefaultState()));
 		
 		BLOCK = registerBlockLayer(LAYERS.getDefaultId());
-		FLUID = registerFluidLayer(new Identifier(ToweletteApi.MOD_ID, "fluid_state"));
+		FLUID = registerFluidLayer(new Identifier("fluid_state"));
 	}
 	
 	public static LayerData<Block, BlockState> registerBlockLayer(final Identifier id)
@@ -257,6 +261,18 @@ public class LayerRegistrar
 	public static <O, S extends State<S>> LayerData<O, S> getLayerData(final int id)
 	{
 		return (LayerData<O, S>) LayerRegistrar.LAYERS.get(id);
+	}
+	
+	@SuppressWarnings("unchecked")
+	public static <S extends State<S>> Palette<S> getPalette(final Identifier id)
+	{
+		return (Palette<S>) LayerRegistrar.PALETTES.get(id);
+	}
+	
+	@SuppressWarnings("unchecked")
+	public static <S extends State<S>> Palette<S> getPalette(final int id)
+	{
+		return (Palette<S>) LayerRegistrar.PALETTES.get(id);
 	}
 	
 	public static <O, S extends State<S>> S deserializeState(CompoundTag compound, Registry<O> registry, Supplier<Identifier> defaultIdSupplier, Function<O, S> defaultStateFunc, Function<O, StateManager<O, S>> stateManagerFunc)

@@ -23,6 +23,7 @@ import net.minecraft.state.State;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.PacketByteBuf;
 import net.minecraft.world.chunk.ChunkSection;
+import net.minecraft.world.chunk.Palette;
 import net.minecraft.world.chunk.PalettedContainer;
 import virtuoel.towelette.api.ChunkSectionStateLayer;
 import virtuoel.towelette.api.LayerData;
@@ -32,6 +33,7 @@ import virtuoel.towelette.util.LayeredPalettedContainerHolder;
 @Mixin(ChunkSection.class)
 public class ChunkSectionMixin implements ChunkSectionStateLayer, LayeredPalettedContainerHolder
 {
+	@Shadow @Final static Palette<BlockState> palette;
 	@Shadow @Final PalettedContainer<BlockState> container;
 	
 	@Unique private Object2ObjectLinkedOpenHashMap<Identifier, MutableTriple<PalettedContainer<?>, Short, Short>> palettedContainers;
@@ -40,6 +42,12 @@ public class ChunkSectionMixin implements ChunkSectionStateLayer, LayeredPalette
 	public Map<Identifier, MutableTriple<PalettedContainer<?>, Short, Short>> getPalettedContainerDataMap()
 	{
 		return palettedContainers;
+	}
+	
+	@Inject(at = @At("RETURN"), method = "<clinit>()V")
+	private static void onStaticInit(CallbackInfo info)
+	{
+		LayerRegistrar.PALETTES.add(new Identifier("block_state"), palette);
 	}
 	
 	@Inject(at = @At("RETURN"), method = "<init>(ISSS)V")

@@ -89,31 +89,15 @@ public class FluidUtils
 	
 	public static boolean scheduleFluidTick(IWorld world, BlockPos pos)
 	{
-		return scheduleFluidTick(world.getFluidState(pos), world, pos);
-	}
-	
-	public static boolean scheduleFluidTick(FluidState state, IWorld world, BlockPos pos)
-	{
+		final FluidState state = world.getFluidState(pos);
 		if (!state.isEmpty())
 		{
-			scheduleFluidTickImpl(state.getFluid(), world, pos);
+			final Fluid fluid = state.getFluid();
+			world.getFluidTickScheduler().schedule(pos, fluid, fluid.getTickRate(world));
+			
 			return true;
 		}
+		
 		return false;
-	}
-	
-	public static boolean scheduleFluidTick(Fluid fluid, IWorld world, BlockPos pos)
-	{
-		if (!fluid.getDefaultState().isEmpty())
-		{
-			scheduleFluidTickImpl(fluid, world, pos);
-			return true;
-		}
-		return false;
-	}
-	
-	private static void scheduleFluidTickImpl(Fluid fluid, IWorld world, BlockPos pos)
-	{
-		world.getFluidTickScheduler().schedule(pos, fluid, fluid.getTickRate(world));
 	}
 }

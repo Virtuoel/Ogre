@@ -5,5 +5,8 @@ import net.minecraft.util.math.BlockPos;
 
 public interface BlockViewStateLayer
 {
-	<O, S extends State<S>> S getState(LayerData<O, S> layer, BlockPos pos);
+	default <O, S extends State<S>> S getState(LayerData<O, S> layer, BlockPos pos)
+	{
+		return layer.getInvalidPositionState();
+	}
 }

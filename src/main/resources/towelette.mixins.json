@@ -25,6 +25,7 @@
 		"layer.ChunkSectionMixin",
 		"layer.ChunkSerializerMixin",
 		"layer.EmptyChunkMixin",
+		"layer.IWorldMixin",
 		"layer.ModifiableWorldMixin",
 		"layer.ServerChunkManagerMixin",
 		"layer.ServerWorldMixin",

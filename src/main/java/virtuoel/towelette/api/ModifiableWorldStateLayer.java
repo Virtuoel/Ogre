@@ -10,7 +10,10 @@ public interface ModifiableWorldStateLayer extends BlockViewStateLayer
 		return setState(layer, pos, state, 3);
 	}
 	
-	<O, S extends State<S>> boolean setState(LayerData<O, S> layer, BlockPos pos, S state, int flags);
+	default <O, S extends State<S>> boolean setState(LayerData<O, S> layer, BlockPos pos, S state, int flags)
+	{
+		return false;
+	}
 	
 	default <O, S extends State<S>> boolean clearState(LayerData<O, S> layer, BlockPos pos, boolean flag)
 	{

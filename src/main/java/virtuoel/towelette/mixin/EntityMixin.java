@@ -24,7 +24,7 @@ public abstract class EntityMixin
 	
 	@SuppressWarnings("unchecked")
 	@Inject(method = "checkBlockCollision", locals = LocalCapture.CAPTURE_FAILSOFT, at = @At(value = "INVOKE", shift = Shift.AFTER, target = "Lnet/minecraft/block/BlockState;onEntityCollision(Lnet/minecraft/world/World;Lnet/minecraft/util/math/BlockPos;Lnet/minecraft/entity/Entity;)V"))
-	private void checkBlockCollisionGetFluidState(CallbackInfo info, Box noop1, BlockPos.PooledMutable noop2, BlockPos.PooledMutable noop3, BlockPos.PooledMutable pos, int noop4, int noop5, int noop6)
+	private void checkBlockCollisionGetState(CallbackInfo info, Box noop1, BlockPos.PooledMutable noop2, BlockPos.PooledMutable noop3, BlockPos.PooledMutable pos, int noop4, int noop5, int noop6)
 	{
 		final BlockViewStateLayer w = ((BlockViewStateLayer) world);
 		for (final Identifier id : LayerRegistrar.LAYERS.getIds())

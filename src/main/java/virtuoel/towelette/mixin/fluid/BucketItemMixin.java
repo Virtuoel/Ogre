@@ -1,4 +1,4 @@
-package virtuoel.towelette.mixin;
+package virtuoel.towelette.mixin.fluid;
 
 import javax.annotation.Nullable;
 

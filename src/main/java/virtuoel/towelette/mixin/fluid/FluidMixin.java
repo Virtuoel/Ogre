@@ -1,4 +1,4 @@
-package virtuoel.towelette.mixin;
+package virtuoel.towelette.mixin.fluid;
 
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Unique;
@@ -12,10 +12,10 @@ import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Direction;
 import net.minecraft.world.IWorld;
 import net.minecraft.world.World;
-import virtuoel.towelette.api.CollidableFluid;
 import virtuoel.towelette.api.LayerRegistrar;
 import virtuoel.towelette.api.ModifiableWorldStateLayer;
-import virtuoel.towelette.api.UpdateableFluid;
+import virtuoel.towelette.api.fluid.CollidableFluid;
+import virtuoel.towelette.api.fluid.UpdateableFluid;
 import virtuoel.towelette.util.FluidUtils;
 
 @Mixin(Fluid.class)

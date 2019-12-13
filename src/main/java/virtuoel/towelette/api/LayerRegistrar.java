@@ -41,6 +41,8 @@ import net.minecraft.world.chunk.ChunkSection;
 import net.minecraft.world.chunk.IdListPalette;
 import net.minecraft.world.chunk.Palette;
 import net.minecraft.world.chunk.WorldChunk;
+import virtuoel.towelette.api.fluid.CollidableFluid;
+import virtuoel.towelette.api.fluid.UpdateableFluid;
 
 public class LayerRegistrar
 {

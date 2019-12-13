@@ -1,4 +1,4 @@
-package virtuoel.towelette.mixin;
+package virtuoel.towelette.mixin.fluid;
 
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;

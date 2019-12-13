@@ -1,4 +1,4 @@
-package virtuoel.towelette.api;
+package virtuoel.towelette.api.fluid;
 
 import net.minecraft.entity.Entity;
 import net.minecraft.fluid.FluidState;

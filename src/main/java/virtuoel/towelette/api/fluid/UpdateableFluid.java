@@ -1,4 +1,4 @@
-package virtuoel.towelette.api;
+package virtuoel.towelette.api.fluid;
 
 import net.minecraft.fluid.FluidState;
 import net.minecraft.util.math.BlockPos;

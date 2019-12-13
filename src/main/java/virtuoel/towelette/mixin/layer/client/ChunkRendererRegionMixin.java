@@ -18,7 +18,6 @@ import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
 import net.minecraft.world.chunk.WorldChunk;
 import virtuoel.towelette.api.BlockViewStateLayer;
-import virtuoel.towelette.api.ChunkStateLayer;
 import virtuoel.towelette.api.LayerData;
 import virtuoel.towelette.api.LayerRegistrar;
 
@@ -36,40 +35,13 @@ public abstract class ChunkRendererRegionMixin implements BlockViewStateLayer
 	@Unique private Object2ObjectLinkedOpenHashMap<Identifier, State<?>[]> states;
 	
 	@Inject(at = @At("RETURN"), method = "<init>(Lnet/minecraft/world/World;II[[Lnet/minecraft/world/chunk/WorldChunk;Lnet/minecraft/util/math/BlockPos;Lnet/minecraft/util/math/BlockPos;)V")
-	private <O, S extends State<S>> void onConstruct(World world, int x, int z, WorldChunk[][] chunks, BlockPos from, BlockPos to, CallbackInfo info)
+	private <O, S extends State<S>> void onConstruct(World world, int chunkX, int chunkZ, WorldChunk[][] chunks, BlockPos startPos, BlockPos endPos, CallbackInfo info)
 	{
 		states = new Object2ObjectLinkedOpenHashMap<Identifier, State<?>[]>();
 		
-		boolean blockState = false;
-		boolean fluidState = false;
 		for (final Identifier id : LayerRegistrar.LAYERS.getIds())
 		{
-			final LayerData<O, S> layer = LayerRegistrar.getLayerData(id);
-			
-			final State<?>[] array;
-			if (!blockState && layer == LayerRegistrar.BLOCK)
-			{
-				blockState = true;
-				array = blockStates;
-			}
-			else if (!fluidState && layer == LayerRegistrar.FLUID)
-			{
-				fluidState = true;
-				array = fluidStates;
-			}
-			else
-			{
-				array = new State[xSize * ySize * zSize];
-				
-				for (final BlockPos pos : BlockPos.iterate(from, to))
-				{
-					final int chunkX = (pos.getX() >> 4) - x;
-					final int chunkZ = (pos.getZ() >> 4) - z;
-					array[getIndex(pos)] = ((ChunkStateLayer) chunks[chunkX][chunkZ]).getState(layer, pos);
-				}
-			}
-			
-			states.put(id, array);
+			states.put(id, LayerRegistrar.getLayerData(id).createRendererRegionStateArray(world, chunkX, chunkZ, chunks, startPos, endPos, xSize, ySize, zSize, blockStates, fluidStates));
 		}
 	}
 	

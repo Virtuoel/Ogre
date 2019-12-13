@@ -15,10 +15,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 import it.unimi.dsi.fastutil.objects.Object2ObjectLinkedOpenHashMap;
-import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;
-import net.minecraft.block.FluidBlock;
-import net.minecraft.fluid.FluidState;
 import net.minecraft.state.State;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.PacketByteBuf;
@@ -149,33 +146,6 @@ public class ChunkSectionMixin implements ChunkSectionStateLayer, LayeredPalette
 	public void onHasRandomBlockTicks(CallbackInfoReturnable<Boolean> info)
 	{
 		info.setReturnValue(palettedContainers.get(LayerRegistrar.LAYERS.getId(LayerRegistrar.BLOCK)).getRight() > 0);
-	}
-	
-	@Inject(at = @At("HEAD"), method = "hasRandomFluidTicks()Z", cancellable = true)
-	public void onHasRandomFluidTicks(CallbackInfoReturnable<Boolean> info)
-	{
-		info.setReturnValue(palettedContainers.get(LayerRegistrar.LAYERS.getId(LayerRegistrar.FLUID)).getRight() > 0);
-	}
-	
-	@Inject(at = @At("HEAD"), method = "setBlockState(IIILnet/minecraft/block/BlockState;Z)Lnet/minecraft/block/BlockState;", cancellable = true)
-	public void setBlockState(int x, int y, int z, BlockState state, boolean flag, CallbackInfoReturnable<BlockState> info)
-	{
-		final Block block = state.getBlock();
-		if (block instanceof FluidBlock)
-		{
-			setState(LayerRegistrar.FLUID, x, y, z, block.getFluidState(state), flag);
-			info.setReturnValue(state);
-		}
-		else
-		{
-			info.setReturnValue(setState(LayerRegistrar.BLOCK, x, y, z, state, flag));
-		}
-	}
-	
-	@Inject(at = @At("HEAD"), method = "getFluidState(III)Lnet/minecraft/fluid/FluidState;", cancellable = true)
-	public void onGetFluidState(int x, int y, int z, CallbackInfoReturnable<FluidState> info)
-	{
-		info.setReturnValue(getState(LayerRegistrar.FLUID, x, y, z));
 	}
 	
 	@Inject(at = @At("RETURN"), method = "toPacket(Lnet/minecraft/util/PacketByteBuf;)V")

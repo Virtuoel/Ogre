@@ -69,8 +69,24 @@ public class LayerRegistrar
 		BLOCK_PALETTE = LayerRegistrar.<BlockState>getPalette(PALETTES.getDefaultId());
 		FLUID_PALETTE = PALETTES.add(new Identifier("fluid_state"), new IdListPalette<>(Fluid.STATE_IDS, Fluids.EMPTY.getDefaultState()));
 		
-		BLOCK = registerBlockLayer(LAYERS.getDefaultId());
-		FLUID = registerFluidLayer(new Identifier("fluid_state"));
+		BLOCK = registerBlockLayer(LAYERS.getDefaultId(), builder ->
+		{
+			if (FabricLoader.getInstance().getEnvironmentType() == EnvType.CLIENT)
+			{
+				builder.rendererRegionStateArrayCallback((l, w, x, z, c, s, e, xS, yS, zS, b, f) -> b);
+			}
+			
+			return builder;
+		});
+		FLUID = registerFluidLayer(new Identifier("fluid_state"), builder ->
+		{
+			if (FabricLoader.getInstance().getEnvironmentType() == EnvType.CLIENT)
+			{
+				builder.rendererRegionStateArrayCallback((l, w, x, z, c, s, e, xS, yS, zS, b, f) -> f);
+			}
+			
+			return builder;
+		});
 	}
 	
 	public static LayerData<Block, BlockState> registerBlockLayer(final Identifier id)

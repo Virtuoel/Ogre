@@ -7,8 +7,10 @@ import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
 
+import net.minecraft.block.BlockState;
 import net.minecraft.client.render.RenderLayer;
 import net.minecraft.entity.Entity;
+import net.minecraft.fluid.FluidState;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.state.State;
@@ -23,6 +25,7 @@ import net.minecraft.world.World;
 import net.minecraft.world.chunk.Chunk;
 import net.minecraft.world.chunk.Palette;
 import net.minecraft.world.chunk.PalettedContainer;
+import net.minecraft.world.chunk.WorldChunk;
 
 public class LayerData<O, S extends State<S>>
 {
@@ -52,7 +55,7 @@ public class LayerData<O, S extends State<S>>
 	private final Function<O, StateManager<O, S>> managerFunction;
 	private final Supplier<S> emptyStateSupplier;
 	private final Supplier<Identifier> defaultIdSupplier;
-
+	
 	private final BiFunction<World, LayerData<O, S>, World> worldFunction;
 	private final BiFunction<ServerWorld, LayerData<O, S>, ServerWorld> serverWorldFunction;
 	
@@ -60,6 +63,7 @@ public class LayerData<O, S extends State<S>>
 	private final Predicate<S> renderPredicate;
 	private final Function<S, RenderLayer> renderLayerFunction;
 	private final StateTesselationCallback<S> tesselationCallback;
+	private final RendererRegionStateArrayCallback<O, S> rendererRegionStateArrayCallback;
 	
 	private LayerData(LayerData.Builder<O, S> builder)
 	{
@@ -97,6 +101,7 @@ public class LayerData<O, S extends State<S>>
 		this.renderPredicate = Optional.ofNullable(builder.renderPredicate).orElse(builder.emptyPredicate);
 		this.renderLayerFunction = builder.renderLayerFunction;
 		this.tesselationCallback = builder.tesselationCallback;
+		this.rendererRegionStateArrayCallback = builder.rendererRegionStateArrayCallback;
 	}
 	
 	public Palette<S> getPalette()
@@ -234,6 +239,11 @@ public class LayerData<O, S extends State<S>>
 		return tesselationCallback.tesselateState(blockRenderManager, state, pos, world, matrixStack, vertexConsumer, checkSides, random);
 	}
 	
+	public S[] createRendererRegionStateArray(World world, int chunkXOffset, int chunkZOffset, WorldChunk[][] chunks, BlockPos startPos, BlockPos endPos, int xSize, int ySize, int zSize, BlockState[] blockStates, FluidState[] fluidStates)
+	{
+		return rendererRegionStateArrayCallback.createRendererRegionStateArray(this, worldFunction.apply(world, this), chunkXOffset, chunkZOffset, chunks, startPos, endPos, xSize, ySize, zSize, blockStates, fluidStates);
+	}
+	
 	public S deserializeState(CompoundTag compound)
 	{
 		return LayerRegistrar.deserializeState(compound, getRegistry(), defaultIdSupplier, defaultStateFunction, managerFunction);
@@ -244,7 +254,7 @@ public class LayerData<O, S extends State<S>>
 		return LayerRegistrar.serializeState(state, getRegistry(), ownerFunction);
 	}
 	
-	public static <O, S extends State<S>> Builder<O, S>builder()
+	public static <O, S extends State<S>> Builder<O, S> builder()
 	{
 		return new Builder<>();
 	}
@@ -285,6 +295,30 @@ public class LayerData<O, S extends State<S>>
 		private Predicate<S> renderPredicate;
 		private Function<S, RenderLayer> renderLayerFunction;
 		private StateTesselationCallback<S> tesselationCallback;
+		private RendererRegionStateArrayCallback<O, S> rendererRegionStateArrayCallback = (layer, world, chunkXOffset, chunkZOffset, chunks, startPos, endPos, xSize, ySize, zSize, blockStates, fluidStates) ->
+		{
+			@SuppressWarnings("unchecked")
+			final S[] array = (S[]) new State[xSize * ySize * zSize];
+			
+			for (final BlockPos pos : BlockPos.iterate(startPos, endPos))
+			{
+				final int x = pos.getX();
+				final int y = pos.getY();
+				final int z = pos.getZ();
+				
+				final int chunkX = (x >> 4) - chunkXOffset;
+				final int chunkZ = (z >> 4) - chunkZOffset;
+				
+				final int i = x - startPos.getX();
+				final int j = y - startPos.getY();
+				final int k = z - startPos.getZ();
+				final int index = k * xSize * ySize + j * xSize + i;
+				
+				array[index] = ((ChunkStateLayer) chunks[chunkX][chunkZ]).getState(layer, pos);
+			}
+			
+			return array;
+		};
 		
 		private Builder()
 		{
@@ -444,6 +478,12 @@ public class LayerData<O, S extends State<S>>
 		public Builder<O, S> tesselationCallback(StateTesselationCallback<S> tesselationCallback)
 		{
 			this.tesselationCallback = tesselationCallback;
+			return this;
+		}
+		
+		public Builder<O, S> rendererRegionStateArrayCallback(RendererRegionStateArrayCallback<O, S> rendererRegionStateArrayCallback)
+		{
+			this.rendererRegionStateArrayCallback = rendererRegionStateArrayCallback;
 			return this;
 		}
 		

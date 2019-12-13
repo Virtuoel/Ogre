@@ -81,7 +81,7 @@ public abstract class BucketItemMixin
 	private void onUse(World world, PlayerEntity player, Hand hand, CallbackInfoReturnable<TypedActionResult<ItemStack>> info, ItemStack held, BlockHitResult hitResult, BlockPos pos, BlockPos offsetPos, BlockState state, Fluid drained)
 	{
 		final ModifiableWorldStateLayer w = ((ModifiableWorldStateLayer) world);
-		w.setState(LayerRegistrar.FLUID, pos, Fluids.EMPTY.getDefaultState(), 11);
+		w.setState(LayerRegistrar.FLUID_LAYER, pos, Fluids.EMPTY.getDefaultState(), 11);
 	}
 	
 	@ModifyVariable(method = "placeFluid", ordinal = 0, at = @At(value = "INVOKE_ASSIGN"))
@@ -110,6 +110,6 @@ public abstract class BucketItemMixin
 			}
 		}
 		
-		w.setState(LayerRegistrar.FLUID, pos, fluidState, 11);
+		w.setState(LayerRegistrar.FLUID_LAYER, pos, fluidState, 11);
 	}
 }

@@ -22,7 +22,7 @@ public abstract class WorldChunkMixin implements ChunkStateLayer
 		final Block block = state.getBlock();
 		if (block instanceof FluidBlock)
 		{
-			setState(LayerRegistrar.FLUID, pos, block.getFluidState(state), flag);
+			setState(LayerRegistrar.FLUID_LAYER, pos, block.getFluidState(state), flag);
 			info.setReturnValue(null);
 		}
 	}

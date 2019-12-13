@@ -55,7 +55,7 @@ public class ChunkSectionMixin implements ChunkSectionStateLayer, LayeredPalette
 		for (final Identifier id : LayerRegistrar.LAYERS.getIds())
 		{
 			final LayerData<?, ?> data = LayerRegistrar.LAYERS.get(id);
-			palettedContainers.put(id, new MutableTriple<>(data == LayerRegistrar.BLOCK ? this.container : data.createContainer(), (short) 0, (short) 0));
+			palettedContainers.put(id, new MutableTriple<>(data == LayerRegistrar.BLOCK_LAYER ? this.container : data.createContainer(), (short) 0, (short) 0));
 		}
 	}
 	
@@ -145,7 +145,7 @@ public class ChunkSectionMixin implements ChunkSectionStateLayer, LayeredPalette
 	@Inject(at = @At("HEAD"), method = "hasRandomBlockTicks()Z", cancellable = true)
 	public void onHasRandomBlockTicks(CallbackInfoReturnable<Boolean> info)
 	{
-		info.setReturnValue(palettedContainers.get(LayerRegistrar.LAYERS.getId(LayerRegistrar.BLOCK)).getRight() > 0);
+		info.setReturnValue(palettedContainers.get(LayerRegistrar.LAYERS.getId(LayerRegistrar.BLOCK_LAYER)).getRight() > 0);
 	}
 	
 	@Inject(at = @At("RETURN"), method = "toPacket(Lnet/minecraft/util/PacketByteBuf;)V")

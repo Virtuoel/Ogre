@@ -65,7 +65,7 @@ public class FluidMixin implements CollidableFluid, UpdateableFluid
 				if (newState != fluidState)
 				{
 					final ModifiableWorldStateLayer w = ((ModifiableWorldStateLayer) world);
-					w.setState(LayerRegistrar.FLUID, mutablePos, newState, flags & -33);
+					w.setState(LayerRegistrar.FLUID_LAYER, mutablePos, newState, flags & -33);
 				}
 			}
 		}
@@ -91,7 +91,7 @@ public class FluidMixin implements CollidableFluid, UpdateableFluid
 				final boolean still = state.isStill();
 				if (still || state.getHeight(world, pos) >= 4.0F/9.0F)
 				{
-					((ModifiableWorldStateLayer) world).setState(LayerRegistrar.FLUID, pos, Fluids.EMPTY.getDefaultState());
+					((ModifiableWorldStateLayer) world).setState(LayerRegistrar.FLUID_LAYER, pos, Fluids.EMPTY.getDefaultState());
 					world.breakBlock(pos, true);
 					world.setBlockState(pos, (still ? Blocks.OBSIDIAN : Blocks.COBBLESTONE).getDefaultState());
 					world.playLevelEvent(1501, pos, 0);

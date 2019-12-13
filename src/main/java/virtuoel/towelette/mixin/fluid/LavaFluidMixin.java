@@ -26,7 +26,7 @@ public class LavaFluidMixin
 		if (FluidUtils.canFluidInteractionReplace(world, pos))
 		{
 			final ModifiableWorldStateLayer w = ((ModifiableWorldStateLayer) world);
-			w.setState(LayerRegistrar.FLUID, pos, Fluids.EMPTY.getDefaultState());
+			w.setState(LayerRegistrar.FLUID_LAYER, pos, Fluids.EMPTY.getDefaultState());
 			return Blocks.WATER;
 		}
 		

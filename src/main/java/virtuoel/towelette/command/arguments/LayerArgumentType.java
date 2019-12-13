@@ -24,7 +24,7 @@ import virtuoel.towelette.api.LayerRegistrar;
 public class LayerArgumentType implements ArgumentType<LayerData<?, ?>>
 {
 	private static final Collection<String> EXAMPLES =
-		Stream.of(LayerRegistrar.BLOCK)
+		Stream.of(LayerRegistrar.BLOCK_LAYER)
 		.map(LayerRegistrar.LAYERS::getId)
 		.map(Identifier::toString)
 		.collect(Collectors.toList());

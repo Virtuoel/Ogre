@@ -20,7 +20,7 @@ public abstract class ChunkSectionMixin implements ChunkSectionStateLayer, Layer
 	@Inject(at = @At("HEAD"), method = "hasRandomFluidTicks()Z", cancellable = true)
 	public void onHasRandomFluidTicks(CallbackInfoReturnable<Boolean> info)
 	{
-		info.setReturnValue(getPalettedContainerDataMap().get(LayerRegistrar.LAYERS.getId(LayerRegistrar.FLUID)).getRight() > 0);
+		info.setReturnValue(getPalettedContainerDataMap().get(LayerRegistrar.LAYERS.getId(LayerRegistrar.FLUID_LAYER)).getRight() > 0);
 	}
 	
 	@Inject(at = @At("HEAD"), method = "setBlockState(IIILnet/minecraft/block/BlockState;Z)Lnet/minecraft/block/BlockState;", cancellable = true)
@@ -29,18 +29,18 @@ public abstract class ChunkSectionMixin implements ChunkSectionStateLayer, Layer
 		final Block block = state.getBlock();
 		if (block instanceof FluidBlock)
 		{
-			setState(LayerRegistrar.FLUID, x, y, z, block.getFluidState(state), flag);
+			setState(LayerRegistrar.FLUID_LAYER, x, y, z, block.getFluidState(state), flag);
 			info.setReturnValue(state);
 		}
 		else
 		{
-			info.setReturnValue(setState(LayerRegistrar.BLOCK, x, y, z, state, flag));
+			info.setReturnValue(setState(LayerRegistrar.BLOCK_LAYER, x, y, z, state, flag));
 		}
 	}
 	
 	@Inject(at = @At("HEAD"), method = "getFluidState(III)Lnet/minecraft/fluid/FluidState;", cancellable = true)
 	public void onGetFluidState(int x, int y, int z, CallbackInfoReturnable<FluidState> info)
 	{
-		info.setReturnValue(getState(LayerRegistrar.FLUID, x, y, z));
+		info.setReturnValue(getState(LayerRegistrar.FLUID_LAYER, x, y, z));
 	}
 }

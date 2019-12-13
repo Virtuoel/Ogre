@@ -45,7 +45,7 @@ public class DummyDrainableBlock extends Block implements FluidDrainable
 			}
 			
 			final ModifiableWorldStateLayer w = ((ModifiableWorldStateLayer) world);
-			w.setState(LayerRegistrar.FLUID, pos, Fluids.EMPTY.getDefaultState(), 11);
+			w.setState(LayerRegistrar.FLUID_LAYER, pos, Fluids.EMPTY.getDefaultState(), 11);
 		}
 		
 		return fluid;

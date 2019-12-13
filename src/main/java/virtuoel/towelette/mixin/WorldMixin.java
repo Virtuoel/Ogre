@@ -27,7 +27,7 @@ public abstract class WorldMixin implements WorldStateLayer
 	@Inject(method = "updateNeighbor", at = @At(value = "INVOKE", shift = Shift.AFTER, target = "Lnet/minecraft/world/World;getBlockState(Lnet/minecraft/util/math/BlockPos;)Lnet/minecraft/block/BlockState;"))
 	private void onUpdateNeighborAfterNeighborUpdate(BlockPos pos, Block block, BlockPos otherPos, CallbackInfo info)
 	{
-		updateNeighborExceptLayer(LayerRegistrar.BLOCK, pos, otherPos);
+		updateNeighborExceptLayer(LayerRegistrar.BLOCK_LAYER, pos, otherPos);
 	}
 	
 	@Override

@@ -14,6 +14,9 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.reflect.Reflection;
 
 import net.fabricmc.api.EnvType;
+import net.fabricmc.fabric.api.renderer.v1.model.FabricBakedModel;
+import net.fabricmc.fabric.impl.client.indigo.Indigo;
+import net.fabricmc.fabric.impl.client.indigo.renderer.accessor.AccessChunkRendererRegion;
 import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockEntityProvider;
@@ -25,6 +28,7 @@ import net.minecraft.client.render.RenderLayers;
 import net.minecraft.client.render.VertexConsumer;
 import net.minecraft.client.render.block.BlockRenderManager;
 import net.minecraft.client.render.chunk.ChunkOcclusionDataBuilder;
+import net.minecraft.client.render.model.BakedModel;
 import net.minecraft.client.util.math.MatrixStack;
 import net.minecraft.fluid.Fluid;
 import net.minecraft.fluid.FluidState;
@@ -202,7 +206,27 @@ public class LayerRegistrar
 					final MatrixStack stack = (MatrixStack) matrixStack;
 					stack.push();
 					stack.translate(pos.getX() & 15, pos.getY() & 15, pos.getZ() & 15);
-					final boolean result = ((BlockRenderManager) blockRenderManager).renderBlock(state, pos, world, (MatrixStack) matrixStack, (VertexConsumer) vertexConsumer, checkSides, random);
+					final boolean result; // = ((BlockRenderManager) blockRenderManager).renderBlock(state, pos, world, (MatrixStack) matrixStack, (VertexConsumer) vertexConsumer, checkSides, random);
+					
+					// TODO FIXME respect Indigo configs
+					if (state.getRenderType() == BlockRenderType.MODEL)
+					{
+						final BakedModel model = ((BlockRenderManager) blockRenderManager).getModel(state);
+						
+						if (Indigo.ALWAYS_TESSELATE_INDIGO || !((FabricBakedModel) model).isVanillaAdapter())
+						{
+							result = ((AccessChunkRendererRegion) world).fabric_getRenderer().tesselateBlock(state, pos, model, (MatrixStack) matrixStack);
+						}
+						else
+						{
+							result = ((BlockRenderManager) blockRenderManager).renderBlock(state, pos, world, (MatrixStack) matrixStack, (VertexConsumer) vertexConsumer, checkSides, random);
+						}
+					}
+					else
+					{
+						result = ((BlockRenderManager) blockRenderManager).renderBlock(state, pos, world, (MatrixStack) matrixStack, (VertexConsumer) vertexConsumer, checkSides, random);
+					}
+					
 					stack.pop();
 					
 					return result;
